@@ -1,0 +1,122 @@
+/* Common button styles shared across all list pages */
+
+/* container for action buttons aligned right */
+.action-buttons {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    float: right;
+}
+
+/* primary "new" buttons (Nouveau contrôle, Nouvel utilisateur, etc.) */
+.btn-new-controlle,
+.btn-new,
+.btn-unified,
+.btn-new-entity {
+    border-radius: 8px;
+    padding: 8px 16px;
+    background: linear-gradient(135deg, #ffc107 0%, #ff9800 100%);
+    border: none;
+    color: white;
+    font-weight: 600;
+    transition: all 0.3s;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    white-space: nowrap;
+    font-size: 0.9rem;
+    box-shadow: 0 4px 10px rgba(255, 193, 7, 0.3);
+    margin-left: 10px;
+}
+
+.btn-new-controlle:hover,
+.btn-new:hover,
+.btn-unified:hover,
+.btn-new-entity:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 15px rgba(255, 193, 7, 0.4);
+    color: white;
+}
+
+/* secondary "import" buttons */
+.btn-import,
+.btn-unified.secondary {
+    border-radius: 8px;
+    padding: 8px 16px;
+    background: #6c757d;
+    border: none;
+    color: white;
+    font-weight: 600;
+    transition: all 0.3s;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.9rem;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+}
+
+.btn-import:hover,
+.btn-unified.secondary:hover {
+    background: #5a6268;
+    transform: translateY(-2px);
+}
+
+/* export buttons (csv/excel/pdf) */
+.btn-export {
+    border-radius: 8px;
+    padding: 6px 12px;
+    font-weight: 500;
+    font-size: 0.8rem;
+    transition: all 0.3s;
+    border: none;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    color: white;
+}
+
+.btn-export.csv { background: #28a745; }
+.btn-export.csv:hover { background: #218838; transform: translateY(-2px); box-shadow: 0 5px 15px rgba(40, 167, 69, 0.3); }
+.btn-export.excel { background: #1e7e34; }
+.btn-export.excel:hover { background: #19692c; transform: translateY(-2px); box-shadow: 0 5px 15px rgba(30, 126, 52, 0.3); }
+.btn-export.pdf { background: #dc3545; }
+.btn-export.pdf:hover { background: #c82333; transform: translateY(-2px); box-shadow: 0 5px 15px rgba(220, 53, 69, 0.3); }
+
+/* filter reset buttons */
+.filter-item .btn-reset {
+    background: #6c757d;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 8px 16px;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.3s;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+}
+
+.filter-item .btn-reset:hover {
+    background: #5a6268;
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(108, 117, 125, 0.3);
+}
+
+/* alignment helpers */
+.btn-new-controlle, .btn-new, .btn-unified, .btn-new-entity {
+    float: right;
+}
+
+@media (max-width:768px){
+    .btn-new-controlle, .btn-new, .btn-unified, .btn-new-entity {
+        margin-left: 0;
+        width: 100%;
+        justify-content: center;
+    }
+}

@@ -1,0 +1,115 @@
+/* Styles personnalisés */
+
+/* Police Barlow globale */
+body, h1, h2, h3, h4, h5, h6,
+p, a, span, div, button, input, select,
+textarea, table, th, td, .nav-link {
+    font-family: 'Barlow', sans-serif !important;
+}
+
+html {
+    font-size: 14px;
+}
+
+/* Titres harmonisés */
+h1 { font-size: 1.8rem; font-weight: 600; }
+h2 { font-size: 1.6rem; font-weight: 600; }
+h3 { font-size: 1.4rem; font-weight: 600; }
+h4 { font-size: 1.2rem; font-weight: 600; }
+h5 { font-size: 1.1rem; font-weight: 600; }
+h6 { font-size: 1rem; font-weight: 600; }
+
+/* Boutons modernes (reprise de l'ancien style initial) */
+.btn-modern {
+    border-radius: 8px;
+    padding: 8px 18px;
+    font-weight: 500;
+    transition: all 0.3s;
+    border: none;
+    cursor: pointer;
+    min-height: 38px;
+    font-size: 0.85rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    text-decoration: none;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.btn-primary-modern {
+    background: white;
+    color: #2e7d32; /* vert sombre similaire au header */
+}
+
+.btn-primary-modern:hover {
+    background: #f8f9fa;
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(255, 255, 255, 0.3);
+    color: #2e7d32;
+}
+
+.btn-secondary-modern {
+    background: white;
+    color: #6c757d;
+}
+
+.btn-secondary-modern:hover {
+    background: #f8f9fa;
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(255, 255, 255, 0.3);
+    color: #6c757d;
+}
+
+.btn-success-modern {
+    background: white;
+    color: #28a745;
+}
+
+.btn-success-modern:hover {
+    background: #f8f9fa;
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(255, 255, 255, 0.3);
+    color: #28a745;
+}
+
+.btn-warning-modern {
+    background: white;
+    color: #ffc107;
+}
+
+.btn-warning-modern:hover {
+    background: #f8f9fa;
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(255, 255, 255, 0.3);
+    color: #ffc107;
+}
+
+.btn-info-modern {
+    background: white;
+    color: #17a2b8;
+}
+
+.btn-info-modern:hover {
+    background: #f8f9fa;
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(255, 255, 255, 0.3);
+    color: #17a2b8;
+}
+
+.btn-danger-modern {
+    background: white;
+    color: #dc3545;
+}
+
+.btn-danger-modern:hover {
+    background: #f8f9fa;
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(255, 255, 255, 0.3);
+    color: #dc3545;
+}
+
+.required:after {
+    content: " *";
+    color: red;
+}

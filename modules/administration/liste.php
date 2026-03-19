@@ -18,28 +18,8 @@ include '../../includes/header.php';
 $utilisateurs = $pdo->query("SELECT id_utilisateur, login, nom_complet, email, profil, actif, dernier_acces FROM utilisateurs ORDER BY nom_complet")->fetchAll();
 ?>
 
-<!-- Inclusion des styles supplémentaires pour DataTables -->
-<link rel="stylesheet" href="https://cdn.datatables.net/1.11.5/css/dataTables.bootstrap4.min.css">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+<!-- Styles supplémentaires -->
 <link rel="stylesheet" href="/ctr.net-fardc/assets/css/fonts.css">
-<!-- SweetAlert2 CSS optionnel mais recommandé -->
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
-
-<!-- Script pour SweetAlert messages -->
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    <?php if (isset($success_message) && $success_message): ?>
-    Swal.fire({
-        icon: 'success',
-        title: 'Succès',
-        text: '<?php echo addslashes($success_message); ?>',
-        button: 'OK',
-        timer: 3000
-    });
-    <?php endif; ?>
-});
-</script>
 
 <style>
 :root {
@@ -893,12 +873,9 @@ a[href^="mailto:"]:hover {
     </div>
 </div>
 
-<!-- Scripts locaux -->
-<script src="../../assets/js/jquery-3.6.0.min.js"></script>
-<script src="../../assets/js/bootstrap.bundle.min.js"></script>
-<script src="../../assets/js/jquery.dataTables.min.js"></script>
-<script src="../../assets/js/dataTables.bootstrap4.min.js"></script>
-<script src="../../assets/js/sweetalert2.all.min.js"></script>
+<?php include '../../includes/footer.php'; ?>
+
+<!-- Scripts supplémentaires (exports) -->
 <script src="../../assets/js/xlsx.full.min.js"></script>
 
 <script>
@@ -1076,5 +1053,3 @@ $(document).ready(function() {
     <?php endif; ?>
 });
 </script>
-
-<?php include '../../includes/footer.php'; ?>

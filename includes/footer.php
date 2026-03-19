@@ -23,6 +23,7 @@
             <script src="https://cdn.jsdelivr.net/npm/admin-lte@3.2/dist/js/adminlte.min.js"></script>
             <!-- Leaflet -->
             <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+            <script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
             <script src="https://cdn.datatables.net/1.11.5/js/dataTables.bootstrap5.min.js"></script>
             <!-- Scripts personnalisés -->
             <script src="/assets/js/custom.js"></script>

@@ -427,7 +427,7 @@ $export_fields = [
     accent-color: #2e7d32;
 }
 
-.DataTables_wrapper {
+.dataTables_wrapper {
     width: 100%;
     padding: 0;
     position: relative;
@@ -1034,15 +1034,12 @@ $export_fields = [
     </div>
 </div>
 
-<!-- Scripts (chemins locaux) -->
-<script src="../../assets/js/jquery-3.6.0.min.js"></script>
-<script src="../../assets/js/jquery.dataTables.min.js"></script>
-<script src="../../assets/js/dataTables.bootstrap4.min.js"></script>
-<script src="../../assets/js/sweetalert2.all.min.js"></script>
+<?php include '../../includes/footer.php'; ?>
+
+<!-- Scripts supplémentaires (exports) -->
 <script src="../../assets/js/xlsx.full.min.js"></script>
 <script src="../../assets/js/jspdf.umd.min.js"></script>
 <script src="../../assets/js/jspdf.plugin.autotable.min.js"></script>
-<!-- Script JSZip supprimé -->
 
 <script>
 $(document).ready(function() {
@@ -1852,5 +1849,3 @@ $(document).ready(function() {
     });
 });
 </script>
-
-<?php include '../../includes/footer.php'; ?>

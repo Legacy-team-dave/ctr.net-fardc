@@ -1190,7 +1190,7 @@ $(document).ready(function() {
             // Ajouter l'icône de recherche avant le champ (en dehors du label)
             filterDiv.prepend(
                 '<i class="fas fa-search search-icon" style="color: #2e7d32; font-size: 1rem;"></i>'
-                );
+            );
 
             const searchLabel = filterDiv.find('label');
             searchLabel.css({

@@ -54,10 +54,49 @@ $ordre_categories = ['Actif', 'Intégré', 'Retraité', 'Décédé Après Bio', 
 
 // Ordre hiérarchique des grades (du plus élevé au moins élevé)
 $gradeOrder = [
-    'GENA', 'GAM', 'LTGEN', 'AMR', 'GENMAJ', 'VAM', 'GENBDE', 'CAM', 'COL', 'CPV',
-    'LTCOL', 'CPF', 'MAJ', 'CPC', 'CAPT', 'LDV', 'LT', 'EV', 'SLT', '2EV', 'A-C', 'MCP', 'A-1', '1MC',
-    'ADJ', 'MRC', '1SM', '1MR', 'SM', '2MR', '1SGT', 'MR', 'SGT', 'QMT', 'CPL', '1MT', '1CL', '2MT',
-    '2CL', 'MT', 'REC', 'ASK', 'COMD'
+    'GENA',
+    'GAM',
+    'LTGEN',
+    'AMR',
+    'GENMAJ',
+    'VAM',
+    'GENBDE',
+    'CAM',
+    'COL',
+    'CPV',
+    'LTCOL',
+    'CPF',
+    'MAJ',
+    'CPC',
+    'CAPT',
+    'LDV',
+    'LT',
+    'EV',
+    'SLT',
+    '2EV',
+    'A-C',
+    'MCP',
+    'A-1',
+    '1MC',
+    'ADJ',
+    'MRC',
+    '1SM',
+    '1MR',
+    'SM',
+    '2MR',
+    '1SGT',
+    'MR',
+    'SGT',
+    'QMT',
+    'CPL',
+    '1MT',
+    '1CL',
+    '2MT',
+    '2CL',
+    'MT',
+    'REC',
+    'ASK',
+    'COMD'
 ];
 
 // Ordre des catégories (du premier à afficher au dernier) - basé sur les codes
@@ -488,7 +527,7 @@ if (!$is_admin_ig) {
     }
 
     // Fonction de tri personnalisée
-    usort($non_vus_raw, function($a, $b) use ($gradeOrder, $categorieOrder) {
+    usort($non_vus_raw, function ($a, $b) use ($gradeOrder, $categorieOrder) {
         // 1. Tri par grade (ordre hiérarchique)
         $gradeA = array_search($a['grade'], $gradeOrder);
         $gradeB = array_search($b['grade'], $gradeOrder);
@@ -1649,7 +1688,7 @@ h3.card-title {
                             <div style="display: flex; flex-wrap: wrap; gap: 5px;">
                                 <?php foreach ($filtres_actifs['garnisons'] as $garnison): ?>
                                 <span class="garnison-tag" style="display: inline-flex; align-items: center;">
-                                    <i class="fas fa-flag mr-1" style="font-size: 0.7rem;"></i>
+                                    <i class="fas fa-user-friends mr-1" style="font-size: 0.7rem;"></i>
                                     <?= htmlspecialchars($garnison) ?>
                                 </span>
                                 <?php endforeach; ?>
@@ -1827,7 +1866,7 @@ h3.card-title {
                         <div class="stat-info">
                             <h4 class="stat-value favorable">
                                 <?= number_format($stats['controles_hors_filtre'] ?? 0, 0, ',', ' ') ?></h4>
-                            <p>Contrôlés (Hors Effectif)</p>
+                            <p>Contrôlés (Hors Garnisons)</p>
                         </div>
                     </div>
                 </div>
@@ -2412,15 +2451,9 @@ h3.card-title {
 const categorieTraductions = <?= json_encode($traductions_categories) ?>;
 
 $(document).ready(function() {
-    $('[data-toggle="tooltip"]').each(function() {
-        var title = $(this).attr('title');
-        if (title) {
-            // Met la première lettre en majuscule, le reste en minuscule
-            title = title.charAt(0).toUpperCase() + title.slice(1).toLowerCase();
-            $(this).attr('title', title);
-        }
-    });
+    // Initialisation des tooltips sans modification du contenu des titres
     $('[data-toggle="tooltip"]').tooltip();
+
     // ===== GRAPHIQUES (UNIFIÉS) =====
     <?php if (!empty($stats_detaillees['par_garnison'])): ?>
     try {

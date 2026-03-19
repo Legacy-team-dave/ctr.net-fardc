@@ -1187,6 +1187,11 @@ $(document).ready(function() {
                 'float': 'right'
             });
 
+            // Ajouter l'icône de recherche avant le champ (en dehors du label)
+            filterDiv.prepend(
+                '<i class="fas fa-search search-icon" style="color: #2e7d32; font-size: 1rem;"></i>'
+                );
+
             const searchLabel = filterDiv.find('label');
             searchLabel.css({
                 'display': 'flex',
@@ -1199,7 +1204,7 @@ $(document).ready(function() {
             filterDiv.append(`
                 <div class="action-buttons">
                     <a href="ajouter.php" class="btn-modern btn-primary-modern">
-                        <i class="fas fa-plus-circle"></i> Nouveau contrôle
+                        <i class="fas fa-plus-circle"></i> Nouveau
                     </a>
                 </div>
             `);

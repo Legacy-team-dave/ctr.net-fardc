@@ -140,7 +140,7 @@
         <div class="splash-content">
             <img src="assets/img/logo-fardc.png" alt="FARDC" class="splash-logo">
             <h1>IG-FARDC</h1>
-            <p>Inspectorat Générale des Forces Armées de la RDC</p>
+            <p>Inspectorat Général des Forces Armées de la RDC</p>
             <div class="splash-spinner"></div>
             <!-- Le bouton "Passer" a été supprimé -->
         </div>

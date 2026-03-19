@@ -90,16 +90,6 @@ $export_fields = [
     'observations'     => ['label' => 'Observations', 'enabled' => true, 'required' => false]
 ];
 ?>
-<!DOCTYPE html>
-<html lang="fr">
-
-<head>
-    <meta charset="UTF-8">
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-    <title>Liste des litiges</title>
-    <link rel="stylesheet" href="../../assets/css/dataTables.bootstrap4.min.css">
-    <link rel="stylesheet" href="../../assets/css/all.min.css">
-    <link rel="stylesheet" href="../../assets/css/sweetalert2.min.css">
     <style>
     /* ========== STYLES REPRIS DU FICHIER 1 ========== */
     body {
@@ -869,9 +859,7 @@ $export_fields = [
         }
     }
     </style>
-</head>
 
-<body>
     <div class="container-fluid py-3">
         <?php if ($success_message): ?>
         <div class="alert alert-success alert-dismissible fade show" role="alert">
@@ -1074,11 +1062,9 @@ $export_fields = [
         </div>
     </div>
 
-    <!-- Scripts -->
-    <script src="../../assets/js/jquery-3.6.0.min.js"></script>
-    <script src="../../assets/js/jquery.dataTables.min.js"></script>
-    <script src="../../assets/js/dataTables.bootstrap4.min.js"></script>
-    <script src="../../assets/js/sweetalert2.all.min.js"></script>
+    <?php include '../../includes/footer.php'; ?>
+
+    <!-- Scripts supplémentaires (exports) -->
     <script src="../../assets/js/xlsx.full.min.js"></script>
     <script src="../../assets/js/jspdf.umd.min.js"></script>
     <script src="../../assets/js/jspdf.plugin.autotable.min.js"></script>
@@ -1903,5 +1889,3 @@ $export_fields = [
         });
     });
     </script>
-
-    <?php include '../../includes/footer.php'; ?>

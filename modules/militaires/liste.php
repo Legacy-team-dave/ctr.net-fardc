@@ -209,31 +209,7 @@ $top_dcd_ap_bio = $pdo->query("
 $timestamp = date('Y-m-d_H\hi');
 ?>
 
-<!-- Meta tags UTF-8 -->
-<meta charset="utf-8">
-<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-
-<!-- Script pour SweetAlert messages -->
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    <?php if ($success_message): ?>
-    Swal.fire({
-        icon: 'success',
-        title: 'Succès',
-        text: '<?php echo addslashes($success_message); ?>',
-        button: 'OK',
-        timer: 3000
-    });
-    <?php endif; ?>
-});
-</script>
-
 <!-- Inclusion des styles -->
-<link rel="stylesheet" href="../../assets/fontawesome/css/all.min.css">
-<link rel="stylesheet" href="../../assets/css/dataTables.bootstrap4.min.css">
-<link rel="stylesheet" href="../../assets/css/all.min.css">
-<link rel="stylesheet" href="../../assets/css/sweetalert2.min.css">
 <link rel="stylesheet" href="../../assets/css/tables-unified.css">
 
 <style>
@@ -1370,12 +1346,9 @@ body {
     </div>
 </div>
 
-<!-- Scripts locaux -->
-<script src="../../assets/js/jquery-3.6.0.min.js"></script>
-<script src="../../assets/js/bootstrap.bundle.min.js"></script>
-<script src="../../assets/js/jquery.dataTables.min.js"></script>
-<script src="../../assets/js/dataTables.bootstrap4.min.js"></script>
-<script src="../../assets/js/sweetalert2.all.min.js"></script>
+<?php include '../../includes/footer.php'; ?>
+
+<!-- Scripts supplémentaires (exports) -->
 <script src="../../assets/js/xlsx.full.min.js"></script>
 <script src="../../assets/fontawesome/js/all.min.js"></script>
 
@@ -1920,6 +1893,4 @@ $(document).ready(function() {
 // --- AJOUT LOG : journalisation de la consultation de la page ---
 audit_action('CONSULTATION', 'militaires', null, 'Consultation de la liste complète des militaires');
 // --- FIN AJOUT LOG ---
-
-include '../../includes/footer.php';
 ?>

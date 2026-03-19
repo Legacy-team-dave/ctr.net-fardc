@@ -3,6 +3,7 @@ REM ============================================================================
 REM Installeur CTR.NET-FARDC
 REM ================================================================================
 REM Ce script configure et installe l'application CTR.NET-FARDC
+REM Version gérant les caractères spéciaux dans les chemins
 
 setlocal enabledelayedexpansion
 
@@ -62,7 +63,7 @@ start C:\laragon\laragon.exe
 timeout /t 3 /nobreak
 
 REM Afficher l'écran de bienvenue (image locale)
-set SPLASH_SCREEN=%~dp0assets\img\splash_screen.png
+set "SPLASH_SCREEN=%~dp0assets\img\splash_screen.png"
 if exist "%SPLASH_SCREEN%" (
     echo Affichage de l'écran de bienvenue...
     start "" "%SPLASH_SCREEN%"
@@ -71,7 +72,7 @@ if exist "%SPLASH_SCREEN%" (
 )
 
 REM Icône de l'application
-set APP_ICON=%~dp0assets\img\ig_fardc.ico
+set "APP_ICON=%~dp0assets\img\ig_fardc.ico"
 if exist "%APP_ICON%" (
     echo Icône de l'application disponible : %APP_ICON%
 ) else (
@@ -79,7 +80,7 @@ if exist "%APP_ICON%" (
 )
 
 REM Définir l'URL de démarrage (splash screen PHP)
-set SPLASH_URL=http://127.0.0.1/ctr.net-fardc/splash_screen.php
+set "SPLASH_URL=http://127.0.0.1/ctr.net-fardc/splash_screen.php"
 
 REM Ouvrir navigateur sur la page de bienvenue
 echo [5/5] Ouverture de l'application...
@@ -98,26 +99,25 @@ REM Le profil CONTROLEUR a été retiré ; utiliser OPERATEUR pour les contrôle
 echo.
 
 REM ================================================================================
-REM Création du raccourci sur le bureau avec l'icône personnalisée
+REM Création d'un vrai raccourci (.lnk) sur le bureau qui lance Laragon + l'application
 REM ================================================================================
 echo Création du raccourci sur le bureau...
 set "desktop_path=%USERPROFILE%\Desktop"
-set "shortcut_name=CTL EFF MIL_IG FARDC.url"
+set "shortcut_name=CTL EFF MIL_IG FARDC.lnk"
 set "shortcut_file=%desktop_path%\%shortcut_name%"
+set "app_icon=%~dp0assets\img\ig_fardc.ico"
+set "target_url=http://127.0.0.1/ctr.net-fardc/splash_screen.php"
 
-if exist "%APP_ICON%" (
-    > "%shortcut_file%" (
-        echo [InternetShortcut]
-        echo URL=%SPLASH_URL%
-        echo IconIndex=0
-        echo IconFile=%APP_ICON%
-    )
+REM Passage des chemins via des variables d'environnement (gère les caractères spéciaux)
+set "SC=%shortcut_file%"
+set "ICON=%app_icon%"
+set "URL=%target_url%"
+
+if exist "%app_icon%" (
+    powershell -Command "$WS = New-Object -ComObject WScript.Shell; $SC = $WS.CreateShortcut($env:SC); $SC.TargetPath = 'cmd.exe'; $SC.Arguments = '/c start C:\laragon\laragon.exe && start ' + $env:URL; $SC.IconLocation = $env:ICON; $SC.Save()"
     echo OK - Raccourci créé avec l'icône personnalisée
 ) else (
-    > "%shortcut_file%" (
-        echo [InternetShortcut]
-        echo URL=%SPLASH_URL%
-    )
+    powershell -Command "$WS = New-Object -ComObject WScript.Shell; $SC = $WS.CreateShortcut($env:SC); $SC.TargetPath = 'cmd.exe'; $SC.Arguments = '/c start C:\laragon\laragon.exe && start ' + $env:URL; $SC.Save()"
     echo ATTENTION: Icône introuvable, raccourci créé sans icône personnalisée
 )
 
@@ -131,5 +131,3 @@ echo Arrêt de Laragon...
 taskkill /f /im laragon.exe > nul 2>&1
 echo Laragon a été fermé.
 echo.
-
-REM Fin du script – pas de pause finale

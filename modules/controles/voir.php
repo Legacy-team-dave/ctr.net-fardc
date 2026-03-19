@@ -207,351 +207,340 @@ include '../../includes/header.php';
 
 <link rel="stylesheet" href="../../assets/fontawesome/css/all.min.css">
 <style>
-/* ===== STYLES COMPACTS REPRIS DE modules/litige/voir.php ===== */
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-}
-
-body {
-    font-family: 'Barlow', sans-serif;
-    background: #f0f2f5;
-    padding: 8px;
-}
-
-.container {
-    max-width: 1200px;
-    margin: 0 auto;
-    background: white;
-    border-radius: 8px;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
-    padding: 12px;
-}
-
-h2 {
-    color: #2e7d32;
-    font-size: 1.2rem;
-    margin-bottom: 10px;
-    padding-bottom: 4px;
-    border-bottom: 2px solid #ffc107;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-}
-
-/* Titres de sections */
-.section-title {
-    color: #2e7d32;
-    font-size: 1rem;
-    margin: 15px 0 8px 0;
-    padding-bottom: 3px;
-    border-bottom: 1px solid #ddd;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-}
-
-.section-title:first-of-type {
-    margin-top: 0;
-}
-
-.section-title i {
-    color: #2e7d32;
-    font-size: 0.95rem;
-    width: 18px;
-}
-
-/* Grille de détails par défaut (auto-fit) */
-.detail-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-    gap: 8px;
-    margin-bottom: 15px;
-}
-
-/* Grilles spécifiques : 3 colonnes */
-.military-grid,
-.control-grid {
-    grid-template-columns: repeat(3, 1fr);
-}
-
-.detail-item {
-    background: #f8f9fa;
-    border-radius: 5px;
-    padding: 6px 8px;
-    border-left: none;
-}
-
-.detail-item.full-width {
-    grid-column: 1 / -1;
-}
-
-.detail-label {
-    font-weight: 600;
-    font-size: 0.65rem;
-    text-transform: uppercase;
-    letter-spacing: 0.3px;
-    color: #6c757d;
-    margin-bottom: 2px;
-    display: flex;
-    align-items: center;
-    gap: 3px;
-}
-
-.detail-label i {
-    color: #2e7d32;
-    font-size: 0.75rem;
-    width: 14px;
-}
-
-.detail-value {
-    font-size: 0.85rem;
-    color: #333;
-    font-weight: 500;
-    word-break: break-word;
-}
-
-/* Valeur nulle */
-.null-value {
-    color: #6c757d;
-    font-weight: 400;
-    font-style: italic;
-    text-transform: none;
-}
-
-/* Badges compacts */
-.zdef-badge {
-    display: inline-block;
-    padding: 3px 8px;
-    border-radius: 16px;
-    font-weight: 700;
-    font-size: 0.7rem;
-    background: #2e7d32;
-    color: white;
-    text-transform: uppercase;
-}
-
-.zdef-badge-1 {
-    background: #0072B5;
-}
-
-.zdef-badge-2 {
-    background: #FFD700;
-    color: #000;
-}
-
-.zdef-badge-3 {
-    background: #CE1126;
-}
-
-.statut-badge {
-    display: inline-block;
-    padding: 3px 8px;
-    border-radius: 16px;
-    font-weight: 700;
-    font-size: 0.7rem;
-    text-transform: uppercase;
-}
-
-.statut-actif {
-    background: #0d6efd;
-    color: white;
-}
-
-.statut-inactif {
-    background: #6c757d;
-    color: white;
-}
-
-.categorie-badge {
-    display: inline-block;
-    padding: 3px 8px;
-    border-radius: 16px;
-    font-weight: 700;
-    font-size: 0.7rem;
-    text-transform: uppercase;
-    color: white;
-}
-
-.categorie-actif {
-    background: #28a745;
-}
-
-.categorie-retraite {
-    background: linear-gradient(135deg, #0d6efd, #0a58ca);
-}
-
-.categorie-integre {
-    background: linear-gradient(135deg, #dc3545, #b02a37);
-}
-
-.categorie-dcd-av {
-    background: #6c757d;
-}
-
-.categorie-dcd-ap {
-    background: linear-gradient(135deg, #6f42c1, #6610f2);
-}
-
-.mention-badge {
-    display: inline-block;
-    padding: 4px 10px;
-    border-radius: 20px;
-    font-weight: 700;
-    font-size: 0.8rem;
-    text-transform: uppercase;
-    min-width: 100px;
-    text-align: center;
-}
-
-.mention-badge.present {
-    background: #28a745;
-    color: white;
-}
-
-.mention-badge.favorable {
-    background: #ffc107;
-    color: #212529;
-}
-
-.mention-badge.defavorable {
-    background: #dc3545;
-    color: white;
-}
-
-/* Boutons compacts */
-.button-bar {
-    display: flex;
-    gap: 6px;
-    justify-content: flex-end;
-    margin-top: 15px;
-    padding-top: 8px;
-    border-top: 1px solid #eee;
-    flex-wrap: wrap;
-}
-
-.btn {
-    padding: 4px 12px;
-    border-radius: 18px;
-    font-weight: 600;
-    font-size: 0.75rem;
-    border: none;
-    cursor: pointer;
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    text-decoration: none;
-    transition: all 0.2s;
-    min-width: 80px;
-    justify-content: center;
-}
-
-.btn-back {
-    background: #6c757d;
-    color: white;
-}
-
-.btn-back:hover {
-    background: #545b62;
-    transform: translateY(-2px);
-    box-shadow: 0 3px 6px rgba(108, 117, 125, 0.3);
-}
-
-.btn-list {
-    background: #2e7d32;
-    color: white;
-}
-
-.btn-list:hover {
-    background: #1b5e20;
-    transform: translateY(-2px);
-    box-shadow: 0 3px 6px rgba(46, 125, 50, 0.3);
-}
-
-/* Notification compacte */
-.notification {
-    position: fixed;
-    top: 15px;
-    right: 15px;
-    background: white;
-    border-radius: 6px;
-    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.15);
-    padding: 8px 15px;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    transform: translateX(400px);
-    animation: slideIn 0.3s ease forwards;
-    z-index: 10000;
-    min-width: 250px;
-    max-width: 320px;
-    font-size: 0.8rem;
-}
-
-.notification.success {
-    border-left: 4px solid #2e7d32;
-}
-
-.notification.error {
-    border-left: 4px solid #dc3545;
-}
-
-.notification i {
-    font-size: 1rem;
-}
-
-.notification.success i {
-    color: #2e7d32;
-}
-
-.notification.error i {
-    color: #dc3545;
-}
-
-.notification .message {
-    flex: 1;
-    font-weight: 500;
-    color: #333;
-}
-
-.notification .close-notif {
-    cursor: pointer;
-    color: #999;
-    font-size: 0.9rem;
-    transition: color 0.2s;
-}
-
-.notification .close-notif:hover {
-    color: #333;
-}
-
-@keyframes slideIn {
-    to {
-        transform: translateX(0);
+    /* ===== STYLES COMPACTS REPRIS DE modules/litige/voir.php ===== */
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
     }
-}
 
-@keyframes slideOut {
-    to {
-        transform: translateX(400px);
-        opacity: 0;
+    body {
+        font-family: 'Barlow', sans-serif;
+        background: #f0f2f5;
+        padding: 8px;
     }
-}
 
-.notification.hide {
-    animation: slideOut 0.3s ease forwards;
-}
+    .container {
+        max-width: 1200px;
+        margin: 0 auto;
+        background: white;
+        border-radius: 8px;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+        padding: 12px;
+    }
 
-/* Responsive */
-@media (max-width: 768px) {
+    h2 {
+        color: #2e7d32;
+        font-size: 1.2rem;
+        margin-bottom: 10px;
+        padding-bottom: 4px;
+        border-bottom: 2px solid #ffc107;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
 
-    .detail-grid,
+    /* Titres de sections */
+    .section-title {
+        color: #2e7d32;
+        font-size: 1rem;
+        margin: 15px 0 8px 0;
+        padding-bottom: 3px;
+        border-bottom: 1px solid #ddd;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .section-title:first-of-type {
+        margin-top: 0;
+    }
+
+    .section-title i {
+        color: #2e7d32;
+        font-size: 0.95rem;
+        width: 18px;
+    }
+
+    /* Grille de détails par défaut (auto-fit) */
+    .detail-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 8px;
+        margin-bottom: 15px;
+    }
+
+    /* Grilles spécifiques : 3 colonnes */
     .military-grid,
     .control-grid {
-        grid-template-columns: 1fr;
+        grid-template-columns: repeat(3, 1fr);
     }
-}
+
+    .detail-item {
+        background: #f8f9fa;
+        border-radius: 5px;
+        padding: 6px 8px;
+        border-left: none;
+    }
+
+    .detail-item.full-width {
+        grid-column: 1 / -1;
+    }
+
+    .detail-label {
+        font-weight: 600;
+        font-size: 0.65rem;
+        text-transform: uppercase;
+        letter-spacing: 0.3px;
+        color: #6c757d;
+        margin-bottom: 2px;
+        display: flex;
+        align-items: center;
+        gap: 3px;
+    }
+
+    .detail-label i {
+        color: #2e7d32;
+        font-size: 0.75rem;
+        width: 14px;
+    }
+
+    .detail-value {
+        font-size: 0.85rem;
+        color: #333;
+        font-weight: 500;
+        word-break: break-word;
+    }
+
+    /* Valeur nulle */
+    .null-value {
+        color: #6c757d;
+        font-weight: 400;
+        font-style: italic;
+        text-transform: none;
+    }
+
+    /* Badges compacts */
+    .zdef-badge {
+        display: inline-block;
+        padding: 3px 8px;
+        border-radius: 16px;
+        font-weight: 700;
+        font-size: 0.7rem;
+        background: #2e7d32;
+        color: white;
+        text-transform: uppercase;
+    }
+
+    .zdef-badge-1 {
+        background: #0072B5;
+    }
+
+    .zdef-badge-2 {
+        background: #FFD700;
+        color: #000;
+    }
+
+    .zdef-badge-3 {
+        background: #CE1126;
+    }
+
+    .statut-badge {
+        display: inline-block;
+        padding: 3px 8px;
+        border-radius: 16px;
+        font-weight: 700;
+        font-size: 0.7rem;
+        text-transform: uppercase;
+    }
+
+    .statut-actif {
+        background: #0d6efd;
+        color: white;
+    }
+
+    .statut-inactif {
+        background: #6c757d;
+        color: white;
+    }
+
+    .categorie-badge {
+        display: inline-block;
+        padding: 3px 8px;
+        border-radius: 16px;
+        font-weight: 700;
+        font-size: 0.7rem;
+        text-transform: uppercase;
+        color: white;
+    }
+
+    .categorie-actif {
+        background: #28a745;
+    }
+
+    .categorie-retraite {
+        background: linear-gradient(135deg, #0d6efd, #0a58ca);
+    }
+
+    .categorie-integre {
+        background: linear-gradient(135deg, #dc3545, #b02a37);
+    }
+
+    .categorie-dcd-av {
+        background: #6c757d;
+    }
+
+    .categorie-dcd-ap {
+        background: linear-gradient(135deg, #6f42c1, #6610f2);
+    }
+
+    .mention-badge {
+        display: inline-block;
+        padding: 4px 10px;
+        border-radius: 20px;
+        font-weight: 700;
+        font-size: 0.8rem;
+        text-transform: uppercase;
+        min-width: 100px;
+        text-align: center;
+    }
+
+    .mention-badge.present {
+        background: #28a745;
+        color: white;
+    }
+
+    .mention-badge.favorable {
+        background: #ffc107;
+        color: #212529;
+    }
+
+    .mention-badge.defavorable {
+        background: #dc3545;
+        color: white;
+    }
+
+    /* Boutons compacts */
+    .button-bar {
+        display: flex;
+        gap: 6px;
+        justify-content: flex-end;
+        margin-top: 15px;
+        padding-top: 8px;
+        border-top: 1px solid #eee;
+        flex-wrap: wrap;
+    }
+
+    .btn {
+        padding: 4px 12px;
+        border-radius: 18px;
+        font-weight: 600;
+        font-size: 0.75rem;
+        border: none;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        text-decoration: none;
+        transition: all 0.2s;
+        min-width: 80px;
+        justify-content: center;
+    }
+
+    .btn-list {
+        background: #2e7d32;
+        color: white;
+    }
+
+    .btn-list:hover {
+        background: #1b5e20;
+        transform: translateY(-2px);
+        box-shadow: 0 3px 6px rgba(46, 125, 50, 0.3);
+    }
+
+    /* Notification compacte */
+    .notification {
+        position: fixed;
+        top: 15px;
+        right: 15px;
+        background: white;
+        border-radius: 6px;
+        box-shadow: 0 3px 10px rgba(0, 0, 0, 0.15);
+        padding: 8px 15px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        transform: translateX(400px);
+        animation: slideIn 0.3s ease forwards;
+        z-index: 10000;
+        min-width: 250px;
+        max-width: 320px;
+        font-size: 0.8rem;
+    }
+
+    .notification.success {
+        border-left: 4px solid #2e7d32;
+    }
+
+    .notification.error {
+        border-left: 4px solid #dc3545;
+    }
+
+    .notification i {
+        font-size: 1rem;
+    }
+
+    .notification.success i {
+        color: #2e7d32;
+    }
+
+    .notification.error i {
+        color: #dc3545;
+    }
+
+    .notification .message {
+        flex: 1;
+        font-weight: 500;
+        color: #333;
+    }
+
+    .notification .close-notif {
+        cursor: pointer;
+        color: #999;
+        font-size: 0.9rem;
+        transition: color 0.2s;
+    }
+
+    .notification .close-notif:hover {
+        color: #333;
+    }
+
+    @keyframes slideIn {
+        to {
+            transform: translateX(0);
+        }
+    }
+
+    @keyframes slideOut {
+        to {
+            transform: translateX(400px);
+            opacity: 0;
+        }
+    }
+
+    .notification.hide {
+        animation: slideOut 0.3s ease forwards;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+
+        .detail-grid,
+        .military-grid,
+        .control-grid {
+            grid-template-columns: 1fr;
+        }
+    }
 </style>
 
 <div class="container">
@@ -561,7 +550,7 @@ h2 {
     <div class="section-title">
         <i class="fas fa-shield-alt"></i> Informations militaires
         <?php if ($zdef): ?>
-        <span class="zdef-badge <?= $zdef_class ?> ms-2"><?= htmlspecialchars($zdef) ?></span>
+            <span class="zdef-badge <?= $zdef_class ?> ms-2"><?= htmlspecialchars($zdef) ?></span>
         <?php endif; ?>
     </div>
     <div class="detail-grid military-grid">
@@ -579,12 +568,12 @@ h2 {
             <div class="detail-label"><i class="fas fa-user-check"></i> Statut</div>
             <div class="detail-value">
                 <?php if (!empty($statut_militaire)): ?>
-                <span class="statut-badge <?= $statut_class ?>">
-                    <i class="fas <?= ($statut_militaire === 'ACTIF') ? 'fa-user-check' : 'fa-user-slash' ?> me-1"></i>
-                    <?= htmlspecialchars($statut_militaire) ?>
-                </span>
+                    <span class="statut-badge <?= $statut_class ?>">
+                        <i class="fas <?= ($statut_militaire === 'ACTIF') ? 'fa-user-check' : 'fa-user-slash' ?> me-1"></i>
+                        <?= htmlspecialchars($statut_militaire) ?>
+                    </span>
                 <?php else: ?>
-                <span class="null-value">NULL</span>
+                    <span class="null-value">NULL</span>
                 <?php endif; ?>
             </div>
         </div>
@@ -592,12 +581,12 @@ h2 {
             <div class="detail-label"><i class="fas fa-tag"></i> Catégorie</div>
             <div class="detail-value">
                 <?php if (!empty($categorie_affichage)): ?>
-                <span class="categorie-badge <?= $categorie_class ?>">
-                    <i class="fas <?= $categorie_icon ?> me-1"></i>
-                    <?= htmlspecialchars($categorie_affichage) ?>
-                </span>
+                    <span class="categorie-badge <?= $categorie_class ?>">
+                        <i class="fas <?= $categorie_icon ?> me-1"></i>
+                        <?= htmlspecialchars($categorie_affichage) ?>
+                    </span>
                 <?php else: ?>
-                <span class="null-value">NULL</span>
+                    <span class="null-value">NULL</span>
                 <?php endif; ?>
             </div>
         </div>
@@ -617,21 +606,21 @@ h2 {
 
     <!-- SECTION 2 : INFORMATIONS BÉNÉFICIAIRES -->
     <?php if (!empty($nom_beneficiaire)): ?>
-    <div class="section-title">
-        <i class="fas fa-users"></i> Informations bénéficiaires
-    </div>
-    <div class="detail-grid">
-        <div class="detail-item">
-            <div class="detail-label"><i class="fas fa-user-tie"></i> Bénéficiaire</div>
-            <div class="detail-value"><?= htmlspecialchars($nom_beneficiaire) ?></div>
+        <div class="section-title">
+            <i class="fas fa-users"></i> Informations bénéficiaires
         </div>
-        <?php if (!empty($lien_parente_affichage)): ?>
-        <div class="detail-item">
-            <div class="detail-label"><i class="fas fa-link"></i> Lien parenté</div>
-            <div class="detail-value"><?= htmlspecialchars($lien_parente_affichage) ?></div>
+        <div class="detail-grid">
+            <div class="detail-item">
+                <div class="detail-label"><i class="fas fa-user-tie"></i> Bénéficiaire</div>
+                <div class="detail-value"><?= htmlspecialchars($nom_beneficiaire) ?></div>
+            </div>
+            <?php if (!empty($lien_parente_affichage)): ?>
+                <div class="detail-item">
+                    <div class="detail-label"><i class="fas fa-link"></i> Lien parenté</div>
+                    <div class="detail-value"><?= htmlspecialchars($lien_parente_affichage) ?></div>
+                </div>
+            <?php endif; ?>
         </div>
-        <?php endif; ?>
-    </div>
     <?php endif; ?>
 
     <!-- SECTION 3 : INFORMATIONS DE CONTRÔLE - Grille 3 colonnes -->
@@ -646,9 +635,9 @@ h2 {
                 <?= !empty($controle['date_controle']) ? date('d/m/Y', strtotime($controle['date_controle'])) : '<span class="null-value">NULL</span>' ?>
             </div>
             <?php if (!empty($controle['modifie_le'])): ?>
-            <div style="margin-top: 5px; font-size: 0.7rem; color: #6c757d;">
-                <i class="fas fa-pen me-1"></i> Modifié le <?= date('d/m/Y H:i', strtotime($controle['modifie_le'])) ?>
-            </div>
+                <div style="margin-top: 5px; font-size: 0.7rem; color: #6c757d;">
+                    <i class="fas fa-pen me-1"></i> Modifié le <?= date('d/m/Y H:i', strtotime($controle['modifie_le'])) ?>
+                </div>
             <?php endif; ?>
         </div>
 
@@ -657,8 +646,8 @@ h2 {
             <div class="detail-label"><i class="fas fa-star"></i> Mention</div>
             <div class="detail-value">
                 <?php if (!empty($mention_affichage)): ?>
-                <span class="mention-badge <?= $mention_class ?>">
-                    <i class="fas 
+                    <span class="mention-badge <?= $mention_class ?>">
+                        <i class="fas 
                             <?php
                             if ($mention_class === 'present') echo 'fa-check-circle';
                             elseif ($mention_class === 'favorable') echo 'fa-thumbs-up';
@@ -666,10 +655,10 @@ h2 {
                             else echo 'fa-tag';
                             ?>
                         me-1"></i>
-                    <?= htmlspecialchars($mention_affichage) ?>
-                </span>
+                        <?= htmlspecialchars($mention_affichage) ?>
+                    </span>
                 <?php else: ?>
-                <span class="null-value">NULL</span>
+                    <span class="null-value">NULL</span>
                 <?php endif; ?>
             </div>
         </div>
@@ -685,42 +674,37 @@ h2 {
 
     <!-- Boutons -->
     <div class="button-bar">
-        <a href="liste.php" class="btn btn-back"><i class="fas fa-arrow-left"></i> Retour</a>
         <a href="liste.php" class="btn btn-list"><i class="fas fa-list"></i> Liste</a>
     </div>
 </div>
 
 <script src="../../assets/js/jquery-3.6.0.min.js"></script>
 <script>
-function showNotification(message, type = 'success', duration = 5000) {
-    const notif = document.createElement('div');
-    notif.className = `notification ${type}`;
-    const icon = type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle';
-    notif.innerHTML = `
+    function showNotification(message, type = 'success', duration = 5000) {
+        const notif = document.createElement('div');
+        notif.className = `notification ${type}`;
+        const icon = type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle';
+        notif.innerHTML = `
         <i class="fas ${icon}"></i>
         <span class="message">${message}</span>
         <i class="fas fa-times close-notif" onclick="this.parentElement.remove()"></i>
     `;
-    document.body.appendChild(notif);
-    setTimeout(() => {
-        notif.classList.add('hide');
-        setTimeout(() => notif.remove(), 300);
-    }, duration);
-}
+        document.body.appendChild(notif);
+        setTimeout(() => {
+            notif.classList.add('hide');
+            setTimeout(() => notif.remove(), 300);
+        }, duration);
+    }
 
-<?php if (isset($_SESSION['success_message'])): ?>
-showNotification('<?= addslashes($_SESSION['success_message']) ?>', 'success');
-<?php unset($_SESSION['success_message']); ?>
-<?php elseif (isset($_SESSION['error_message'])): ?>
-showNotification('<?= addslashes($_SESSION['error_message']) ?>', 'error');
-<?php unset($_SESSION['error_message']); ?>
-<?php endif; ?>
+    <?php if (isset($_SESSION['success_message'])): ?>
+        showNotification('<?= addslashes($_SESSION['success_message']) ?>', 'success');
+        <?php unset($_SESSION['success_message']); ?>
+    <?php elseif (isset($_SESSION['error_message'])): ?>
+        showNotification('<?= addslashes($_SESSION['error_message']) ?>', 'error');
+        <?php unset($_SESSION['error_message']); ?>
+    <?php endif; ?>
 </script>
 
 <?php
-// --- AJOUT LOG ---
-audit_action('CONSULTATION', 'controles', $id, 'Consultation du contrôle');
-// --- FIN LOG ---
-
 include '../../includes/footer.php';
 ?>

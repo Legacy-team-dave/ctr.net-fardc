@@ -1200,6 +1200,14 @@ $export_fields = [
                     'flex': '0 1 auto'
                 });
 
+                // Supprimer l'icône existante dans le label (celle de language.search)
+                searchLabel.find('i').remove();
+
+                // Supprimer le texte "Rechercher :"
+                searchLabel.contents().filter(function() {
+                    return this.nodeType === 3;
+                }).remove();
+
                 // Ajout du bouton "Nouveau contrôle"
                 filterDiv.append(`
                 <div class="action-buttons">

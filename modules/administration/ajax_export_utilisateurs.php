@@ -25,7 +25,7 @@ if (!empty($search)) {
 if (isset($columns[$order_column])) {
     $sql .= " ORDER BY " . $columns[$order_column] . " " . ($order_dir === 'asc' ? 'ASC' : 'DESC');
 } else {
-    $sql .= " ORDER BY nom_complet ASC";
+    $sql .= " ORDER BY profil ASC";
 }
 
 $stmt = $pdo->prepare($sql);

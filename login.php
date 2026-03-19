@@ -99,8 +99,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     body {
         font-family: 'Barlow', sans-serif;
+        /* ... */
         background: linear-gradient(135deg, rgba(0, 0, 0, 0.7) 0%, rgba(0, 0, 0, 0.7) 100%),
-            url('assets/img/splash_screen.png') no-repeat center center fixed;
+            url('assets/img/fardc2.png') no-repeat center center fixed;
+        /* ... */
         background-size: cover;
         display: flex;
         align-items: center;

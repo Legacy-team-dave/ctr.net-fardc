@@ -1156,7 +1156,7 @@ body {
                             <i class="fas <?= getIconeCategorie('Décédé Avant Bio') ?>"></i>
                         </div>
                         <div>
-                            <h4 style="margin: 0; font-size: 1rem;">Top Décédés Avant</h4>
+                            <h4 style="margin: 0; font-size: 1rem;">Top Décédés Avant Bio</h4>
                             <p style="margin: 0; font-size: 0.7rem; color: #6c757d;">Grades</p>
                         </div>
                     </div>
@@ -1198,7 +1198,7 @@ body {
                             <i class="fas <?= getIconeCategorie('Décédé Après Bio') ?>"></i>
                         </div>
                         <div>
-                            <h4 style="margin: 0; font-size: 1rem;">Top Décédés Après</h4>
+                            <h4 style="margin: 0; font-size: 1rem;">Top Décédés Après Bio</h4>
                             <p style="margin: 0; font-size: 0.7rem; color: #6c757d;">Grades</p>
                         </div>
                     </div>
@@ -1587,8 +1587,9 @@ $(document).ready(function() {
             filterDiv.css({
                 'display': 'flex',
                 'align-items': 'center',
+                'justify-content': 'flex-end',
                 'gap': '10px',
-                'float': 'right'
+                'flex-wrap': 'nowrap'
             });
 
             // Style pour le label de recherche
@@ -1604,7 +1605,7 @@ $(document).ready(function() {
             filterDiv.append(`
                 <div class="action-buttons">
                     <a href="ajouter.php" class="btn-modern btn-primary-modern">
-                        <i class="fas fa-plus-circle"></i> Nouveau
+                        <i class="fas fa-user-plus"></i> Nouveau
                     </a>
                     <a href="importer.php" class="btn-modern btn-secondary-modern">
                         <i class="fas fa-file-import"></i> Importer

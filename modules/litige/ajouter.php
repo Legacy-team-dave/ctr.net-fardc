@@ -408,14 +408,14 @@ h2 {
         <div class="detail-grid form-grid">
             <?php
             $fields = [
-                'matricule'        => ['Matricule', 'required', 'Ex: 12345'],
-                'noms'             => ['Noms', 'required', 'Nom complet'],
-                'grade'            => ['Grade', '', 'Grade militaire'],
+                'matricule'        => ['Matricule', 'required', '172134576144'],
+                'noms'             => ['Noms', 'required', 'Dave Akwas'],
+                'grade'            => ['Grade', '', 'GENMAJ'],
                 'type_controle'    => ['Type contrôle', 'required', ''],
-                'nom_beneficiaire' => ['Nom bénéficiaire', '', 'Nom du bénéficiaire'],
+                'nom_beneficiaire' => ['Nom bénéficiaire', '', 'Reedy Mwenge'],
                 'lien_parente'     => ['Lien parenté', '', ''],
-                'garnison'         => ['Garnison', '', 'Garnison'],
-                'province'         => ['Province', '', 'Province']
+                'garnison'         => ['Garnison', '', 'Garnison de Boma'],
+                'province'         => ['Province', '', 'Kongo-Central']
             ];
 
             foreach ($fields as $name => $f):

@@ -115,10 +115,8 @@ $export_fields = [
 ];
 ?>
 
-<!-- ========== STYLES SPÉCIFIQUES (repris du fichier 1 avec adaptations) ========== -->
+<!-- ========== STYLES SPÉCIFIQUES ========== -->
 <style>
-/* Ici on place le bloc CSS du fichier 1, mais en supprimant les doublons et en adaptant 
-   éventuellement les classes pour coller à la structure. On conserve l'essentiel. */
 .modern-card {
     border: none;
     border-radius: 15px;
@@ -272,7 +270,14 @@ $export_fields = [
     transform: translateY(-2px);
 }
 
-/* Bouton ZIP supprimé */
+.btn-export.zip {
+    background: #9b59b6;
+}
+
+.btn-export.zip:hover {
+    background: #8e44ad;
+    transform: translateY(-2px);
+}
 
 .btn-export.choisir {
     background: #6c757d;
@@ -856,7 +861,8 @@ $export_fields = [
                             <button class="btn-export excel" id="export-excel"><i class="fas fa-file-excel"></i>
                                 Excel</button>
                             <button class="btn-export pdf" id="export-pdf"><i class="fas fa-file-pdf"></i> PDF</button>
-                            <!-- Bouton ZIP supprimé -->
+                            <button class="btn-export zip" id="export-zip"><i class="fas fa-file-archive"></i>
+                                ZIP</button>
                         </div>
                     </div>
                 </div>
@@ -1036,19 +1042,18 @@ $export_fields = [
 
 <?php include '../../includes/footer.php'; ?>
 
-<!-- Scripts supplémentaires (exports) -->
+<!-- Scripts supplémentaires -->
 <script src="../../assets/js/xlsx.full.min.js"></script>
 <script src="../../assets/js/jspdf.umd.min.js"></script>
 <script src="../../assets/js/jspdf.plugin.autotable.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 
 <script>
 $(document).ready(function() {
     // État des champs sélectionnés pour l'export
-    let selectedExportFields = {
-        <?php foreach ($export_fields as $key => $field): ?>
-        <?= $key ?>: <?= json_encode($field['enabled']) ?>,
-        <?php endforeach; ?>
-    };
+    let selectedExportFields = <?php echo json_encode(array_map(function ($field) {
+                                        return $field['enabled'];
+                                    }, $export_fields)); ?>;
 
     const getTimestamp = () => {
         const d = new Date();
@@ -1242,16 +1247,16 @@ $(document).ready(function() {
 
     function updateFilterTags() {
         const tags = [];
-        if ($('#mention-filter').val()) tags.push(`Mention: ${$('#mention-filter').val()}`);
+        if ($('#mention-filter').val()) tags.push(`Mention : ${$('#mention-filter').val()}`);
         if ($('#statut-filter').val()) tags.push(
-            `Statut: ${$('#statut-filter').find('option:selected').text()}`);
-        if ($('#zone-filter').val()) tags.push(`Zone: ${$('#zone-filter').find('option:selected').text()}`);
+            `Statut : ${$('#statut-filter').find('option:selected').text()}`);
+        if ($('#zone-filter').val()) tags.push(`Zone : ${$('#zone-filter').find('option:selected').text()}`);
         if ($('#categorie-filter').val()) tags.push(
-            `Catégorie: ${$('#categorie-filter').find('option:selected').text()}`);
+            `Catégorie : ${$('#categorie-filter').find('option:selected').text()}`);
         if ($('#garnison-filter').val()) tags.push(
-            `Garnison: ${$('#garnison-filter').find('option:selected').text()}`);
-        if ($('#date-debut').val()) tags.push(`Du: ${$('#date-debut').val()}`);
-        if ($('#date-fin').val()) tags.push(`Au: ${$('#date-fin').val()}`);
+            `Garnison : ${$('#garnison-filter').find('option:selected').text()}`);
+        if ($('#date-debut').val()) tags.push(`Du : ${$('#date-debut').val()}`);
+        if ($('#date-fin').val()) tags.push(`Au : ${$('#date-fin').val()}`);
 
         const $tagsContainer = $('.filtre-tags');
         $tagsContainer.empty();
@@ -1844,6 +1849,108 @@ $(document).ready(function() {
                 icon: 'error',
                 title: 'Erreur',
                 text: 'Une erreur est survenue lors de la génération du PDF.'
+            });
+        }
+    });
+
+    // --- Export ZIP ---
+    $('#export-zip').on('click', async function() {
+        const filters = {
+            mention: $('#mention-filter').val(),
+            statut: $('#statut-filter').val(),
+            zone: $('#zone-filter').val(),
+            categorie: $('#categorie-filter').val(),
+            garnison: $('#garnison-filter').val(),
+            date_debut: $('#date-debut').val(),
+            date_fin: $('#date-fin').val()
+        };
+        $.get('?ajax=log_export', {
+            type: 'ZIP',
+            filtres: JSON.stringify(filters)
+        });
+
+        const exportDataFull = prepareExportData(false);
+        const exportDataAbbr = prepareExportData(true);
+        if (!exportDataFull || exportDataFull.data.length === 0) {
+            return Swal.fire('Aucune donnée à exporter', '', 'info');
+        }
+
+        Swal.fire({
+            title: 'Génération du ZIP...',
+            text: 'Préparation des fichiers',
+            allowOutsideClick: false,
+            didOpen: () => Swal.showLoading()
+        });
+
+        try {
+            // 1. Fichier CSV
+            const csvHeaderLines = exportDataFull.headerLines.map(line => line[0]);
+            const csvContent = [
+                ...csvHeaderLines,
+                '',
+                exportDataFull.headers.join(';'),
+                ...exportDataFull.data.map(r => r.join(';'))
+            ].join('\n');
+            const csvBlob = new Blob(["\uFEFF" + csvContent], {
+                type: 'text/csv;charset=utf-8;'
+            });
+
+            // 2. Fichier Excel (XLSX)
+            const worksheetData = [
+                ...exportDataFull.headerLines,
+                [],
+                exportDataFull.headers,
+                ...exportDataFull.data
+            ];
+            const wb = XLSX.utils.book_new();
+            const ws = XLSX.utils.aoa_to_sheet(worksheetData);
+            const range = XLSX.utils.decode_range(ws['!ref']);
+            if (!ws['!merges']) ws['!merges'] = [];
+            for (let i = 0; i < 3; i++) {
+                ws['!merges'].push({
+                    s: {
+                        r: i,
+                        c: 0
+                    },
+                    e: {
+                        r: i,
+                        c: exportDataFull.headers.length - 1
+                    }
+                });
+            }
+            XLSX.utils.book_append_sheet(wb, ws, 'CONTRÔLES');
+            const excelBlob = new Blob([XLSX.write(wb, {
+                bookType: 'xlsx',
+                type: 'array'
+            })], {
+                type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+            });
+
+            // 3. Fichier PDF (avec en-têtes abrégés)
+            const pdfBlob = await generatePDFBlob(exportDataAbbr);
+
+            // Création de l'archive ZIP
+            const zip = new JSZip();
+            zip.file("controles.csv", csvBlob);
+            zip.file("controles.xlsx", excelBlob);
+            zip.file("controles.pdf", pdfBlob);
+
+            const zipBlob = await zip.generateAsync({
+                type: "blob"
+            });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(zipBlob);
+            link.download = `controles_${getTimestamp()}.zip`;
+            link.click();
+
+            Swal.close();
+        } catch (error) {
+            Swal.close();
+            console.error('Erreur ZIP:', error);
+            Swal.fire({
+                icon: 'error',
+                title: 'Erreur',
+                text: 'Une erreur est survenue lors de la création du ZIP.'
             });
         }
     });

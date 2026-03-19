@@ -789,7 +789,7 @@ body {
         $nom_militaire = htmlspecialchars($militaire['noms']);
 
         $type_info = match (true) {
-            $statut == 1 => ['ACTIF', 'badge-actif', 'fa-user-check', false, true, false],
+            $statut == 1 => ['ACTIF', 'badge-actif', 'fa-user-check', true, $statut_vivant, $statut_decede],
             $cat === 'DCD_AV_BIO' => ['DÉCÉDÉ AVANT BIO', 'badge-decede-av-bio', 'fa-skull-crossbones', true, false, true],
             $cat === 'DCD_AP_BIO' => ['DÉCÉDÉ APRÈS BIO', 'badge-dcd-ap-bio', 'fa-skull', true, $statut_vivant, $statut_decede],
             $cat === 'RETRAITES' => ['RETRAITÉ', 'badge-retraite', 'fa-user-clock', true, $statut_vivant, $statut_decede],
@@ -1020,6 +1020,7 @@ body {
 <!-- Scripts locaux (alignés sur le fichier 2) -->
 <script src="../../assets/js/jquery-3.6.0.min.js"></script>
 <script src="../../assets/js/sweetalert2.all.min.js"></script>
+<script src="../../assets/js/sweetalert2@11.js"></script>
 
 <script>
 (function() {

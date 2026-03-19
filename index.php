@@ -1688,7 +1688,8 @@ $provinceStatsJson = json_encode($provinceStats);
                                     <div style="display: flex; flex-wrap: wrap; gap: 5px;">
                                         <?php foreach ($filtres_actifs['garnisons'] as $garnison): ?>
                                             <span class="garnison-tag" style="display: inline-flex; align-items: center;">
-                                                <i class="fas fa-user-friends mr-1" style="font-size: 0.7rem;"></i>
+                                                <i class="fas fa-map-pin
+ mr-1" style="font-size: 0.7rem;"></i>
                                                 <?= htmlspecialchars($garnison) ?>
                                             </span>
                                         <?php endforeach; ?>
@@ -2452,6 +2453,14 @@ $provinceStatsJson = json_encode($provinceStats);
 
     $(document).ready(function() {
         // Initialisation des tooltips sans modification du contenu des titres
+        $('[data-toggle="tooltip"]').each(function() {
+            var title = $(this).attr('title');
+            if (title) {
+                // Met la première lettre en majuscule, le reste en minuscule
+                title = title.charAt(0) + title.slice(1).toLowerCase();
+                $(this).attr('title', title);
+            }
+        });
         $('[data-toggle="tooltip"]').tooltip();
 
         // ===== GRAPHIQUES (UNIFIÉS) =====

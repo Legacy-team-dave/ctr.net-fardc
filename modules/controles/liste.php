@@ -1046,7 +1046,7 @@ $export_fields = [
 <script src="../../assets/js/xlsx.full.min.js"></script>
 <script src="../../assets/js/jspdf.umd.min.js"></script>
 <script src="../../assets/js/jspdf.plugin.autotable.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="../../assets/js/jszip.min.js"></script>
 
 <script>
 $(document).ready(function() {

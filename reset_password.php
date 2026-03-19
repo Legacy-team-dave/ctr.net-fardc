@@ -154,7 +154,7 @@ if ($step === 'reset') {
     body.reset-page {
         /* Fond avec image et superposition sombre */
         background: linear-gradient(135deg, rgba(0, 0, 0, 0.7) 0%, rgba(0, 0, 0, 0.7) 100%),
-            url('assets/img/fardc.png') no-repeat center center fixed;
+            url('assets/img/fardc2.png') no-repeat center center fixed;
         background-size: cover;
         font-family: 'Barlow', sans-serif;
         display: flex;

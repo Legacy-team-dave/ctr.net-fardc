@@ -5,7 +5,7 @@
  * Description : Fonctions utilitaires pour l'application
  * Version : 2.0 avec gestion automatique des tables logs
  * MODIFICATION : Ajout des colonnes remember_token et gestion du "Se souvenir de moi"
- * MODIFICATION 2 : Ajout des fonctions de sauvegarde automatique quotidienne (CSV + Excel)
+ * MODIFICATION 2 : Ajout des fonctions de sauvegarde automatique quotidienne
  */
 
 // Démarrer la session si ce n'est pas déjà fait
@@ -933,7 +933,7 @@ function update_last_backup_time()
 }
 
 /**
- * Génère une sauvegarde ZIP des tables controles et litiges (CSV + Excel)
+ * Génère une sauvegarde ZIP des tables controles et litiges
  * @return bool True si succès, False sinon
  */
 function generate_backup()
@@ -952,76 +952,35 @@ function generate_backup()
         return false;
     }
 
-    // Charger l'autoload de Composer pour PhpSpreadsheet
-    require_once __DIR__ . '/../../vendor/autoload.php';
-
-    /**
-     * Ajoute les fichiers CSV et Excel d'une table dans l'archive ZIP
-     *
-     * @param ZipArchive $zip
-     * @param string $tableName
-     * @param string $timestamp
-     * @param PDO $pdo
-     */
-    function addTableToZip($zip, $tableName, $timestamp, $pdo)
-    {
-        $stmt = $pdo->query("SELECT * FROM $tableName");
-        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
-        if (empty($rows)) {
-            return;
-        }
-
-        // 1. Fichier CSV
+    // Export de la table controles
+    $stmt = $pdo->query("SELECT * FROM controles");
+    $controles = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    if (!empty($controles)) {
         $csv = fopen('php://temp', 'r+');
-        fputcsv($csv, array_keys($rows[0]));
-        foreach ($rows as $row) {
+        fputcsv($csv, array_keys($controles[0]));
+        foreach ($controles as $row) {
             fputcsv($csv, $row);
         }
         rewind($csv);
         $csv_content = stream_get_contents($csv);
         fclose($csv);
-        $zip->addFromString($tableName . '_' . $timestamp . '.csv', $csv_content);
-
-        // 2. Fichier Excel (XLSX)
-        $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
-        $sheet = $spreadsheet->getActiveSheet();
-
-        // En-têtes
-        $headers = array_keys($rows[0]);
-        $col = 1;
-        foreach ($headers as $header) {
-            $sheet->$sheet->getCellByColumnAndRow($col, 1)->setValue($header);
-
-            $col++;
-        }
-
-        // Données
-        $rowNum = 2;
-        foreach ($rows as $row) {
-            $col = 1;
-            foreach ($headers as $header) {
-                $sheet->$sheet->getCellByColumnAndRow($col, 1)->setValue($header);
-
-                $col++;
-            }
-            $rowNum++;
-        }
-
-        // Ajuster la largeur des colonnes
-        foreach (range('A', $sheet->getHighestColumn()) as $col) {
-            $sheet->getColumnDimension($col)->setAutoSize(true);
-        }
-
-        // Sauvegarder dans un flux mémoire
-        $writer = new \PhpOffice\PhpSpreadsheet\Writer\Xlsx($spreadsheet);
-        ob_start();
-        $writer->save('php://output');
-        $excel_content = ob_get_clean();
-        $zip->addFromString($tableName . '_' . $timestamp . '.xlsx', $excel_content);
+        $zip->addFromString('controles_' . $timestamp . '.csv', $csv_content);
     }
 
-    addTableToZip($zip, 'controles', $timestamp, $pdo);
-    addTableToZip($zip, 'litiges', $timestamp, $pdo);
+    // Export de la table litiges
+    $stmt = $pdo->query("SELECT * FROM litiges");
+    $litiges = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    if (!empty($litiges)) {
+        $csv = fopen('php://temp', 'r+');
+        fputcsv($csv, array_keys($litiges[0]));
+        foreach ($litiges as $row) {
+            fputcsv($csv, $row);
+        }
+        rewind($csv);
+        $csv_content = stream_get_contents($csv);
+        fclose($csv);
+        $zip->addFromString('litiges_' . $timestamp . '.csv', $csv_content);
+    }
 
     $zip->close();
 

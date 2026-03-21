@@ -2,6 +2,20 @@
 session_start();
 require_once 'includes/functions.php';
 
+// MODIFICATION : Supprimer le token "Se souvenir de moi" de la base de données et du cookie
+if (isset($_SESSION['user_id'])) {
+    try {
+        // $pdo est déjà défini via functions.php (qui inclut database.php)
+        global $pdo;
+        $stmt = $pdo->prepare("UPDATE utilisateurs SET remember_token = NULL, remember_token_expires = NULL WHERE id_utilisateur = ?");
+        $stmt->execute([$_SESSION['user_id']]);
+    } catch (PDOException $e) {
+        error_log("Erreur lors de la suppression du token remember_token : " . $e->getMessage());
+    }
+    // Supprimer le cookie
+    setcookie('remember_token', '', time() - 3600, '/', '', false, true);
+}
+
 // Journaliser la déconnexion
 if (isset($_SESSION['user_id'])) {
     audit_action('DECONNEXION', 'utilisateurs', $_SESSION['user_id'], 'Déconnexion');

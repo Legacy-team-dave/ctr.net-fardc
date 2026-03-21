@@ -5,7 +5,8 @@
 require_once '../../includes/functions.php';
 require_login();
 
-$profils = ['ADMIN_IG', 'OPERATEUR'];
+// === MODIFICATION : ajout du profil CONTROLEUR ===
+$profils = ['ADMIN_IG', 'OPERATEUR', 'CONTROLEUR'];
 $error = null;
 
 // Génération du jeton CSRF (valable pour le formulaire)
@@ -55,449 +56,449 @@ include '../../includes/header.php';
 <script src="../../assets/js/sweetalert2.all.min.js"></script>
 
 <style>
-/* ===== DESIGN MODERNE (inspiré de register.php) ===== */
-:root {
-    --primary: #2e7d32;
-    --primary-dark: #1b5e20;
-    --success: #28a745;
-    --danger: #dc3545;
-    --warning: #ffc107;
-    --gray: #6c757d;
-    --light: #f8f9fa;
-}
-
-body {
-    font-family: 'Barlow', sans-serif;
-    background: #f4f6f9;
-}
-
-.container-fluid {
-    padding: 5px 10px;
-    /* réduit */
-}
-
-/* Wrapper pour occuper toute la largeur */
-.register-wrapper {
-    width: 100%;
-    max-width: none;
-    margin: 0;
-    padding: 0 5px;
-    /* réduit */
-    animation: fadeInUp 0.4s ease-out;
-}
-
-@keyframes fadeInUp {
-    from {
-        opacity: 0;
-        transform: translateY(15px);
+    /* ===== DESIGN MODERNE (inspiré de register.php) ===== */
+    :root {
+        --primary: #2e7d32;
+        --primary-dark: #1b5e20;
+        --success: #28a745;
+        --danger: #dc3545;
+        --warning: #ffc107;
+        --gray: #6c757d;
+        --light: #f8f9fa;
     }
 
-    to {
-        opacity: 1;
-        transform: translateY(0);
+    body {
+        font-family: 'Barlow', sans-serif;
+        background: #f4f6f9;
     }
-}
 
-/* Carte principale – plus compacte */
-.card-modern {
-    border: none;
-    border-radius: 8px;
-    /* légèrement réduit */
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1) !important;
-    overflow: hidden;
-    background: white;
-    width: 100%;
-}
-
-.card-modern .card-body {
-    padding: 12px 12px 5px;
-    /* réduit de 20px à 12px */
-}
-
-/* En-tête de formulaire */
-.form-header {
-    text-align: center;
-    margin-bottom: 8px;
-    /* réduit */
-}
-
-.form-header .title {
-    font-size: 1.3rem;
-    /* réduit de 1.5rem */
-    font-weight: 700;
-    color: var(--primary-dark);
-    margin-bottom: 2px;
-    /* réduit */
-}
-
-.form-header .subtitle {
-    font-size: 0.75rem;
-    /* réduit de 0.85rem */
-    color: var(--gray);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 3px;
-    /* réduit */
-}
-
-.form-header .subtitle i {
-    color: var(--primary);
-    font-size: 0.7rem;
-    /* réduit */
-}
-
-/* Grille 2 colonnes */
-.row-two-cols {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 8px;
-    /* réduit de 12px */
-    margin-bottom: 8px;
-    /* réduit de 12px */
-}
-
-/* Groupes de champs avec icône */
-.input-group-modern {
-    margin-bottom: 8px;
-    /* réduit de 12px */
-    position: relative;
-}
-
-.input-group-modern .input-icon {
-    position: absolute;
-    left: 8px;
-    /* légèrement réduit */
-    top: 50%;
-    transform: translateY(-50%);
-    color: var(--primary);
-    z-index: 10;
-    font-size: 0.8rem;
-    /* réduit de 0.9rem */
-}
-
-.input-group-modern .form-control,
-.input-group-modern .form-select {
-    width: 100%;
-    padding: 6px 25px 6px 28px;
-    /* réduit de 8px 30px 8px 30px */
-    border: 1.5px solid #e0e0e0;
-    border-radius: 5px;
-    /* légèrement réduit */
-    font-size: 0.8rem;
-    /* réduit de 0.85rem */
-    transition: all 0.3s;
-    font-family: 'Barlow', sans-serif;
-    height: 34px;
-    /* réduit de 38px */
-    background-color: white;
-}
-
-.input-group-modern .form-control:focus,
-.input-group-modern .form-select:focus {
-    border-color: var(--primary);
-    box-shadow: 0 0 0 0.1rem rgba(46, 125, 50, 0.15);
-    outline: none;
-}
-
-/* Style spécifique pour select */
-.input-group-modern .form-select {
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%232e7d32' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
-    background-repeat: no-repeat;
-    background-position: right 8px center;
-    /* ajusté */
-    background-size: 12px;
-    /* réduit */
-    padding-right: 28px;
-    /* réduit */
-}
-
-/* Icône de validation à droite */
-.validation-icon {
-    position: absolute;
-    right: 25px;
-    /* ajusté */
-    top: 50%;
-    transform: translateY(-50%);
-    font-size: 0.8rem;
-    /* réduit */
-    pointer-events: none;
-    z-index: 10;
-}
-
-.validation-icon.valid {
-    color: var(--success);
-}
-
-.validation-icon.invalid {
-    color: var(--danger);
-}
-
-/* Toggle pour le mot de passe */
-.password-toggle {
-    position: absolute;
-    right: 5px;
-    /* ajusté */
-    top: 50%;
-    transform: translateY(-50%);
-    cursor: pointer;
-    color: var(--gray);
-    z-index: 10;
-    background: white;
-    padding: 2px;
-    border-radius: 50%;
-    transition: all 0.2s;
-    font-size: 0.7rem;
-    /* réduit */
-}
-
-/* Force du mot de passe */
-.password-strength {
-    margin-top: 2px;
-    /* réduit */
-    font-size: 0.65rem;
-    /* réduit de 0.7rem */
-    display: flex;
-    align-items: center;
-    gap: 3px;
-    /* réduit */
-}
-
-.strength-bar {
-    flex: 1;
-    height: 3px;
-    /* réduit de 4px */
-    background-color: #e0e0e0;
-    border-radius: 2px;
-    overflow: hidden;
-}
-
-.strength-bar-fill {
-    height: 100%;
-    width: 0%;
-    transition: width 0.3s, background-color 0.3s;
-}
-
-.strength-text {
-    min-width: 40px;
-    /* légèrement réduit */
-    text-align: right;
-    color: var(--gray);
-}
-
-/* Message d'erreur sous le champ */
-.field-error {
-    color: var(--danger);
-    font-size: 0.65rem;
-    /* réduit */
-    margin-top: 1px;
-    /* réduit */
-    padding-left: 28px;
-    /* ajusté */
-}
-
-/* Checkbox personnalisée */
-.form-check-modern {
-    display: flex;
-    align-items: center;
-    margin: 8px 0 2px 0;
-    /* réduit */
-    padding-left: 0;
-}
-
-.form-check-modern input[type="checkbox"] {
-    width: 16px;
-    /* réduit */
-    height: 16px;
-    /* réduit */
-    margin-right: 5px;
-    /* réduit */
-    cursor: pointer;
-    accent-color: var(--primary);
-}
-
-.form-check-modern label {
-    display: flex;
-    align-items: center;
-    gap: 3px;
-    /* réduit */
-    font-size: 0.8rem;
-    /* réduit de 0.9rem */
-    cursor: pointer;
-    color: #495057;
-}
-
-.form-check-modern label i {
-    color: var(--primary);
-    font-size: 0.7rem;
-    /* réduit */
-}
-
-/* Carte d'information sur les profils */
-.info-card {
-    background: var(--light);
-    border-left: 4px solid var(--primary);
-    border-radius: 5px;
-    /* réduit */
-    padding: 6px 10px;
-    /* réduit de 12px */
-    margin-bottom: 12px;
-    /* réduit de 20px */
-    font-size: 0.7rem;
-    /* réduit de 0.8rem */
-}
-
-.info-card strong {
-    color: var(--primary-dark);
-}
-
-.info-card .profile-badge {
-    display: inline-block;
-    padding: 1px 5px;
-    /* réduit */
-    border-radius: 10px;
-    /* réduit */
-    background: #e0e0e0;
-    font-weight: 600;
-    margin: 2px 0;
-    font-size: 0.65rem;
-    /* ajouté */
-}
-
-/* Boutons d'action */
-.action-buttons {
-    display: flex;
-    gap: 6px;
-    /* réduit de 10px */
-    justify-content: center;
-    flex-wrap: wrap;
-    margin-top: 12px;
-    /* réduit de 20px */
-}
-
-.btn-modern {
-    border-radius: 5px;
-    /* réduit */
-    padding: 6px 12px;
-    /* réduit de 8px 16px */
-    font-weight: 600;
-    font-size: 0.7rem;
-    /* réduit de 0.8rem */
-    text-transform: uppercase;
-    letter-spacing: 0.2px;
-    /* légèrement réduit */
-    transition: all 0.3s;
-    border: none;
-    cursor: pointer;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 4px;
-    /* réduit */
-    min-width: 90px;
-    /* réduit de 110px */
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    /* légèrement réduit */
-    text-decoration: none;
-    color: white;
-}
-
-.btn-modern i {
-    font-size: 0.7rem;
-    /* réduit */
-}
-
-.btn-primary-modern {
-    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
-}
-
-.btn-primary-modern:hover:not(:disabled) {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 8px rgba(46, 125, 50, 0.3);
-    /* réduit */
-}
-
-.btn-secondary-modern {
-    background: linear-gradient(135deg, var(--gray) 0%, #5a6268 100%);
-}
-
-.btn-secondary-modern:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 8px rgba(108, 117, 125, 0.3);
-    /* réduit */
-}
-
-.btn-warning-modern {
-    background: linear-gradient(135deg, #ffc107 0%, #e0a800 100%);
-    color: #212529;
-}
-
-.btn-warning-modern:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 8px rgba(255, 193, 7, 0.3);
-    /* réduit */
-}
-
-.btn-modern:disabled {
-    opacity: 0.7;
-    cursor: not-allowed;
-    transform: none;
-}
-
-/* Alerte moderne (pour les erreurs éventuelles) */
-.alert-modern {
-    border-radius: 5px;
-    /* réduit */
-    border: none;
-    padding: 5px 8px;
-    /* réduit de 8px 12px */
-    margin-bottom: 8px;
-    /* réduit de 15px */
-    font-size: 0.7rem;
-    /* réduit */
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    /* réduit */
-}
-
-.alert-modern.error {
-    background: #fee2e2;
-    color: #991b1b;
-    border-left: 3px solid var(--danger);
-}
-
-.alert-modern.success {
-    background: #d4edda;
-    color: #155724;
-    border-left: 3px solid var(--success);
-}
-
-/* Adaptation mobile */
-@media (max-width: 576px) {
-    .row-two-cols {
-        grid-template-columns: 1fr;
-        gap: 5px;
+    .container-fluid {
+        padding: 5px 10px;
         /* réduit */
     }
 
+    /* Wrapper pour occuper toute la largeur */
+    .register-wrapper {
+        width: 100%;
+        max-width: none;
+        margin: 0;
+        padding: 0 5px;
+        /* réduit */
+        animation: fadeInUp 0.4s ease-out;
+    }
+
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(15px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    /* Carte principale – plus compacte */
+    .card-modern {
+        border: none;
+        border-radius: 8px;
+        /* légèrement réduit */
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1) !important;
+        overflow: hidden;
+        background: white;
+        width: 100%;
+    }
+
+    .card-modern .card-body {
+        padding: 12px 12px 5px;
+        /* réduit de 20px à 12px */
+    }
+
+    /* En-tête de formulaire */
+    .form-header {
+        text-align: center;
+        margin-bottom: 8px;
+        /* réduit */
+    }
+
+    .form-header .title {
+        font-size: 1.3rem;
+        /* réduit de 1.5rem */
+        font-weight: 700;
+        color: var(--primary-dark);
+        margin-bottom: 2px;
+        /* réduit */
+    }
+
+    .form-header .subtitle {
+        font-size: 0.75rem;
+        /* réduit de 0.85rem */
+        color: var(--gray);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 3px;
+        /* réduit */
+    }
+
+    .form-header .subtitle i {
+        color: var(--primary);
+        font-size: 0.7rem;
+        /* réduit */
+    }
+
+    /* Grille 2 colonnes */
+    .row-two-cols {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+        /* réduit de 12px */
+        margin-bottom: 8px;
+        /* réduit de 12px */
+    }
+
+    /* Groupes de champs avec icône */
+    .input-group-modern {
+        margin-bottom: 8px;
+        /* réduit de 12px */
+        position: relative;
+    }
+
+    .input-group-modern .input-icon {
+        position: absolute;
+        left: 8px;
+        /* légèrement réduit */
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--primary);
+        z-index: 10;
+        font-size: 0.8rem;
+        /* réduit de 0.9rem */
+    }
+
+    .input-group-modern .form-control,
+    .input-group-modern .form-select {
+        width: 100%;
+        padding: 6px 25px 6px 28px;
+        /* réduit de 8px 30px 8px 30px */
+        border: 1.5px solid #e0e0e0;
+        border-radius: 5px;
+        /* légèrement réduit */
+        font-size: 0.8rem;
+        /* réduit de 0.85rem */
+        transition: all 0.3s;
+        font-family: 'Barlow', sans-serif;
+        height: 34px;
+        /* réduit de 38px */
+        background-color: white;
+    }
+
+    .input-group-modern .form-control:focus,
+    .input-group-modern .form-select:focus {
+        border-color: var(--primary);
+        box-shadow: 0 0 0 0.1rem rgba(46, 125, 50, 0.15);
+        outline: none;
+    }
+
+    /* Style spécifique pour select */
+    .input-group-modern .form-select {
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%232e7d32' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-position: right 8px center;
+        /* ajusté */
+        background-size: 12px;
+        /* réduit */
+        padding-right: 28px;
+        /* réduit */
+    }
+
+    /* Icône de validation à droite */
+    .validation-icon {
+        position: absolute;
+        right: 25px;
+        /* ajusté */
+        top: 50%;
+        transform: translateY(-50%);
+        font-size: 0.8rem;
+        /* réduit */
+        pointer-events: none;
+        z-index: 10;
+    }
+
+    .validation-icon.valid {
+        color: var(--success);
+    }
+
+    .validation-icon.invalid {
+        color: var(--danger);
+    }
+
+    /* Toggle pour le mot de passe */
+    .password-toggle {
+        position: absolute;
+        right: 5px;
+        /* ajusté */
+        top: 50%;
+        transform: translateY(-50%);
+        cursor: pointer;
+        color: var(--gray);
+        z-index: 10;
+        background: white;
+        padding: 2px;
+        border-radius: 50%;
+        transition: all 0.2s;
+        font-size: 0.7rem;
+        /* réduit */
+    }
+
+    /* Force du mot de passe */
+    .password-strength {
+        margin-top: 2px;
+        /* réduit */
+        font-size: 0.65rem;
+        /* réduit de 0.7rem */
+        display: flex;
+        align-items: center;
+        gap: 3px;
+        /* réduit */
+    }
+
+    .strength-bar {
+        flex: 1;
+        height: 3px;
+        /* réduit de 4px */
+        background-color: #e0e0e0;
+        border-radius: 2px;
+        overflow: hidden;
+    }
+
+    .strength-bar-fill {
+        height: 100%;
+        width: 0%;
+        transition: width 0.3s, background-color 0.3s;
+    }
+
+    .strength-text {
+        min-width: 40px;
+        /* légèrement réduit */
+        text-align: right;
+        color: var(--gray);
+    }
+
+    /* Message d'erreur sous le champ */
+    .field-error {
+        color: var(--danger);
+        font-size: 0.65rem;
+        /* réduit */
+        margin-top: 1px;
+        /* réduit */
+        padding-left: 28px;
+        /* ajusté */
+    }
+
+    /* Checkbox personnalisée */
+    .form-check-modern {
+        display: flex;
+        align-items: center;
+        margin: 8px 0 2px 0;
+        /* réduit */
+        padding-left: 0;
+    }
+
+    .form-check-modern input[type="checkbox"] {
+        width: 16px;
+        /* réduit */
+        height: 16px;
+        /* réduit */
+        margin-right: 5px;
+        /* réduit */
+        cursor: pointer;
+        accent-color: var(--primary);
+    }
+
+    .form-check-modern label {
+        display: flex;
+        align-items: center;
+        gap: 3px;
+        /* réduit */
+        font-size: 0.8rem;
+        /* réduit de 0.9rem */
+        cursor: pointer;
+        color: #495057;
+    }
+
+    .form-check-modern label i {
+        color: var(--primary);
+        font-size: 0.7rem;
+        /* réduit */
+    }
+
+    /* Carte d'information sur les profils */
+    .info-card {
+        background: var(--light);
+        border-left: 4px solid var(--primary);
+        border-radius: 5px;
+        /* réduit */
+        padding: 6px 10px;
+        /* réduit de 12px */
+        margin-bottom: 12px;
+        /* réduit de 20px */
+        font-size: 0.7rem;
+        /* réduit de 0.8rem */
+    }
+
+    .info-card strong {
+        color: var(--primary-dark);
+    }
+
+    .info-card .profile-badge {
+        display: inline-block;
+        padding: 1px 5px;
+        /* réduit */
+        border-radius: 10px;
+        /* réduit */
+        background: #e0e0e0;
+        font-weight: 600;
+        margin: 2px 0;
+        font-size: 0.65rem;
+        /* ajouté */
+    }
+
+    /* Boutons d'action */
     .action-buttons {
-        flex-direction: column;
+        display: flex;
+        gap: 6px;
+        /* réduit de 10px */
+        justify-content: center;
+        flex-wrap: wrap;
+        margin-top: 12px;
+        /* réduit de 20px */
+    }
+
+    .btn-modern {
+        border-radius: 5px;
+        /* réduit */
+        padding: 6px 12px;
+        /* réduit de 8px 16px */
+        font-weight: 600;
+        font-size: 0.7rem;
+        /* réduit de 0.8rem */
+        text-transform: uppercase;
+        letter-spacing: 0.2px;
+        /* légèrement réduit */
+        transition: all 0.3s;
+        border: none;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 4px;
+        /* réduit */
+        min-width: 90px;
+        /* réduit de 110px */
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        /* légèrement réduit */
+        text-decoration: none;
+        color: white;
+    }
+
+    .btn-modern i {
+        font-size: 0.7rem;
+        /* réduit */
+    }
+
+    .btn-primary-modern {
+        background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+    }
+
+    .btn-primary-modern:hover:not(:disabled) {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(46, 125, 50, 0.3);
+        /* réduit */
+    }
+
+    .btn-secondary-modern {
+        background: linear-gradient(135deg, var(--gray) 0%, #5a6268 100%);
+    }
+
+    .btn-secondary-modern:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(108, 117, 125, 0.3);
+        /* réduit */
+    }
+
+    .btn-warning-modern {
+        background: linear-gradient(135deg, #ffc107 0%, #e0a800 100%);
+        color: #212529;
+    }
+
+    .btn-warning-modern:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(255, 193, 7, 0.3);
+        /* réduit */
+    }
+
+    .btn-modern:disabled {
+        opacity: 0.7;
+        cursor: not-allowed;
+        transform: none;
+    }
+
+    /* Alerte moderne (pour les erreurs éventuelles) */
+    .alert-modern {
+        border-radius: 5px;
+        /* réduit */
+        border: none;
+        padding: 5px 8px;
+        /* réduit de 8px 12px */
+        margin-bottom: 8px;
+        /* réduit de 15px */
+        font-size: 0.7rem;
+        /* réduit */
+        display: flex;
+        align-items: center;
         gap: 4px;
         /* réduit */
     }
 
-    .btn-modern {
-        width: 100%;
-        min-width: auto;
-        /* supprime la largeur minimale */
+    .alert-modern.error {
+        background: #fee2e2;
+        color: #991b1b;
+        border-left: 3px solid var(--danger);
     }
 
-    .card-modern .card-body {
-        padding: 8px;
-        /* encore plus compact sur mobile */
+    .alert-modern.success {
+        background: #d4edda;
+        color: #155724;
+        border-left: 3px solid var(--success);
     }
-}
+
+    /* Adaptation mobile */
+    @media (max-width: 576px) {
+        .row-two-cols {
+            grid-template-columns: 1fr;
+            gap: 5px;
+            /* réduit */
+        }
+
+        .action-buttons {
+            flex-direction: column;
+            gap: 4px;
+            /* réduit */
+        }
+
+        .btn-modern {
+            width: 100%;
+            min-width: auto;
+            /* supprime la largeur minimale */
+        }
+
+        .card-modern .card-body {
+            padding: 8px;
+            /* encore plus compact sur mobile */
+        }
+    }
 </style>
 
 <!-- ============================================
@@ -519,27 +520,29 @@ body {
 
                 <!-- Affichage d'une erreur éventuelle via SweetAlert et alerte inline -->
                 <?php if (isset($error) && $error): ?>
-                <div class="alert-modern error">
-                    <i class="fas fa-exclamation-circle"></i>
-                    <?= htmlspecialchars($error) ?>
-                </div>
-                <script>
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Erreur',
-                    text: '<?= addslashes($error) ?>',
-                    confirmButtonColor: '#2e7d32',
-                    confirmButtonText: 'Compris'
-                });
-                </script>
+                    <div class="alert-modern error">
+                        <i class="fas fa-exclamation-circle"></i>
+                        <?= htmlspecialchars($error) ?>
+                    </div>
+                    <script>
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Erreur',
+                            text: '<?= addslashes($error) ?>',
+                            confirmButtonColor: '#2e7d32',
+                            confirmButtonText: 'Compris'
+                        });
+                    </script>
                 <?php endif; ?>
 
                 <!-- Carte d'information sur les profils (compacte) -->
+                <!-- === MODIFICATION : Ajout du badge CONTROLEUR === -->
                 <div class="info-card">
                     <i class="fas fa-info-circle" style="color: var(--primary);"></i>
                     <strong>Profils :</strong>
                     <span class="profile-badge" style="background:#2e7d32; color:white;">ADMIN_IG</span> Admin
                     <span class="profile-badge" style="background:#17a2b8; color:white;">OPERATEUR</span> Gestion
+                    <span class="profile-badge" style="background:#ffc107; color:#212529;">CONTROLEUR</span> Contrôle
                 </div>
 
                 <form method="post" id="userForm">
@@ -560,9 +563,9 @@ body {
                                 <option value="" disabled <?= !isset($_POST['profil']) ? 'selected' : '' ?>>Profil *
                                 </option>
                                 <?php foreach ($profils as $p): ?>
-                                <option value="<?= $p ?>"
-                                    <?= (isset($_POST['profil']) && $_POST['profil'] == $p) ? 'selected' : '' ?>>
-                                    <?= $p ?></option>
+                                    <option value="<?= $p ?>"
+                                        <?= (isset($_POST['profil']) && $_POST['profil'] == $p) ? 'selected' : '' ?>>
+                                        <?= $p ?></option>
                                 <?php endforeach; ?>
                             </select>
                         </div>
@@ -645,272 +648,272 @@ body {
      SCRIPTS JAVASCRIPT
      ============================================ -->
 <script>
-// Fonction pour afficher/masquer le mot de passe
-function togglePasswordVisibility(fieldId, element) {
-    const input = document.getElementById(fieldId);
-    const icon = element.querySelector('i');
-    if (input.type === 'password') {
-        input.type = 'text';
-        icon.classList.remove('fa-eye');
-        icon.classList.add('fa-eye-slash');
-    } else {
-        input.type = 'password';
-        icon.classList.remove('fa-eye-slash');
-        icon.classList.add('fa-eye');
-    }
-}
-
-// Évaluation de la force du mot de passe
-function evaluatePasswordStrength(password) {
-    let strength = 0;
-    if (password.length >= 6) strength += 1;
-    if (password.length >= 8) strength += 1;
-    if (/[a-z]/.test(password) && /[A-Z]/.test(password)) strength += 1;
-    if (/[0-9]/.test(password)) strength += 1;
-    if (/[^a-zA-Z0-9]/.test(password)) strength += 1;
-    return strength;
-}
-
-function updatePasswordStrength() {
-    const password = document.getElementById('password').value;
-    const strength = evaluatePasswordStrength(password);
-    const barFill = document.getElementById('strengthBarFill');
-    const strengthText = document.getElementById('strengthText');
-    const iconSpan = document.getElementById('passwordStrengthIcon');
-    let fillPercent = 0;
-    let text = 'Faible';
-    let color = '#dc3545';
-
-    if (password.length === 0) {
-        fillPercent = 0;
-        text = '';
-        color = '#e0e0e0';
-        iconSpan.innerHTML = '';
-    } else if (strength <= 2) {
-        fillPercent = 20;
-        text = 'Faible';
-        color = '#dc3545';
-        iconSpan.innerHTML = '<i class="fas fa-exclamation-triangle" style="color:#dc3545;"></i>';
-    } else if (strength <= 3) {
-        fillPercent = 50;
-        text = 'Moyen';
-        color = '#ffc107';
-        iconSpan.innerHTML = '<i class="fas fa-exclamation-circle" style="color:#ffc107;"></i>';
-    } else if (strength <= 4) {
-        fillPercent = 75;
-        text = 'Bon';
-        color = '#17a2b8';
-        iconSpan.innerHTML = '<i class="fas fa-check-circle" style="color:#17a2b8;"></i>';
-    } else {
-        fillPercent = 100;
-        text = 'Fort';
-        color = '#28a745';
-        iconSpan.innerHTML = '<i class="fas fa-check-circle" style="color:#28a745;"></i>';
+    // Fonction pour afficher/masquer le mot de passe
+    function togglePasswordVisibility(fieldId, element) {
+        const input = document.getElementById(fieldId);
+        const icon = element.querySelector('i');
+        if (input.type === 'password') {
+            input.type = 'text';
+            icon.classList.remove('fa-eye');
+            icon.classList.add('fa-eye-slash');
+        } else {
+            input.type = 'password';
+            icon.classList.remove('fa-eye-slash');
+            icon.classList.add('fa-eye');
+        }
     }
 
-    barFill.style.width = fillPercent + '%';
-    barFill.style.backgroundColor = color;
-    strengthText.textContent = text;
-    strengthText.style.color = color;
-}
-
-function updateConfirmation() {
-    const password = document.getElementById('password').value;
-    const confirm = document.getElementById('confirm_password').value;
-    const confirmIcon = document.getElementById('confirmIcon');
-    const confirmError = document.getElementById('confirmError');
-
-    if (confirm.length === 0) {
-        confirmIcon.innerHTML = '';
-        confirmError.textContent = '';
-        return;
+    // Évaluation de la force du mot de passe
+    function evaluatePasswordStrength(password) {
+        let strength = 0;
+        if (password.length >= 6) strength += 1;
+        if (password.length >= 8) strength += 1;
+        if (/[a-z]/.test(password) && /[A-Z]/.test(password)) strength += 1;
+        if (/[0-9]/.test(password)) strength += 1;
+        if (/[^a-zA-Z0-9]/.test(password)) strength += 1;
+        return strength;
     }
 
-    if (password === confirm) {
-        confirmIcon.innerHTML = '<i class="fas fa-check-circle" style="color:#28a745;"></i>';
-        confirmError.textContent = '';
-    } else {
-        confirmIcon.innerHTML = '<i class="fas fa-times-circle" style="color:#dc3545;"></i>';
-        confirmError.textContent = 'Les mots de passe ne correspondent pas.';
-    }
-}
+    function updatePasswordStrength() {
+        const password = document.getElementById('password').value;
+        const strength = evaluatePasswordStrength(password);
+        const barFill = document.getElementById('strengthBarFill');
+        const strengthText = document.getElementById('strengthText');
+        const iconSpan = document.getElementById('passwordStrengthIcon');
+        let fillPercent = 0;
+        let text = 'Faible';
+        let color = '#dc3545';
 
-// Validation finale avec SweetAlert
-function validateForm(event) {
-    event.preventDefault();
+        if (password.length === 0) {
+            fillPercent = 0;
+            text = '';
+            color = '#e0e0e0';
+            iconSpan.innerHTML = '';
+        } else if (strength <= 2) {
+            fillPercent = 20;
+            text = 'Faible';
+            color = '#dc3545';
+            iconSpan.innerHTML = '<i class="fas fa-exclamation-triangle" style="color:#dc3545;"></i>';
+        } else if (strength <= 3) {
+            fillPercent = 50;
+            text = 'Moyen';
+            color = '#ffc107';
+            iconSpan.innerHTML = '<i class="fas fa-exclamation-circle" style="color:#ffc107;"></i>';
+        } else if (strength <= 4) {
+            fillPercent = 75;
+            text = 'Bon';
+            color = '#17a2b8';
+            iconSpan.innerHTML = '<i class="fas fa-check-circle" style="color:#17a2b8;"></i>';
+        } else {
+            fillPercent = 100;
+            text = 'Fort';
+            color = '#28a745';
+            iconSpan.innerHTML = '<i class="fas fa-check-circle" style="color:#28a745;"></i>';
+        }
 
-    const login = document.getElementById('login').value.trim();
-    const nomComplet = document.getElementById('nom_complet').value.trim();
-    const password = document.getElementById('password').value;
-    const confirm = document.getElementById('confirm_password').value;
-    const profil = document.getElementById('profil').value;
-
-    // Vérifications simples
-    if (!login || !nomComplet || !password || !profil) {
-        Swal.fire({
-            icon: 'warning',
-            title: 'Champs manquants',
-            text: 'Veuillez remplir tous les champs obligatoires.',
-            confirmButtonColor: '#2e7d32'
-        });
-        return false;
-    }
-
-    const loginRegex = /^[a-zA-Z0-9._-]+$/;
-    if (!loginRegex.test(login)) {
-        Swal.fire({
-            icon: 'error',
-            title: 'Login invalide',
-            text: 'Le login ne peut contenir que des lettres, chiffres, points, tirets et underscores.',
-            confirmButtonColor: '#2e7d32'
-        });
-        return false;
-    }
-
-    if (password.length < 6) {
-        Swal.fire({
-            icon: 'warning',
-            title: 'Mot de passe trop court',
-            text: 'Le mot de passe doit contenir au moins 6 caractères.',
-            confirmButtonColor: '#2e7d32'
-        });
-        return false;
+        barFill.style.width = fillPercent + '%';
+        barFill.style.backgroundColor = color;
+        strengthText.textContent = text;
+        strengthText.style.color = color;
     }
 
-    if (password !== confirm) {
-        Swal.fire({
-            icon: 'error',
-            title: 'Mots de passe différents',
-            text: 'La confirmation ne correspond pas.',
-            confirmButtonColor: '#2e7d32'
-        });
-        return false;
+    function updateConfirmation() {
+        const password = document.getElementById('password').value;
+        const confirm = document.getElementById('confirm_password').value;
+        const confirmIcon = document.getElementById('confirmIcon');
+        const confirmError = document.getElementById('confirmError');
+
+        if (confirm.length === 0) {
+            confirmIcon.innerHTML = '';
+            confirmError.textContent = '';
+            return;
+        }
+
+        if (password === confirm) {
+            confirmIcon.innerHTML = '<i class="fas fa-check-circle" style="color:#28a745;"></i>';
+            confirmError.textContent = '';
+        } else {
+            confirmIcon.innerHTML = '<i class="fas fa-times-circle" style="color:#dc3545;"></i>';
+            confirmError.textContent = 'Les mots de passe ne correspondent pas.';
+        }
     }
 
-    const email = document.getElementById('email').value.trim();
-    if (email) {
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        if (!emailRegex.test(email)) {
+    // Validation finale avec SweetAlert
+    function validateForm(event) {
+        event.preventDefault();
+
+        const login = document.getElementById('login').value.trim();
+        const nomComplet = document.getElementById('nom_complet').value.trim();
+        const password = document.getElementById('password').value;
+        const confirm = document.getElementById('confirm_password').value;
+        const profil = document.getElementById('profil').value;
+
+        // Vérifications simples
+        if (!login || !nomComplet || !password || !profil) {
             Swal.fire({
-                icon: 'error',
-                title: 'Email invalide',
-                text: 'Veuillez saisir une adresse email valide.',
+                icon: 'warning',
+                title: 'Champs manquants',
+                text: 'Veuillez remplir tous les champs obligatoires.',
                 confirmButtonColor: '#2e7d32'
             });
             return false;
         }
-    }
 
-    // Confirmation avant envoi
-    Swal.fire({
-        title: 'Confirmer l\'ajout',
-        html: `<p>Êtes-vous sûr de vouloir ajouter <strong>${escapeHtml(login)}</strong> ?</p>`,
-        icon: 'question',
-        showCancelButton: true,
-        confirmButtonColor: '#2e7d32',
-        cancelButtonColor: '#6c757d',
-        confirmButtonText: 'Oui, ajouter',
-        cancelButtonText: 'Annuler',
-        reverseButtons: true
-    }).then((result) => {
-        if (result.isConfirmed) {
-            const submitBtn = document.getElementById('submitBtn');
-            submitBtn.disabled = true;
-            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Traitement...';
-            document.getElementById('userForm').submit();
-        }
-    });
-
-    return false;
-}
-
-function escapeHtml(text) {
-    if (!text) return text;
-    const map = {
-        '&': '&amp;',
-        '<': '&lt;',
-        '>': '&gt;',
-        '"': '&quot;',
-        "'": '&#039;'
-    };
-    return text.replace(/[&<>"']/g, m => map[m]);
-}
-
-// Réinitialisation du formulaire
-function resetForm() {
-    Swal.fire({
-        title: 'Réinitialiser',
-        text: 'Voulez-vous vraiment effacer tous les champs ?',
-        icon: 'warning',
-        showCancelButton: true,
-        confirmButtonColor: '#ffc107',
-        cancelButtonColor: '#6c757d',
-        confirmButtonText: 'Oui, réinitialiser',
-        cancelButtonText: 'Annuler'
-    }).then((result) => {
-        if (result.isConfirmed) {
-            document.getElementById('userForm').reset();
-            document.getElementById('strengthBarFill').style.width = '0%';
-            document.getElementById('strengthText').textContent = '';
-            document.getElementById('passwordStrengthIcon').innerHTML = '';
-            document.getElementById('confirmIcon').innerHTML = '';
-            document.getElementById('confirmError').textContent = '';
+        const loginRegex = /^[a-zA-Z0-9._-]+$/;
+        if (!loginRegex.test(login)) {
             Swal.fire({
-                icon: 'success',
-                title: 'Réinitialisé',
-                text: 'Formulaire réinitialisé',
-                timer: 1500,
-                showConfirmButton: false
+                icon: 'error',
+                title: 'Login invalide',
+                text: 'Le login ne peut contenir que des lettres, chiffres, points, tirets et underscores.',
+                confirmButtonColor: '#2e7d32'
             });
+            return false;
         }
-    });
-}
 
-// Gestionnaire de modifications non sauvegardées
-let formModified = false;
-document.querySelectorAll('#userForm input, #userForm select').forEach(el => {
-    el.addEventListener('change', () => formModified = true);
-    el.addEventListener('keyup', () => formModified = true);
-});
+        if (password.length < 6) {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Mot de passe trop court',
+                text: 'Le mot de passe doit contenir au moins 6 caractères.',
+                confirmButtonColor: '#2e7d32'
+            });
+            return false;
+        }
 
-document.getElementById('cancelBtn').addEventListener('click', function(e) {
-    if (formModified) {
-        e.preventDefault();
+        if (password !== confirm) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Mots de passe différents',
+                text: 'La confirmation ne correspond pas.',
+                confirmButtonColor: '#2e7d32'
+            });
+            return false;
+        }
+
+        const email = document.getElementById('email').value.trim();
+        if (email) {
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(email)) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Email invalide',
+                    text: 'Veuillez saisir une adresse email valide.',
+                    confirmButtonColor: '#2e7d32'
+                });
+                return false;
+            }
+        }
+
+        // Confirmation avant envoi
         Swal.fire({
-            title: 'Modifications non sauvegardées',
-            text: 'Voulez-vous vraiment quitter ?',
-            icon: 'warning',
+            title: 'Confirmer l\'ajout',
+            html: `<p>Êtes-vous sûr de vouloir ajouter <strong>${escapeHtml(login)}</strong> ?</p>`,
+            icon: 'question',
             showCancelButton: true,
-            confirmButtonColor: '#dc3545',
+            confirmButtonColor: '#2e7d32',
             cancelButtonColor: '#6c757d',
-            confirmButtonText: 'Oui, quitter',
-            cancelButtonText: 'Rester'
+            confirmButtonText: 'Oui, ajouter',
+            cancelButtonText: 'Annuler',
+            reverseButtons: true
         }).then((result) => {
             if (result.isConfirmed) {
-                window.location.href = this.href;
+                const submitBtn = document.getElementById('submitBtn');
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Traitement...';
+                document.getElementById('userForm').submit();
+            }
+        });
+
+        return false;
+    }
+
+    function escapeHtml(text) {
+        if (!text) return text;
+        const map = {
+            '&': '&amp;',
+            '<': '&lt;',
+            '>': '&gt;',
+            '"': '&quot;',
+            "'": '&#039;'
+        };
+        return text.replace(/[&<>"']/g, m => map[m]);
+    }
+
+    // Réinitialisation du formulaire
+    function resetForm() {
+        Swal.fire({
+            title: 'Réinitialiser',
+            text: 'Voulez-vous vraiment effacer tous les champs ?',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#ffc107',
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: 'Oui, réinitialiser',
+            cancelButtonText: 'Annuler'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                document.getElementById('userForm').reset();
+                document.getElementById('strengthBarFill').style.width = '0%';
+                document.getElementById('strengthText').textContent = '';
+                document.getElementById('passwordStrengthIcon').innerHTML = '';
+                document.getElementById('confirmIcon').innerHTML = '';
+                document.getElementById('confirmError').textContent = '';
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Réinitialisé',
+                    text: 'Formulaire réinitialisé',
+                    timer: 1500,
+                    showConfirmButton: false
+                });
             }
         });
     }
-});
 
-// Initialisation des écouteurs pour la force du mot de passe
-document.getElementById('password').addEventListener('input', function() {
+    // Gestionnaire de modifications non sauvegardées
+    let formModified = false;
+    document.querySelectorAll('#userForm input, #userForm select').forEach(el => {
+        el.addEventListener('change', () => formModified = true);
+        el.addEventListener('keyup', () => formModified = true);
+    });
+
+    document.getElementById('cancelBtn').addEventListener('click', function(e) {
+        if (formModified) {
+            e.preventDefault();
+            Swal.fire({
+                title: 'Modifications non sauvegardées',
+                text: 'Voulez-vous vraiment quitter ?',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#dc3545',
+                cancelButtonColor: '#6c757d',
+                confirmButtonText: 'Oui, quitter',
+                cancelButtonText: 'Rester'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    window.location.href = this.href;
+                }
+            });
+        }
+    });
+
+    // Initialisation des écouteurs pour la force du mot de passe
+    document.getElementById('password').addEventListener('input', function() {
+        updatePasswordStrength();
+        updateConfirmation();
+    });
+    document.getElementById('confirm_password').addEventListener('input', updateConfirmation);
+
+    // Auto-formatage du login (minuscules)
+    document.getElementById('login').addEventListener('input', function(e) {
+        this.value = this.value.toLowerCase().replace(/[^a-z0-9._-]/g, '');
+    });
+
+    // Attacher la validation au formulaire
+    document.getElementById('userForm').addEventListener('submit', validateForm);
+
+    // Initialisation au chargement
     updatePasswordStrength();
     updateConfirmation();
-});
-document.getElementById('confirm_password').addEventListener('input', updateConfirmation);
-
-// Auto-formatage du login (minuscules)
-document.getElementById('login').addEventListener('input', function(e) {
-    this.value = this.value.toLowerCase().replace(/[^a-z0-9._-]/g, '');
-});
-
-// Attacher la validation au formulaire
-document.getElementById('userForm').addEventListener('submit', validateForm);
-
-// Initialisation au chargement
-updatePasswordStrength();
-updateConfirmation();
 </script>
 
 <?php include '../../includes/footer.php'; ?>

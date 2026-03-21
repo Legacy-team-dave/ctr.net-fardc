@@ -30,6 +30,7 @@ if (isset($_SESSION['success_message'])) {
 
 $breadcrumb = ['Administration' => '#', 'Utilisateurs' => '#'];
 include '../../includes/header.php';
+verifier_acces(['ADMIN_IG']); // pour une page admin, on vérifie à nouveau pour plus de sécurité
 
 $utilisateurs = $pdo->query("SELECT id_utilisateur, login, nom_complet, email, profil, actif, dernier_acces FROM utilisateurs ORDER BY profil")->fetchAll();
 

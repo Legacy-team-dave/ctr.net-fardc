@@ -1,0 +1,252 @@
+/* ==============================================
+   Fichier : assets/css/mobile.css
+   Description : Styles optimisés pour mobile/tablette
+   Utilisation : Inclure conditionnellement pour le profil CONTROLEUR
+   ============================================== */
+
+/* ==============================================
+   1. RÉGLAGES GÉNÉRAUX
+   ============================================== */
+body {
+    font-size: 16px;
+    background: #ffffff;
+    line-height: 1.4;
+}
+
+/* Augmenter la taille des éléments interactifs pour le tactile */
+a, button, .btn, .btn-mention, .form-control, input, textarea, select, .list-group-item {
+    touch-action: manipulation;
+}
+
+/* ==============================================
+   2. CARTES ET CONTENEURS
+   ============================================== */
+.card-modern {
+    border-radius: 12px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.card-modern .card-header {
+    padding: 12px 15px;
+}
+
+.card-modern .card-header h3 {
+    font-size: 1.1rem;
+}
+
+.card-modern .card-body {
+    padding: 15px;
+}
+
+/* ==============================================
+   3. FORMULAIRES ET CHAMPS DE SAISIE
+   ============================================== */
+input, textarea, select, .form-control-modern {
+    font-size: 16px !important; /* Évite le zoom automatique sur iOS */
+    padding: 10px 12px;
+    border-radius: 8px;
+}
+
+textarea {
+    min-height: 80px;
+}
+
+.form-check-input {
+    width: 1.2rem;
+    height: 1.2rem;
+    margin-top: 0;
+}
+
+/* ==============================================
+   4. BOUTONS
+   ============================================== */
+.btn-mention {
+    padding: 10px 16px;
+    font-size: 1rem;
+    border-radius: 30px;
+    margin: 4px;
+}
+
+.btn-present {
+    padding: 12px 20px;
+    font-size: 1.1rem;
+}
+
+.btn-new-search {
+    padding: 6px 12px;
+    font-size: 0.8rem;
+}
+
+.btn-login, .btn-register, .btn-gradient {
+    padding: 12px;
+    font-size: 1rem;
+}
+
+/* ==============================================
+   5. ZONE D'INFORMATION MILITAIRE
+   ============================================== */
+.militaire-info {
+    padding: 0.8rem 1rem;
+    margin-bottom: 1rem;
+}
+
+.militaire-info .info-item {
+    font-size: 0.85rem;
+}
+
+.militaire-info .info-grid {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+}
+
+.militaire-info .separator {
+    display: none;
+}
+
+/* ==============================================
+   6. STATUT TEMPORAIRE
+   ============================================== */
+.statut-temp {
+    padding: 8px;
+}
+
+.statut-temp .form-check-label {
+    font-size: 0.9rem;
+}
+
+.statut-temp .d-flex {
+    flex-direction: column;
+    gap: 10px;
+}
+
+/* ==============================================
+   7. LIENS DE PARENTÉ (GRILLE)
+   ============================================== */
+.liens-grid {
+    grid-template-columns: 1fr;
+    gap: 8px;
+}
+
+.lien-groupe {
+    padding: 6px;
+}
+
+.lien-groupe label {
+    font-size: 0.85rem;
+}
+
+.lien-groupe .form-check {
+    font-size: 0.85rem;
+    margin-bottom: 6px;
+}
+
+.lien-groupe .form-check small {
+    font-size: 0.7rem;
+}
+
+/* ==============================================
+   8. BÉNÉFICIAIRES ET OBSERVATIONS
+   ============================================== */
+.beneficiaire-card {
+    padding: 8px;
+}
+
+.beneficiaire-card .fw-bold {
+    font-size: 0.85rem;
+}
+
+.observations-group textarea {
+    font-size: 0.9rem;
+    min-height: 80px;
+}
+
+/* ==============================================
+   9. ACTIONS (BOUTONS FAVORABLE/DÉFAVORABLE)
+   ============================================== */
+.actions-container {
+    flex-direction: column;
+    gap: 8px;
+}
+
+.actions-container .btn-mention {
+    width: 100%;
+    justify-content: center;
+}
+
+/* ==============================================
+   10. RECHERCHE EN TEMPS RÉEL
+   ============================================== */
+#search-results .list-group-item {
+    padding: 10px 12px;
+}
+
+#search-results .list-group-item strong {
+    font-size: 0.9rem;
+}
+
+/* ==============================================
+   11. TOAST MESSAGES
+   ============================================== */
+.toast-message {
+    min-width: 200px;
+    font-size: 0.85rem;
+    padding: 10px 15px;
+}
+
+/* ==============================================
+   12. GRILLES ET FLEX
+   ============================================== */
+.row [class*="col-"] {
+    margin-bottom: 10px;
+}
+
+.container-fluid {
+    padding-left: 10px;
+    padding-right: 10px;
+}
+
+/* ==============================================
+   13. TABLEAUX (si utilisés)
+   ============================================== */
+.table-responsive {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+.table th, .table td {
+    white-space: nowrap;
+}
+
+/* ==============================================
+   14. AJUSTEMENTS POUR TRÈS PETITS ÉCRANS (<=480px)
+   ============================================== */
+@media (max-width: 480px) {
+    body {
+        font-size: 14px;
+    }
+
+    .card-modern .card-header h3 {
+        font-size: 1rem;
+    }
+
+    .btn-mention {
+        padding: 8px 12px;
+        font-size: 0.9rem;
+    }
+
+    .militaire-info .info-item {
+        font-size: 0.75rem;
+    }
+
+    .form-control-modern {
+        font-size: 14px !important;
+    }
+
+    .toast-message {
+        min-width: 160px;
+        font-size: 0.75rem;
+        padding: 8px 12px;
+    }
+}

@@ -2,6 +2,9 @@
 require_once '../../includes/functions.php';
 require_login();
 
+// MODIFICATION : Vérifier que seuls les profils autorisés accèdent à cette page
+check_profil(['OPERATEUR', 'CONTROLEUR']);
+
 // --- AJAX : recherche en temps réel ---
 if (isset($_GET['ajax']) && $_GET['ajax'] === 'search' && isset($_GET['q'])) {
     header('Content-Type: application/json');
@@ -209,9 +212,12 @@ if ($q !== '') {
 
 $page_titre = 'Effectuer un contrôle';
 include '../../includes/header.php';
+
+// MODIFICATION : Détection du profil pour charger des styles spécifiques
+$is_controleur = isset($_SESSION['user_profil']) && $_SESSION['user_profil'] === 'CONTROLEUR';
 ?>
 
-<!-- Styles (alignés sur le fichier 2) -->
+<!-- Styles principaux -->
 <link rel="stylesheet" href="../../assets/fontawesome/css/all.min.css">
 <link rel="stylesheet" href="../../assets/css/dataTables.bootstrap4.min.css">
 <link rel="stylesheet" href="../../assets/css/all.min.css">
@@ -753,6 +759,124 @@ body {
         padding: 12px 20px;
     }
 }
+
+/* ==============================================
+   STYLES SPÉCIFIQUES POUR LE PROFIL CONTROLEUR (MOBILE)
+   ============================================== */
+<?php if ($is_controleur): ?>
+
+/* Ajustements pour une utilisation optimale sur mobile/tablette */
+body {
+    font-size: 16px;
+    background: #ffffff;
+}
+
+.card-modern {
+    border-radius: 12px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.card-modern .card-header {
+    padding: 12px 15px;
+}
+
+.card-modern .card-header h3 {
+    font-size: 1.1rem;
+}
+
+.card-modern .card-body {
+    padding: 15px;
+}
+
+.btn-mention {
+    padding: 8px 16px;
+    font-size: 1rem;
+    border-radius: 30px;
+}
+
+.btn-present {
+    padding: 12px 20px;
+    font-size: 1.1rem;
+}
+
+.btn-new-search {
+    padding: 6px 12px;
+    font-size: 0.8rem;
+}
+
+.militaire-info {
+    padding: 0.8rem 1rem;
+    margin-bottom: 1rem;
+}
+
+.militaire-info .info-item {
+    font-size: 0.85rem;
+}
+
+.statut-temp {
+    padding: 8px;
+}
+
+.statut-temp .form-check-label {
+    font-size: 0.9rem;
+}
+
+.liens-grid {
+    gap: 8px;
+}
+
+.lien-groupe {
+    padding: 6px;
+}
+
+.lien-groupe label {
+    font-size: 0.85rem;
+}
+
+.lien-groupe .form-check {
+    font-size: 0.85rem;
+}
+
+.beneficiaire-card {
+    padding: 8px;
+}
+
+.beneficiaire-card .fw-bold {
+    font-size: 0.85rem;
+}
+
+.observations-group textarea {
+    font-size: 0.9rem;
+    min-height: 80px;
+}
+
+.actions-container .btn-mention {
+    padding: 10px 16px;
+}
+
+/* Augmenter la taille des champs de saisie pour faciliter le tactile */
+input,
+textarea,
+select {
+    font-size: 16px !important;
+}
+
+/* Réduire les marges pour optimiser l'espace */
+.container-fluid {
+    padding-left: 10px;
+    padding-right: 10px;
+}
+
+/* Améliorer l'affichage des toasts sur mobile */
+.toast-message {
+    min-width: 200px;
+    font-size: 0.85rem;
+    padding: 10px 15px;
+}
+
+<?php endif;
+?>
 </style>
 
 <!-- Conteneur pour les toasts -->
@@ -1017,7 +1141,7 @@ body {
     <?php endif; ?>
 </div>
 
-<!-- Scripts locaux (alignés sur le fichier 2) -->
+<!-- Scripts locaux -->
 <script src="../../assets/js/jquery-3.6.0.min.js"></script>
 <script src="../../assets/js/sweetalert2.all.min.js"></script>
 <script src="../../assets/js/sweetalert2@11.js"></script>
@@ -1396,5 +1520,3 @@ body {
     }
 })();
 </script>
-
-<?php include '../../includes/footer.php'; ?>

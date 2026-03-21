@@ -13,6 +13,7 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'log_export') {
         audit_action('EXPORT', 'non_vus', null, $details);
         echo json_encode(['success' => true]);
     } else {
+
         echo json_encode(['success' => false]);
     }
     exit;
@@ -30,6 +31,7 @@ $page_titre = $is_admin_ig ? 'Tableau de bord Administrateur' : 'Tableau de bord
 $card_col_class = 'col-12 col-sm-6 col-md-4';
 
 include 'includes/header.php';
+verifier_acces(['ADMIN_IG', 'OPERATEUR']); // pour une page admin
 
 // ============================================
 // Table de traduction des catégories

@@ -2,6 +2,9 @@
 require_once '../../includes/functions.php';
 require_login();
 
+    // Vérifier si une sauvegarde automatique est nécessaire (tous les 2 jours)
+    maybe_create_backup();
+
 $success_message = $_SESSION['success_message'] ?? null;
 unset($_SESSION['success_message']);
 $user_profil = $_SESSION['user_profil'] ?? '';

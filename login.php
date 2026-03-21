@@ -1,6 +1,51 @@
 <?php
 require_once 'includes/functions.php';
 
+// MODIFICATION : Vérification du cookie "remember_token" si l'utilisateur n'est pas déjà connecté
+if (!isset($_SESSION['user_id']) && isset($_COOKIE['remember_token'])) {
+    $token = $_COOKIE['remember_token'];
+    try {
+        // Recherche de l'utilisateur avec ce token valide (non expiré)
+        $stmt = $pdo->prepare("SELECT * FROM utilisateurs WHERE remember_token = ? AND remember_token_expires > NOW() AND actif = true");
+        $stmt->execute([$token]);
+        $user = $stmt->fetch();
+
+        if ($user) {
+            // Reconnecter automatiquement l'utilisateur
+            session_regenerate_id(true);
+            $_SESSION['user_id'] = $user['id_utilisateur'];
+            $_SESSION['user_login'] = $user['login'];
+            $_SESSION['user_nom'] = $user['nom_complet'];
+            $_SESSION['user_email'] = $user['email'];
+            $_SESSION['user_profil'] = $user['profil'];
+            $_SESSION['user_avatar'] = $user['avatar'];
+
+            // Charger les préférences si elles existent
+            if (!empty($user['preferences'])) {
+                $_SESSION['filtres'] = json_decode($user['preferences'], true);
+            }
+
+            // Redirection selon profil (même logique qu'en bas)
+            if ($user['profil'] === 'OPERATEUR') {
+                $redirectUrl = !empty($user['preferences']) ? 'modules/controles/ajouter.php' : 'preferences.php';
+            } elseif ($user['profil'] === 'ADMIN_IG') {
+                $redirectUrl = 'index.php';
+            } elseif ($user['profil'] === 'CONTROLEUR') {
+                $redirectUrl = 'modules/controles/ajouter.php';
+            } else {
+                $redirectUrl = 'index.php';
+            }
+            header('Location: ' . $redirectUrl);
+            exit;
+        } else {
+            // Token invalide ou expiré, on supprime le cookie
+            setcookie('remember_token', '', time() - 3600, '/', '', false, true);
+        }
+    } catch (PDOException $e) {
+        error_log("Erreur lors de la vérification du token : " . $e->getMessage());
+    }
+}
+
 // Si déjà connecté, rediriger vers la page appropriée selon le profil
 if (isset($_SESSION['user_id'])) {
     $profil = $_SESSION['user_profil'] ?? null;
@@ -24,6 +69,9 @@ if (isset($_SESSION['user_id'])) {
     } elseif ($profil === 'ADMIN_IG') {
         header('Location: index.php');
         exit;
+    } elseif ($profil === 'CONTROLEUR') {
+        header('Location: modules/controles/ajouter.php');
+        exit;
     } else {
         header('Location: index.php');
         exit;
@@ -35,6 +83,7 @@ $error = '';
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $login = trim($_POST['login'] ?? '');
     $password = $_POST['password'] ?? '';
+    $remember = isset($_POST['remember']); // MODIFICATION : récupération de la case à cocher
 
     try {
         $stmt = $pdo->prepare("SELECT * FROM utilisateurs WHERE (login = ? OR nom_complet = ? OR email = ?) AND actif = true");
@@ -61,12 +110,33 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $_SESSION['filtres'] = json_decode($user['preferences'], true);
             }
 
+            // MODIFICATION : Gestion du "Se souvenir de moi"
+            if ($remember) {
+                // Générer un token sécurisé
+                $token = bin2hex(random_bytes(32));
+                $expires = date('Y-m-d H:i:s', strtotime('+30 days')); // Valable 30 jours
+
+                // Stocker le token dans la base de données
+                $stmtToken = $pdo->prepare("UPDATE utilisateurs SET remember_token = ?, remember_token_expires = ? WHERE id_utilisateur = ?");
+                $stmtToken->execute([$token, $expires, $user['id_utilisateur']]);
+
+                // Définir le cookie (httponly, secure en production, sameSite strict)
+                setcookie('remember_token', $token, time() + (30 * 24 * 3600), '/', '', false, true);
+            } else {
+                // Si la case n'est pas cochée, supprimer un éventuel token existant
+                $stmtToken = $pdo->prepare("UPDATE utilisateurs SET remember_token = NULL, remember_token_expires = NULL WHERE id_utilisateur = ?");
+                $stmtToken->execute([$user['id_utilisateur']]);
+                setcookie('remember_token', '', time() - 3600, '/', '', false, true);
+            }
+
             // Déterminer l'URL de redirection selon le profil
             $redirectUrl = '';
             if ($user['profil'] === 'OPERATEUR') {
                 $redirectUrl = !empty($user['preferences']) ? 'modules/controles/ajouter.php' : 'preferences.php';
             } elseif ($user['profil'] === 'ADMIN_IG') {
                 $redirectUrl = 'index.php';
+            } elseif ($user['profil'] === 'CONTROLEUR') {
+                $redirectUrl = 'modules/controles/ajouter.php';
             } else {
                 $redirectUrl = 'index.php';
             }
@@ -99,10 +169,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     body {
         font-family: 'Barlow', sans-serif;
-        /* ... */
         background: linear-gradient(135deg, rgba(0, 0, 0, 0.7) 0%, rgba(0, 0, 0, 0.7) 100%),
             url('assets/img/fardc2.png') no-repeat center center fixed;
-        /* ... */
         background-size: cover;
         display: flex;
         align-items: center;

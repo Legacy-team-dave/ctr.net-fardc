@@ -4,6 +4,8 @@
  * Fichier : includes/functions.php
  * Description : Fonctions utilitaires pour l'application
  * Version : 2.0 avec gestion automatique des tables logs
+ * MODIFICATION : Ajout des colonnes remember_token et gestion du "Se souvenir de moi"
+ * MODIFICATION 2 : Ajout des fonctions de sauvegarde automatique quotidienne (CSV + Excel)
  */
 
 // Démarrer la session si ce n'est pas déjà fait
@@ -204,9 +206,42 @@ function check_preferences_column()
     return false;
 }
 
+// MODIFICATION : Vérifier et créer les colonnes remember_token et remember_token_expires
+/**
+ * Vérifie et crée les colonnes remember_token et remember_token_expires si elles n'existent pas
+ * 
+ * @return bool True si au moins une colonne a été créée, False sinon
+ */
+function check_remember_columns()
+{
+    global $pdo;
+    $created = false;
+    try {
+        // Vérifier la colonne remember_token
+        $check = $pdo->query("SHOW COLUMNS FROM utilisateurs LIKE 'remember_token'");
+        if ($check->rowCount() == 0) {
+            $pdo->exec("ALTER TABLE utilisateurs ADD COLUMN remember_token VARCHAR(255) NULL AFTER preferences");
+            error_log("✅ Colonne 'remember_token' créée avec succès");
+            $created = true;
+        }
+
+        // Vérifier la colonne remember_token_expires
+        $check = $pdo->query("SHOW COLUMNS FROM utilisateurs LIKE 'remember_token_expires'");
+        if ($check->rowCount() == 0) {
+            $pdo->exec("ALTER TABLE utilisateurs ADD COLUMN remember_token_expires DATETIME NULL AFTER remember_token");
+            error_log("✅ Colonne 'remember_token_expires' créée avec succès");
+            $created = true;
+        }
+    } catch (PDOException $e) {
+        error_log("❌ Erreur vérification/création des colonnes remember_token: " . $e->getMessage());
+    }
+    return $created;
+}
+
 // Exécuter les vérifications au chargement du fichier
 check_logs_table();
 check_preferences_column();
+check_remember_columns(); // MODIFICATION : appel de la nouvelle fonction
 
 /**
  * ============================================
@@ -860,6 +895,154 @@ function json_response($data, $status_code = 200)
     header('Content-Type: application/json');
     echo json_encode($data, JSON_UNESCAPED_UNICODE);
     exit;
+}
+
+/**
+ * ============================================
+ * FONCTIONS DE SAUVEGARDE AUTOMATIQUE
+ * ============================================
+ */
+
+/**
+ * Récupère la date de la dernière sauvegarde
+ * @return int timestamp de la dernière sauvegarde, 0 si aucune
+ */
+function get_last_backup_time()
+{
+    $backup_dir = dirname(__DIR__, 2) . '/backups/';
+    if (!is_dir($backup_dir)) {
+        mkdir($backup_dir, 0755, true);
+    }
+    $last_backup_file = $backup_dir . 'last_backup.txt';
+    if (file_exists($last_backup_file)) {
+        return (int) file_get_contents($last_backup_file);
+    }
+    return 0;
+}
+
+/**
+ * Met à jour la date de la dernière sauvegarde
+ */
+function update_last_backup_time()
+{
+    $backup_dir = dirname(__DIR__, 2) . '/backups/';
+    if (!is_dir($backup_dir)) {
+        mkdir($backup_dir, 0755, true);
+    }
+    file_put_contents($backup_dir . 'last_backup.txt', time());
+}
+
+/**
+ * Génère une sauvegarde ZIP des tables controles et litiges (CSV + Excel)
+ * @return bool True si succès, False sinon
+ */
+function generate_backup()
+{
+    global $pdo;
+    $backup_dir = dirname(__DIR__, 2) . '/backups/';
+    if (!is_dir($backup_dir)) {
+        mkdir($backup_dir, 0755, true);
+    }
+    $timestamp = date('Y-m-d_H-i-s');
+    $zip_file = $backup_dir . 'backup_' . $timestamp . '.zip';
+
+    $zip = new ZipArchive();
+    if ($zip->open($zip_file, ZipArchive::CREATE) !== true) {
+        error_log("Impossible de créer l'archive de sauvegarde.");
+        return false;
+    }
+
+    // Charger l'autoload de Composer pour PhpSpreadsheet
+    require_once __DIR__ . '/../../vendor/autoload.php';
+
+    /**
+     * Ajoute les fichiers CSV et Excel d'une table dans l'archive ZIP
+     *
+     * @param ZipArchive $zip
+     * @param string $tableName
+     * @param string $timestamp
+     * @param PDO $pdo
+     */
+    function addTableToZip($zip, $tableName, $timestamp, $pdo)
+    {
+        $stmt = $pdo->query("SELECT * FROM $tableName");
+        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        if (empty($rows)) {
+            return;
+        }
+
+        // 1. Fichier CSV
+        $csv = fopen('php://temp', 'r+');
+        fputcsv($csv, array_keys($rows[0]));
+        foreach ($rows as $row) {
+            fputcsv($csv, $row);
+        }
+        rewind($csv);
+        $csv_content = stream_get_contents($csv);
+        fclose($csv);
+        $zip->addFromString($tableName . '_' . $timestamp . '.csv', $csv_content);
+
+        // 2. Fichier Excel (XLSX)
+        $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+
+        // En-têtes
+        $headers = array_keys($rows[0]);
+        $col = 1;
+        foreach ($headers as $header) {
+            $sheet->$sheet->getCellByColumnAndRow($col, 1)->setValue($header);
+
+            $col++;
+        }
+
+        // Données
+        $rowNum = 2;
+        foreach ($rows as $row) {
+            $col = 1;
+            foreach ($headers as $header) {
+                $sheet->$sheet->getCellByColumnAndRow($col, 1)->setValue($header);
+
+                $col++;
+            }
+            $rowNum++;
+        }
+
+        // Ajuster la largeur des colonnes
+        foreach (range('A', $sheet->getHighestColumn()) as $col) {
+            $sheet->getColumnDimension($col)->setAutoSize(true);
+        }
+
+        // Sauvegarder dans un flux mémoire
+        $writer = new \PhpOffice\PhpSpreadsheet\Writer\Xlsx($spreadsheet);
+        ob_start();
+        $writer->save('php://output');
+        $excel_content = ob_get_clean();
+        $zip->addFromString($tableName . '_' . $timestamp . '.xlsx', $excel_content);
+    }
+
+    addTableToZip($zip, 'controles', $timestamp, $pdo);
+    addTableToZip($zip, 'litiges', $timestamp, $pdo);
+
+    $zip->close();
+
+    // Conserver toutes les archives (pas de suppression)
+    return true;
+}
+
+/**
+ * Vérifie si une sauvegarde doit être effectuée (tous les 1 jour)
+ * et l'exécute si nécessaire
+ */
+function maybe_create_backup()
+{
+    $last_backup = get_last_backup_time();
+    $now = time();
+    $one_day = 1 * 24 * 3600; // 86400 secondes
+    if (($now - $last_backup) >= $one_day) {
+        generate_backup();
+        update_last_backup_time();
+        error_log("Sauvegarde automatique exécutée.");
+    }
 }
 
 // Programme de nettoyage automatique (1% de chance à chaque chargement)

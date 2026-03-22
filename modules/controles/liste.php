@@ -2,8 +2,8 @@
 require_once '../../includes/functions.php';
 require_login();
 
-        // Vérifier si une sauvegarde automatique est nécessaire (tous les 2 jours)
-        maybe_create_backup();
+// Vérifier si une sauvegarde automatique est nécessaire (tous les 2 jours)
+maybe_create_backup();
 
 // --- AJAX : journalisation des exports ---
 if (isset($_GET['ajax']) && $_GET['ajax'] === 'log_export') {
@@ -807,6 +807,28 @@ $export_fields = [
         grid-template-columns: 1fr;
     }
 }
+
+/* Styles spécifiques pour le QR code modal */
+#qrCodeModal .modal-content {
+    border-radius: 15px;
+}
+
+#qrCodeModal .modal-header {
+    background: linear-gradient(135deg, #2e7d32 0%, #1b5e20 100%);
+    color: white;
+    border-bottom: none;
+}
+
+#qrCodeModal .modal-header .btn-close {
+    filter: brightness(0) invert(1);
+}
+
+@media (max-width: 992px) {
+    #qrcode canvas {
+        width: 100% !important;
+        height: auto !important;
+    }
+}
 </style>
 
 <div class="container-fluid py-3">
@@ -939,15 +961,15 @@ $export_fields = [
                     <!-- Tableau avec une colonne cachée pour la date -->
                     <table id="table-controles" class="table-militaires" style="width:100%">
                         <thead>
-                            <tr>
-                                <th><input type="checkbox" class="select-all-checkbox" id="select-all"></th>
-                                <th>Matricule</th>
-                                <th>Noms</th>
-                                <th>Grade</th>
-                                <th>Unité</th>
-                                <th>Observations</th>
-                                <th>ZDEF</th>
-                                <th style="display:none;">Date</th>
+                            <th><input type="checkbox" class="select-all-checkbox" id="select-all"></th>
+                            <th>Matricule</th>
+                            <th>Noms</th>
+                            <th>Grade</th>
+                            <th>Unité</th>
+                            <th>Observations</th>
+                            <th>ZDEF</th>
+                            <th>QR</th>
+                            <th style="display:none;">Date</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -962,6 +984,15 @@ $export_fields = [
                                 $observations = $c['observations'] ?? '';
                                 $ancien_beneficiaire = $c['nom_beneficiaire'] ?? '';
                                 $date_controle_brut = $c['date_controle'] ?? '';
+
+                                // Données pour le QR code
+                                $qrData = [
+                                    'matricule'      => $c['matricule'],
+                                    'noms'           => $c['nom_militaire'],
+                                    'grade'          => $grade,
+                                    'date_controle'  => $date_controle_brut,
+                                    'mention'        => $c['mention']
+                                ];
                             ?>
                             <tr data-zone="<?= $zdef['code'] ?>"
                                 data-mention="<?= htmlspecialchars($c['mention'] ?? '') ?>"
@@ -989,6 +1020,12 @@ $export_fields = [
                                 <td><?= !empty($unite) ? htmlspecialchars($unite) : '' ?></td>
                                 <td><?= !empty($observations) ? htmlspecialchars($observations) : '' ?></td>
                                 <td><?= $zdef['value'] ?></td>
+                                <td class="text-center">
+                                    <button type="button" class="btn btn-sm btn-outline-success btn-qr-code"
+                                        data-info='<?= htmlspecialchars(json_encode($qrData), ENT_QUOTES) ?>'>
+                                        <i class="fas fa-qrcode"></i>
+                                    </button>
+                                </td>
                                 <td style="display:none;"><?= htmlspecialchars($date_controle_brut) ?></td>
                             </tr>
                             <?php endforeach; ?>
@@ -1043,176 +1080,205 @@ $export_fields = [
     </div>
 </div>
 
-<?php include '../../includes/footer.php'; ?>
+<!-- Modal QR Code -->
+<div class="modal fade" id="qrCodeModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title"><i class="fas fa-qrcode"></i> Code QR du contrôle</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body text-center">
+                <!-- Ajout des informations du militaire -->
+                <div class="militaire-info mb-3 text-center">
+                    <div><strong>Matricule :</strong> <span id="qrMatricule"></span></div>
+                    <div><strong>Noms :</strong> <span id="qrNoms"></span></div>
+                    <div><strong>Grade :</strong> <span id="qrGrade"></span></div>
+                    <canvas id="qrcodeCanvas" style="width: 300px; height: 300px; margin: 0 auto;"></canvas>
+                    <p class="mt-3 text-muted">Scannez ce code pour obtenir les informations du militaire.</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
+                </div>
+            </div>
+        </div>
+    </div>
 
-<!-- Scripts supplémentaires -->
-<script src="../../assets/js/xlsx.full.min.js"></script>
-<script src="../../assets/js/jspdf.umd.min.js"></script>
-<script src="../../assets/js/jspdf.plugin.autotable.min.js"></script>
-<script src="../../assets/js/jszip.min.js"></script>
+    <?php include '../../includes/footer.php'; ?>
 
-<script>
-$(document).ready(function() {
-    // État des champs sélectionnés pour l'export
-    let selectedExportFields = <?php echo json_encode(array_map(function ($field) {
+    <!-- Bootstrap JS -->
+    <script src="../../assets/js/bootstrap.bundle.min.js"></script> <!-- ou bootstrap.min.js + popper -->
+
+    <!-- Scripts supplémentaires -->
+    <script src="../../assets/js/xlsx.full.min.js"></script>
+    <script src="../../assets/js/jspdf.umd.min.js"></script>
+    <script src="../../assets/js/jspdf.plugin.autotable.min.js"></script>
+    <script src="../../assets/js/jszip.min.js"></script>
+    <script src="../../assets/js/qrcode.min.js"></script>
+
+    <script>
+    $(document).ready(function() {
+        // État des champs sélectionnés pour l'export
+        let selectedExportFields = <?php echo json_encode(array_map(function ($field) {
                                         return $field['enabled'];
                                     }, $export_fields)); ?>;
 
-    const getTimestamp = () => {
-        const d = new Date();
-        return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}_${String(d.getHours()).padStart(2,'0')}h${String(d.getMinutes()).padStart(2,'0')}`;
-    };
+        const getTimestamp = () => {
+            const d = new Date();
+            return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}_${String(d.getHours()).padStart(2,'0')}h${String(d.getMinutes()).padStart(2,'0')}`;
+        };
 
-    const loadImage = async (url) => {
-        try {
-            const response = await fetch(url);
-            if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-            const blob = await response.blob();
-            return await new Promise((resolve, reject) => {
-                const reader = new FileReader();
-                reader.onloadend = () => {
-                    const img = new Image();
-                    img.onload = () => resolve({
-                        dataURL: reader.result,
-                        width: img.width,
-                        height: img.height
-                    });
-                    img.onerror = reject;
-                    img.src = reader.result;
-                };
-                reader.onerror = reject;
-                reader.readAsDataURL(blob);
-            });
-        } catch (error) {
-            console.error('Erreur chargement image:', error);
-            throw error;
-        }
-    };
-
-    <?php if ($success_message): ?>
-    Swal.fire({
-        icon: 'success',
-        title: 'Succès',
-        text: '<?= addslashes($success_message) ?>',
-        timer: 2000,
-        showConfirmButton: false,
-        position: 'top-end',
-        toast: true,
-        background: '#28a745',
-        color: '#ffffff',
-        iconColor: '#ffffff',
-        timerProgressBar: true
-    });
-    <?php endif; ?>
-
-    let searchTerm = '';
-
-    function highlightSearchTerm(data, term) {
-        if (!term || !data) return data;
-        const regex = new RegExp('(' + term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ')', 'gi');
-        if (typeof data === 'string') {
-            if (data.indexOf('<') !== -1 && data.indexOf('>') !== -1) {
-                const tempDiv = document.createElement('div');
-                tempDiv.innerHTML = data;
-                const textContent = tempDiv.textContent || tempDiv.innerText;
-                if (textContent.match(regex)) {
-                    return data.replace(new RegExp(textContent.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g'),
-                        textContent.replace(regex, '<mark>$1</mark>'));
-                }
-                return data;
-            }
-            return data.replace(regex, '<mark>$1</mark>');
-        }
-        return data;
-    }
-
-    const gradeOrder = ['GENA', 'GAM', 'LTGEN', 'AMR', 'GENMAJ', 'VAM', 'GENBDE', 'CAM', 'COL', 'CPV',
-        'LTCOL', 'CPF', 'MAJ', 'CPC', 'CAPT', 'LDV', 'LT', 'EV', 'SLT', '2EV', 'A-C', 'MCP', 'A-1', '1MC',
-        'ADJ', 'MRC', '1SM', '1MR', 'SM', '2MR', '1SGT', 'MR', 'SGT', 'QMT', 'CPL', '1MT', '1CL', '2MT',
-        '2CL', 'MT', 'REC', 'ASK', 'COMD'
-    ];
-
-    function getGradeIndex(grade) {
-        const index = gradeOrder.indexOf(grade);
-        return index === -1 ? 999 : index;
-    }
-
-    const table = $('#table-controles').DataTable({
-        language: {
-            url: '//cdn.datatables.net/plug-ins/1.11.5/i18n/fr-FR.json',
-            search: '<i class="fas fa-search"></i>',
-            lengthMenu: "Afficher _MENU_ éléments",
-            info: "Affichage de _START_ à _END_ sur _TOTAL_ éléments",
-            infoEmpty: "Aucun élément",
-            infoFiltered: "(filtré de _MAX_ éléments)",
-            zeroRecords: "Aucun enregistrement correspondant",
-            paginate: {
-                first: "Premier",
-                previous: "Précédent",
-                next: "Suivant",
-                last: "Dernier"
-            }
-        },
-        order: [
-            [7, 'desc']
-        ], // Tri par date (colonne cachée)
-        pageLength: 10,
-        lengthMenu: [10, 25, 50, 100],
-        scrollX: true,
-        scrollY: '400px',
-        scrollCollapse: true,
-        paging: true,
-        columnDefs: [{
-                orderable: false,
-                targets: [0]
-            }, // checkbox
-            {
-                targets: [7],
-                visible: false
-            } // colonne date cachée
-        ],
-        createdRow: function(row, data, dataIndex) {
-            if (searchTerm) {
-                $(row).find('td').each(function() {
-                    const $td = $(this);
-                    if ($td.index() === 0) return;
-                    $td.html(highlightSearchTerm($td.html(), searchTerm));
+        const loadImage = async (url) => {
+            try {
+                const response = await fetch(url);
+                if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                const blob = await response.blob();
+                return await new Promise((resolve, reject) => {
+                    const reader = new FileReader();
+                    reader.onloadend = () => {
+                        const img = new Image();
+                        img.onload = () => resolve({
+                            dataURL: reader.result,
+                            width: img.width,
+                            height: img.height
+                        });
+                        img.onerror = reject;
+                        img.src = reader.result;
+                    };
+                    reader.onerror = reject;
+                    reader.readAsDataURL(blob);
                 });
+            } catch (error) {
+                console.error('Erreur chargement image:', error);
+                throw error;
             }
-        },
-        initComplete: function() {
-            const filterDiv = $('.dataTables_filter');
+        };
 
-            filterDiv.css({
-                'display': 'flex',
-                'align-items': 'center',
-                'gap': '10px',
-                'float': 'right'
-            });
+        <?php if ($success_message): ?>
+        Swal.fire({
+            icon: 'success',
+            title: 'Succès',
+            text: '<?= addslashes($success_message) ?>',
+            timer: 2000,
+            showConfirmButton: false,
+            position: 'top-end',
+            toast: true,
+            background: '#28a745',
+            color: '#ffffff',
+            iconColor: '#ffffff',
+            timerProgressBar: true
+        });
+        <?php endif; ?>
 
-            // Ajouter l'icône de recherche avant le champ (en dehors du label)
-            filterDiv.prepend(
-                '<i class="fas fa-search search-icon" style="color: #2e7d32; font-size: 1rem;"></i>'
-            );
+        let searchTerm = '';
 
-            const searchLabel = filterDiv.find('label');
-            searchLabel.css({
-                'display': 'flex',
-                'align-items': 'center',
-                'margin-bottom': '0',
-                'flex': '0 1 auto'
-            });
+        function highlightSearchTerm(data, term) {
+            if (!term || !data) return data;
+            const regex = new RegExp('(' + term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ')', 'gi');
+            if (typeof data === 'string') {
+                if (data.indexOf('<') !== -1 && data.indexOf('>') !== -1) {
+                    const tempDiv = document.createElement('div');
+                    tempDiv.innerHTML = data;
+                    const textContent = tempDiv.textContent || tempDiv.innerText;
+                    if (textContent.match(regex)) {
+                        return data.replace(new RegExp(textContent.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g'),
+                            textContent.replace(regex, '<mark>$1</mark>'));
+                    }
+                    return data;
+                }
+                return data.replace(regex, '<mark>$1</mark>');
+            }
+            return data;
+        }
 
-            // Supprimer l'icône existante dans le label (celle de language.search)
-            searchLabel.find('i').remove();
+        const gradeOrder = ['GENA', 'GAM', 'LTGEN', 'AMR', 'GENMAJ', 'VAM', 'GENBDE', 'CAM', 'COL', 'CPV',
+            'LTCOL', 'CPF', 'MAJ', 'CPC', 'CAPT', 'LDV', 'LT', 'EV', 'SLT', '2EV', 'A-C', 'MCP', 'A-1',
+            '1MC',
+            'ADJ', 'MRC', '1SM', '1MR', 'SM', '2MR', '1SGT', 'MR', 'SGT', 'QMT', 'CPL', '1MT', '1CL', '2MT',
+            '2CL', 'MT', 'REC', 'ASK', 'COMD'
+        ];
 
-            // Supprimer le texte "Rechercher :"
-            searchLabel.contents().filter(function() {
-                return this.nodeType === 3;
-            }).remove();
+        function getGradeIndex(grade) {
+            const index = gradeOrder.indexOf(grade);
+            return index === -1 ? 999 : index;
+        }
 
-            // Ajout du bouton "Nouveau contrôle"
-            filterDiv.append(`
+        const table = $('#table-controles').DataTable({
+            language: {
+                url: '//cdn.datatables.net/plug-ins/1.11.5/i18n/fr-FR.json',
+                search: '<i class="fas fa-search"></i>',
+                lengthMenu: "Afficher _MENU_ éléments",
+                info: "Affichage de _START_ à _END_ sur _TOTAL_ éléments",
+                infoEmpty: "Aucun élément",
+                infoFiltered: "(filtré de _MAX_ éléments)",
+                zeroRecords: "Aucun enregistrement correspondant",
+                paginate: {
+                    first: "Premier",
+                    previous: "Précédent",
+                    next: "Suivant",
+                    last: "Dernier"
+                }
+            },
+            order: [
+                [8, 'desc']
+            ], // Tri par date (colonne cachée, index 8)
+            pageLength: 10,
+            lengthMenu: [10, 25, 50, 100],
+            scrollX: true,
+            scrollY: '400px',
+            scrollCollapse: true,
+            paging: true,
+            columnDefs: [{
+                    orderable: false,
+                    targets: [0, 7]
+                }, // checkbox et QR Code non triables
+                {
+                    targets: [8],
+                    visible: false
+                } // colonne date cachée
+            ],
+            createdRow: function(row, data, dataIndex) {
+                if (searchTerm) {
+                    $(row).find('td').each(function() {
+                        const $td = $(this);
+                        if ($td.index() === 0) return;
+                        $td.html(highlightSearchTerm($td.html(), searchTerm));
+                    });
+                }
+            },
+            initComplete: function() {
+                const filterDiv = $('.dataTables_filter');
+
+                filterDiv.css({
+                    'display': 'flex',
+                    'align-items': 'center',
+                    'gap': '10px',
+                    'float': 'right'
+                });
+
+                // Ajouter l'icône de recherche avant le champ (en dehors du label)
+                filterDiv.prepend(
+                    '<i class="fas fa-search search-icon" style="color: #2e7d32; font-size: 1rem;"></i>'
+                );
+
+                const searchLabel = filterDiv.find('label');
+                searchLabel.css({
+                    'display': 'flex',
+                    'align-items': 'center',
+                    'margin-bottom': '0',
+                    'flex': '0 1 auto'
+                });
+
+                // Supprimer l'icône existante dans le label (celle de language.search)
+                searchLabel.find('i').remove();
+
+                // Supprimer le texte "Rechercher :"
+                searchLabel.contents().filter(function() {
+                    return this.nodeType === 3;
+                }).remove();
+
+                // Ajout du bouton "Nouveau contrôle"
+                filterDiv.append(`
                 <div class="action-buttons">
                     <a href="ajouter.php" class="btn-modern btn-primary-modern">
                         <i class="fas fa-user-plus"></i> Nouveau
@@ -1220,703 +1286,643 @@ $(document).ready(function() {
                 </div>
             `);
 
-            $('.dataTables_filter label').contents().filter(function() {
-                return this.nodeType === 3;
-            }).remove();
-        }
-    });
-
-    $('.dataTables_filter input').on('keyup search input', function() {
-        searchTerm = $(this).val();
-        setTimeout(() => {
-            if (searchTerm) {
-                $('#table-controles tbody tr').each(function() {
-                    $(this).find('td').each(function() {
-                        const $td = $(this);
-                        if ($td.index() === 0) return;
-                        const originalHtml = $td.html();
-                        if (!originalHtml.includes('<mark')) {
-                            $td.html(highlightSearchTerm(originalHtml,
-                                searchTerm));
-                        }
-                    });
-                });
-            } else {
-                table.rows().invalidate().draw(false);
+                $('.dataTables_filter label').contents().filter(function() {
+                    return this.nodeType === 3;
+                }).remove();
             }
-        }, 100);
-    });
+        });
 
-    function updateSelectAll() {
-        $('#select-all').prop('checked', $('.row-checkbox:checked').length === $('.row-checkbox').length);
-    }
+        $('.dataTables_filter input').on('keyup search input', function() {
+            searchTerm = $(this).val();
+            setTimeout(() => {
+                if (searchTerm) {
+                    $('#table-controles tbody tr').each(function() {
+                        $(this).find('td').each(function() {
+                            const $td = $(this);
+                            if ($td.index() === 0) return;
+                            const originalHtml = $td.html();
+                            if (!originalHtml.includes('<mark')) {
+                                $td.html(highlightSearchTerm(originalHtml,
+                                    searchTerm));
+                            }
+                        });
+                    });
+                } else {
+                    table.rows().invalidate().draw(false);
+                }
+            }, 100);
+        });
 
-    $('#select-all').on('change', function() {
-        $('.row-checkbox').prop('checked', $(this).prop('checked'));
-    });
-
-    $(document).on('change', '.row-checkbox', updateSelectAll);
-
-    table.on('draw', function() {
-        $('#select-all').prop('checked', false);
-    });
-
-    function updateFilterTags() {
-        const tags = [];
-        if ($('#mention-filter').val()) tags.push(`Mention : ${$('#mention-filter').val()}`);
-        if ($('#statut-filter').val()) tags.push(
-            `Statut : ${$('#statut-filter').find('option:selected').text()}`);
-        if ($('#zone-filter').val()) tags.push(`Zone : ${$('#zone-filter').find('option:selected').text()}`);
-        if ($('#categorie-filter').val()) tags.push(
-            `Catégorie : ${$('#categorie-filter').find('option:selected').text()}`);
-        if ($('#garnison-filter').val()) tags.push(
-            `Garnison : ${$('#garnison-filter').find('option:selected').text()}`);
-        if ($('#date-debut').val()) tags.push(`Du : ${$('#date-debut').val()}`);
-        if ($('#date-fin').val()) tags.push(`Au : ${$('#date-fin').val()}`);
-
-        const $tagsContainer = $('.filtre-tags');
-        $tagsContainer.empty();
-        tags.forEach(tag => $tagsContainer.append(`<span class="filtre-tag me-2">${tag}</span>`));
-        $tagsContainer.toggle(tags.length > 0);
-    }
-
-    $.fn.dataTable.ext.search.push(function(settings, data, dataIndex) {
-        if (settings.nTable.id !== 'table-controles') return true;
-
-        const row = table.row(dataIndex);
-        const rowNode = row.node();
-        const $row = $(rowNode);
-
-        const mention = $row.data('mention') || '';
-        const statut = $row.data('statut');
-        const zone = $row.data('zone') || '';
-        const categorie = $row.data('categorie') || '';
-        const garnison = $row.data('garnison') || '';
-        const dateIso = $row.data('date-order') || '';
-
-        const mentionFilter = $('#mention-filter').val();
-        const statutFilter = $('#statut-filter').val();
-        const zoneFilter = $('#zone-filter').val();
-        const categorieFilter = $('#categorie-filter').val();
-        const garnisonFilter = $('#garnison-filter').val();
-        const dateDebut = $('#date-debut').val();
-        const dateFin = $('#date-fin').val();
-
-        if (mentionFilter && mention !== mentionFilter) return false;
-        if (statutFilter !== '') {
-            if (Number(statut) !== Number(statutFilter)) return false;
+        function updateSelectAll() {
+            $('#select-all').prop('checked', $('.row-checkbox:checked').length === $('.row-checkbox').length);
         }
-        if (zoneFilter && zone !== zoneFilter) return false;
-        if (categorieFilter && categorie !== categorieFilter) return false;
-        if (garnisonFilter && garnison !== garnisonFilter) return false;
-        if (dateDebut && dateIso && dateIso < dateDebut) return false;
-        if (dateFin && dateIso && dateIso > dateFin) return false;
 
-        return true;
-    });
+        $('#select-all').on('change', function() {
+            $('.row-checkbox').prop('checked', $(this).prop('checked'));
+        });
 
-    $('#mention-filter, #statut-filter, #zone-filter, #categorie-filter, #garnison-filter, #date-debut, #date-fin')
-        .on('change keyup', function() {
+        $(document).on('change', '.row-checkbox', updateSelectAll);
+
+        table.on('draw', function() {
+            $('#select-all').prop('checked', false);
+        });
+
+        function updateFilterTags() {
+            const tags = [];
+            if ($('#mention-filter').val()) tags.push(`Mention : ${$('#mention-filter').val()}`);
+            if ($('#statut-filter').val()) tags.push(
+                `Statut : ${$('#statut-filter').find('option:selected').text()}`);
+            if ($('#zone-filter').val()) tags.push(
+                `Zone : ${$('#zone-filter').find('option:selected').text()}`);
+            if ($('#categorie-filter').val()) tags.push(
+                `Catégorie : ${$('#categorie-filter').find('option:selected').text()}`);
+            if ($('#garnison-filter').val()) tags.push(
+                `Garnison : ${$('#garnison-filter').find('option:selected').text()}`);
+            if ($('#date-debut').val()) tags.push(`Du : ${$('#date-debut').val()}`);
+            if ($('#date-fin').val()) tags.push(`Au : ${$('#date-fin').val()}`);
+
+            const $tagsContainer = $('.filtre-tags');
+            $tagsContainer.empty();
+            tags.forEach(tag => $tagsContainer.append(`<span class="filtre-tag me-2">${tag}</span>`));
+            $tagsContainer.toggle(tags.length > 0);
+        }
+
+        $.fn.dataTable.ext.search.push(function(settings, data, dataIndex) {
+            if (settings.nTable.id !== 'table-controles') return true;
+
+            const row = table.row(dataIndex);
+            const rowNode = row.node();
+            const $row = $(rowNode);
+
+            const mention = $row.data('mention') || '';
+            const statut = $row.data('statut');
+            const zone = $row.data('zone') || '';
+            const categorie = $row.data('categorie') || '';
+            const garnison = $row.data('garnison') || '';
+            const dateIso = $row.data('date-order') || '';
+
+            const mentionFilter = $('#mention-filter').val();
+            const statutFilter = $('#statut-filter').val();
+            const zoneFilter = $('#zone-filter').val();
+            const categorieFilter = $('#categorie-filter').val();
+            const garnisonFilter = $('#garnison-filter').val();
+            const dateDebut = $('#date-debut').val();
+            const dateFin = $('#date-fin').val();
+
+            if (mentionFilter && mention !== mentionFilter) return false;
+            if (statutFilter !== '') {
+                if (Number(statut) !== Number(statutFilter)) return false;
+            }
+            if (zoneFilter && zone !== zoneFilter) return false;
+            if (categorieFilter && categorie !== categorieFilter) return false;
+            if (garnisonFilter && garnison !== garnisonFilter) return false;
+            if (dateDebut && dateIso && dateIso < dateDebut) return false;
+            if (dateFin && dateIso && dateIso > dateFin) return false;
+
+            return true;
+        });
+
+        $('#mention-filter, #statut-filter, #zone-filter, #categorie-filter, #garnison-filter, #date-debut, #date-fin')
+            .on('change keyup', function() {
+                table.draw();
+                updateFilterTags();
+            });
+
+        $('#reset-filters').on('click', function() {
+            $('#mention-filter, #statut-filter, #zone-filter, #categorie-filter, #garnison-filter, #date-debut, #date-fin')
+                .val('');
             table.draw();
             updateFilterTags();
         });
 
-    $('#reset-filters').on('click', function() {
-        $('#mention-filter, #statut-filter, #zone-filter, #categorie-filter, #garnison-filter, #date-debut, #date-fin')
-            .val('');
-        table.draw();
-        updateFilterTags();
-    });
-
-    // Modal de sélection des champs
-    $('#choisir-champs').on('click', function() {
-        $('#champs-optionnels input[type="checkbox"]').each(function() {
-            const fieldName = $(this).val();
-            $(this).prop('checked', selectedExportFields[fieldName] || false);
+        // Modal de sélection des champs
+        $('#choisir-champs').on('click', function() {
+            $('#champs-optionnels input[type="checkbox"]').each(function() {
+                const fieldName = $(this).val();
+                $(this).prop('checked', selectedExportFields[fieldName] || false);
+            });
+            $('#modal-champs-export').fadeIn(300);
         });
-        $('#modal-champs-export').fadeIn(300);
-    });
 
-    $('#modal-champs-close, #modal-champs-annuler').on('click', function() {
-        $('#modal-champs-export').fadeOut(300);
-    });
-
-    $(window).on('click', function(e) {
-        if ($(e.target).is('#modal-champs-export')) {
+        $('#modal-champs-close, #modal-champs-annuler').on('click', function() {
             $('#modal-champs-export').fadeOut(300);
-        }
-    });
-
-    $('#modal-champs-confirmer').on('click', function() {
-        $('#champs-optionnels input[type="checkbox"]').each(function() {
-            const fieldName = $(this).val();
-            selectedExportFields[fieldName] = $(this).prop('checked');
         });
-        $('#modal-champs-export').fadeOut(300);
 
-        const selectedCount = Object.values(selectedExportFields).filter(v => v).length;
-        Swal.fire({
-            icon: 'success',
-            title: 'Champs sélectionnés',
-            text: `${selectedCount} champs seront exportés`,
-            timer: 1500,
-            showConfirmButton: false,
-            position: 'top-end',
-            toast: true
-        });
-    });
-
-    // Fonctions d'export
-    function getZoneFilterLabel(zones) {
-        if (zones && zones.length > 0) {
-            const validZones = zones.filter(z => z && z !== 'N/A');
-            if (validZones.length === 0) return "LISTE DES MILITAIRES CONTROLES";
-            if (validZones.length === 1) return `LISTE DES MILITAIRES CONTROLES DE LA ${validZones[0]}`;
-            const firstPart = validZones.slice(0, -1).join(', ');
-            const last = validZones[validZones.length - 1];
-            return `LISTE DES MILITAIRES CONTROLES DE LA ${firstPart} ET ${last}`;
-        } else {
-            const zoneSelect = $('#zone-filter');
-            const selectedZone = zoneSelect.val();
-            let zonesList = [];
-            if (selectedZone) {
-                zonesList = [selectedZone];
-            } else {
-                zoneSelect.find('option').each(function() {
-                    const val = $(this).val();
-                    if (val) zonesList.push(val);
-                });
+        $(window).on('click', function(e) {
+            if ($(e.target).is('#modal-champs-export')) {
+                $('#modal-champs-export').fadeOut(300);
             }
-            if (zonesList.length === 0) return "LISTE DES MILITAIRES CONTROLES";
-            if (zonesList.length === 1) return `LISTE DES MILITAIRES CONTROLES DE LA ${zonesList[0]}`;
-            const firstPart = zonesList.slice(0, -1).join(', ');
-            const last = zonesList[zonesList.length - 1];
-            return `LISTE DES MILITAIRES CONTROLES DE LA ${firstPart} ET ${last}`;
-        }
-    }
-
-    const fieldOrder = ['serie', 'matricule', 'noms', 'grade', 'ancien_beneficiaire', 'beneficiaire',
-        'lien_parente', 'unite', 'garnison', 'province', 'categorie', 'mention', 'observations',
-        'zdef', 'date_controle'
-    ];
-
-    const fullLabels = {
-        'serie': 'SÉRIE',
-        'matricule': 'MATRICULE',
-        'noms': 'NOMS',
-        'grade': 'GRADE',
-        'ancien_beneficiaire': 'ANCIEN BÉNÉFICIAIRE',
-        'beneficiaire': 'BÉNÉFICIAIRE',
-        'lien_parente': 'LIEN PARENTÉ',
-        'unite': 'UNITÉ',
-        'garnison': 'GARNISON',
-        'province': 'PROVINCE',
-        'categorie': 'CATÉGORIE',
-        'mention': 'MENTION',
-        'observations': 'OBSERVATIONS',
-        'zdef': 'ZDEF',
-        'date_controle': 'DATE CONTRÔLE'
-    };
-
-    const abbrLabels = {
-        'serie': 'SÉRIE',
-        'matricule': 'MATRICULE',
-        'noms': 'NOMS',
-        'grade': 'GRADE',
-        'ancien_beneficiaire': 'ANC. BÉNÉF.',
-        'beneficiaire': 'BÉNÉFICIAIRE',
-        'lien_parente': 'LIEN',
-        'unite': 'UNITÉ',
-        'garnison': 'GARNISON',
-        'province': 'PROVINCE',
-        'categorie': 'CATÉGORIE',
-        'mention': 'MENTION',
-        'observations': 'OBN.',
-        'zdef': 'ZDEF',
-        'date_controle': 'DATE'
-    };
-
-    function getFilteredRows() {
-        let rowsToExport = [];
-        const checkboxes = $('.row-checkbox:checked');
-        if (checkboxes.length > 0) {
-            checkboxes.each(function() {
-                const row = table.row($(this).closest('tr'));
-                if (row) rowsToExport.push(row);
-            });
-        } else {
-            table.rows({
-                search: 'applied',
-                filter: 'applied'
-            }).every(function() {
-                rowsToExport.push(this);
-            });
-        }
-        return rowsToExport;
-    }
-
-    function extractRowData(row) {
-        const node = row.node();
-        const $cells = $(node).find('td');
-        const $row = $(node);
-        const rowData = {};
-
-        rowData.matricule = $cells.eq(1).text().trim().toUpperCase();
-        rowData.noms = $cells.eq(2).text().trim().toUpperCase();
-        rowData.grade = $cells.eq(3).text().trim().toUpperCase();
-        rowData.unite = $cells.eq(4).text().trim().toUpperCase();
-        let obs = $cells.eq(5).text().trim().toUpperCase();
-        obs = (obs === 'NULL') ? '' : obs;
-        rowData.observations = obs;
-        rowData.zdef = $cells.eq(6).text().trim().toUpperCase();
-
-        rowData.ancien_beneficiaire = $row.attr('data-ancien-beneficiaire') || '';
-        rowData.beneficiaire = $row.attr('data-beneficiaire') || '';
-        let lien = $row.attr('data-lien-parente') || '';
-        if (['FRÈRE', 'SŒUR', 'PÈRE', 'MÈRE'].includes(lien.toUpperCase())) lien = 'TUTEUR';
-        rowData.lien_parente = lien;
-        rowData.garnison = $row.attr('data-garnison') || '';
-        rowData.province = $row.attr('data-province') || '';
-        rowData.categorie = $row.attr('data-categorie-libelle') || $row.data('categorie') || '';
-        rowData.mention = $row.attr('data-mention') || '';
-        rowData.date_controle = $row.attr('data-date-controle') || '';
-        rowData.zoneAttr = $row.data('zone') || '';
-
-        return rowData;
-    }
-
-    function prepareExportData(useAbbreviatedHeaders) {
-        const rows = getFilteredRows();
-        if (rows.length === 0) return null;
-
-        const rawRows = rows.map(row => extractRowData(row));
-
-        rawRows.sort((a, b) => {
-            const gradeA = a.grade || '';
-            const gradeB = b.grade || '';
-            const matriculeA = a.matricule || '';
-            const matriculeB = b.matricule || '';
-            const idxA = getGradeIndex(gradeA);
-            const idxB = getGradeIndex(gradeB);
-            if (idxA !== idxB) return idxA - idxB;
-            return matriculeA.localeCompare(matriculeB);
         });
 
-        const selectedFields = fieldOrder.filter(field => selectedExportFields[field]);
+        $('#modal-champs-confirmer').on('click', function() {
+            $('#champs-optionnels input[type="checkbox"]').each(function() {
+                const fieldName = $(this).val();
+                selectedExportFields[fieldName] = $(this).prop('checked');
+            });
+            $('#modal-champs-export').fadeOut(300);
 
-        const labels = useAbbreviatedHeaders ? abbrLabels : fullLabels;
-        const headers = selectedFields.map(field => labels[field]);
+            const selectedCount = Object.values(selectedExportFields).filter(v => v).length;
+            Swal.fire({
+                icon: 'success',
+                title: 'Champs sélectionnés',
+                text: `${selectedCount} champs seront exportés`,
+                timer: 1500,
+                showConfirmButton: false,
+                position: 'top-end',
+                toast: true
+            });
+        });
 
-        const data = rawRows.map((row, index) => {
-            return selectedFields.map(field => {
-                if (field === 'serie') {
-                    return (index + 1).toString();
-                } else {
-                    return row[field] || '';
+        // Gestion du QR Code avec qrcode-generator
+        $(document).on('click', '.btn-qr-code', function() {
+            const info = $(this).data('info');
+
+            // Remplir les champs d'informations dans la modal
+            $('#qrMatricule').text(info.matricule || '');
+            $('#qrNoms').text(info.noms || '');
+            $('#qrGrade').text(info.grade || '');
+            $('#qrDateControle').text(info.date_controle || '');
+            $('#qrMention').text(info.mention || '');
+
+            if (!info) {
+                console.error("Aucune donnée trouvée dans data-info");
+                return;
+            }
+
+            // Construction de la chaîne à encoder
+            const textToEncode = `Matricule : ${info.matricule || ''}\n` +
+                `Noms : ${info.noms || ''}\n` +
+                `Grade : ${info.grade || ''}\n` +
+                `Date contrôle : ${info.date_controle || ''}\n` +
+                `Mention : ${info.mention || ''}`;
+
+            // Génération du QR code avec qrcode-generator
+            const qr = qrcode(0, 'M'); // niveau de correction M
+            qr.addData(textToEncode);
+            qr.make();
+
+            // Récupérer le canvas
+            const canvas = document.getElementById('qrcodeCanvas');
+            if (!canvas) {
+                console.error("Canvas #qrcodeCanvas introuvable");
+                return;
+            }
+
+            // Dimensions du canvas (ex: 300x300)
+            const size = 300;
+            canvas.width = size;
+            canvas.height = size;
+
+            const ctx = canvas.getContext('2d');
+            const cellSize = size / qr.getModuleCount();
+
+            // Dessiner le QR code
+            for (let row = 0; row < qr.getModuleCount(); row++) {
+                for (let col = 0; col < qr.getModuleCount(); col++) {
+                    ctx.fillStyle = qr.isDark(row, col) ? '#000000' : '#ffffff';
+                    ctx.fillRect(col * cellSize, row * cellSize, cellSize, cellSize);
                 }
-            });
-        });
+            }
 
-        const zonesSet = new Set();
-        rawRows.forEach(row => {
-            if (row.zoneAttr && row.zoneAttr !== 'N/A') zonesSet.add(row.zoneAttr);
+            // Ouvrir le modal
+            $('#qrCodeModal').modal('show');
         });
-        const zoneLabel = getZoneFilterLabel(Array.from(zonesSet));
+        // Fonctions d'export (inchangées)
+        function getZoneFilterLabel(zones) {
+            if (zones && zones.length > 0) {
+                const validZones = zones.filter(z => z && z !== 'N/A');
+                if (validZones.length === 0) return "LISTE DES MILITAIRES CONTROLES";
+                if (validZones.length === 1) return `LISTE DES MILITAIRES CONTROLES DE LA ${validZones[0]}`;
+                const firstPart = validZones.slice(0, -1).join(', ');
+                const last = validZones[validZones.length - 1];
+                return `LISTE DES MILITAIRES CONTROLES DE LA ${firstPart} ET ${last}`;
+            } else {
+                const zoneSelect = $('#zone-filter');
+                const selectedZone = zoneSelect.val();
+                let zonesList = [];
+                if (selectedZone) {
+                    zonesList = [selectedZone];
+                } else {
+                    zoneSelect.find('option').each(function() {
+                        const val = $(this).val();
+                        if (val) zonesList.push(val);
+                    });
+                }
+                if (zonesList.length === 0) return "LISTE DES MILITAIRES CONTROLES";
+                if (zonesList.length === 1) return `LISTE DES MILITAIRES CONTROLES DE LA ${zonesList[0]}`;
+                const firstPart = zonesList.slice(0, -1).join(', ');
+                const last = zonesList[zonesList.length - 1];
+                return `LISTE DES MILITAIRES CONTROLES DE LA ${firstPart} ET ${last}`;
+            }
+        }
 
-        const headerLines = [
-            ['MINISTERE DE LA DEFENSE NATIONALE ET ANCIENS COMBATTANTS'],
-            ['INSPECTORAT GENERAL DES FARDC'],
-            [zoneLabel]
+        const fieldOrder = ['serie', 'matricule', 'noms', 'grade', 'ancien_beneficiaire', 'beneficiaire',
+            'lien_parente', 'unite', 'garnison', 'province', 'categorie', 'mention', 'observations',
+            'zdef', 'date_controle'
         ];
 
-        return {
-            headerLines,
-            headers,
-            data
+        const fullLabels = {
+            'serie': 'SÉRIE',
+            'matricule': 'MATRICULE',
+            'noms': 'NOMS',
+            'grade': 'GRADE',
+            'ancien_beneficiaire': 'ANCIEN BÉNÉFICIAIRE',
+            'beneficiaire': 'BÉNÉFICIAIRE',
+            'lien_parente': 'LIEN PARENTÉ',
+            'unite': 'UNITÉ',
+            'garnison': 'GARNISON',
+            'province': 'PROVINCE',
+            'categorie': 'CATÉGORIE',
+            'mention': 'MENTION',
+            'observations': 'OBSERVATIONS',
+            'zdef': 'ZDEF',
+            'date_controle': 'DATE CONTRÔLE'
         };
-    }
 
-    async function generatePDFBlob(exportData) {
-        const {
-            headerLines,
-            headers,
-            data
-        } = exportData;
-        const headerStrings = headerLines.map(line => line[0]);
+        const abbrLabels = {
+            'serie': 'SÉRIE',
+            'matricule': 'MATRICULE',
+            'noms': 'NOMS',
+            'grade': 'GRADE',
+            'ancien_beneficiaire': 'ANC. BÉNÉF.',
+            'beneficiaire': 'BÉNÉFICIAIRE',
+            'lien_parente': 'LIEN',
+            'unite': 'UNITÉ',
+            'garnison': 'GARNISON',
+            'province': 'PROVINCE',
+            'categorie': 'CATÉGORIE',
+            'mention': 'MENTION',
+            'observations': 'OBN.',
+            'zdef': 'ZDEF',
+            'date_controle': 'DATE'
+        };
 
-        let logo, qrCode, watermark;
-        try {
-            [logo, qrCode, watermark] = await Promise.all([
-                loadImage('../../assets/img/new-logo-ig-fardc.png'),
-                loadImage('../../assets/img/qr-code-ig-fardc.png'),
-                loadImage('../../assets/img/filigrane_logo_ig_fardc.png')
-            ]);
-        } catch (imageError) {
-            console.warn('Images non trouvées', imageError);
-            logo = {
-                dataURL: null,
-                width: 100,
-                height: 100
-            };
-            qrCode = {
-                dataURL: null,
-                width: 100,
-                height: 100
-            };
-            watermark = {
-                dataURL: null,
-                width: 100,
-                height: 100
+        function getFilteredRows() {
+            let rowsToExport = [];
+            const checkboxes = $('.row-checkbox:checked');
+            if (checkboxes.length > 0) {
+                checkboxes.each(function() {
+                    const row = table.row($(this).closest('tr'));
+                    if (row) rowsToExport.push(row);
+                });
+            } else {
+                table.rows({
+                    search: 'applied',
+                    filter: 'applied'
+                }).every(function() {
+                    rowsToExport.push(this);
+                });
+            }
+            return rowsToExport;
+        }
+
+        function extractRowData(row) {
+            const node = row.node();
+            const $cells = $(node).find('td');
+            const $row = $(node);
+            const rowData = {};
+
+            rowData.matricule = $cells.eq(1).text().trim().toUpperCase();
+            rowData.noms = $cells.eq(2).text().trim().toUpperCase();
+            rowData.grade = $cells.eq(3).text().trim().toUpperCase();
+            rowData.unite = $cells.eq(4).text().trim().toUpperCase();
+            let obs = $cells.eq(5).text().trim().toUpperCase();
+            obs = (obs === 'NULL') ? '' : obs;
+            rowData.observations = obs;
+            rowData.zdef = $cells.eq(6).text().trim().toUpperCase();
+
+            rowData.ancien_beneficiaire = $row.attr('data-ancien-beneficiaire') || '';
+            rowData.beneficiaire = $row.attr('data-beneficiaire') || '';
+            let lien = $row.attr('data-lien-parente') || '';
+            if (['FRÈRE', 'SŒUR', 'PÈRE', 'MÈRE'].includes(lien.toUpperCase())) lien = 'TUTEUR';
+            rowData.lien_parente = lien;
+            rowData.garnison = $row.attr('data-garnison') || '';
+            rowData.province = $row.attr('data-province') || '';
+            rowData.categorie = $row.attr('data-categorie-libelle') || $row.data('categorie') || '';
+            rowData.mention = $row.attr('data-mention') || '';
+            rowData.date_controle = $row.attr('data-date-controle') || '';
+            rowData.zoneAttr = $row.data('zone') || '';
+
+            return rowData;
+        }
+
+        function prepareExportData(useAbbreviatedHeaders) {
+            const rows = getFilteredRows();
+            if (rows.length === 0) return null;
+
+            const rawRows = rows.map(row => extractRowData(row));
+
+            rawRows.sort((a, b) => {
+                const gradeA = a.grade || '';
+                const gradeB = b.grade || '';
+                const matriculeA = a.matricule || '';
+                const matriculeB = b.matricule || '';
+                const idxA = getGradeIndex(gradeA);
+                const idxB = getGradeIndex(gradeB);
+                if (idxA !== idxB) return idxA - idxB;
+                return matriculeA.localeCompare(matriculeB);
+            });
+
+            const selectedFields = fieldOrder.filter(field => selectedExportFields[field]);
+
+            const labels = useAbbreviatedHeaders ? abbrLabels : fullLabels;
+            const headers = selectedFields.map(field => labels[field]);
+
+            const data = rawRows.map((row, index) => {
+                return selectedFields.map(field => {
+                    if (field === 'serie') {
+                        return (index + 1).toString();
+                    } else {
+                        return row[field] || '';
+                    }
+                });
+            });
+
+            const zonesSet = new Set();
+            rawRows.forEach(row => {
+                if (row.zoneAttr && row.zoneAttr !== 'N/A') zonesSet.add(row.zoneAttr);
+            });
+            const zoneLabel = getZoneFilterLabel(Array.from(zonesSet));
+
+            const headerLines = [
+                ['MINISTERE DE LA DEFENSE NATIONALE ET ANCIENS COMBATTANTS'],
+                ['INSPECTORAT GENERAL DES FARDC'],
+                [zoneLabel]
+            ];
+
+            return {
+                headerLines,
+                headers,
+                data
             };
         }
 
-        const {
-            jsPDF
-        } = window.jspdf;
-        const doc = new jsPDF({
-            orientation: 'landscape',
-            unit: 'mm',
-            format: 'a4'
-        });
+        async function generatePDFBlob(exportData) {
+            const {
+                headerLines,
+                headers,
+                data
+            } = exportData;
+            const headerStrings = headerLines.map(line => line[0]);
 
-        const pageWidth = doc.internal.pageSize.width;
-        const pageHeight = doc.internal.pageSize.height;
-        const margin = 15;
-        const rightMargin = 15;
-        const topMargin = 50;
-        const bottomMargin = 35;
-
-        const columnStyles = {};
-        headers.forEach((_, index) => {
-            columnStyles[index] = {
-                halign: index === 0 ? 'center' : 'left'
-            };
-        });
-
-        let headerAdded = false;
-
-        function addWatermark() {
-            if (!watermark.dataURL) return;
+            let logo, qrCode, watermark;
             try {
-                doc.saveGraphicsState();
-                doc.setGState(new doc.GState({
-                    opacity: 0.2
-                }));
-                const wmWidth = 100;
-                const wmHeight = (watermark.height / watermark.width) * wmWidth;
-                const x = (pageWidth - wmWidth) / 2;
-                const y = (pageHeight - wmHeight) / 2;
-                doc.addImage(watermark.dataURL, 'PNG', x, y, wmWidth, wmHeight);
-                doc.restoreGraphicsState();
-            } catch (e) {
-                console.warn('Impossible d\'ajouter le filigrane', e);
+                [logo, qrCode, watermark] = await Promise.all([
+                    loadImage('../../assets/img/new-logo-ig-fardc.png'),
+                    loadImage('../../assets/img/qr-code-ig-fardc.png'),
+                    loadImage('../../assets/img/filigrane_logo_ig_fardc.png')
+                ]);
+            } catch (imageError) {
+                console.warn('Images non trouvées', imageError);
+                logo = {
+                    dataURL: null,
+                    width: 100,
+                    height: 100
+                };
+                qrCode = {
+                    dataURL: null,
+                    width: 100,
+                    height: 100
+                };
+                watermark = {
+                    dataURL: null,
+                    width: 100,
+                    height: 100
+                };
             }
-        }
 
-        function addFirstPageHeader() {
-            if (logo.dataURL) {
+            const {
+                jsPDF
+            } = window.jspdf;
+            const doc = new jsPDF({
+                orientation: 'landscape',
+                unit: 'mm',
+                format: 'a4'
+            });
+
+            const pageWidth = doc.internal.pageSize.width;
+            const pageHeight = doc.internal.pageSize.height;
+            const margin = 15;
+            const rightMargin = 15;
+            const topMargin = 50;
+            const bottomMargin = 35;
+
+            const columnStyles = {};
+            headers.forEach((_, index) => {
+                columnStyles[index] = {
+                    halign: index === 0 ? 'center' : 'left'
+                };
+            });
+
+            let headerAdded = false;
+
+            function addWatermark() {
+                if (!watermark.dataURL) return;
                 try {
-                    const logoHeight = 18;
-                    const logoWidth = (logo.width / logo.height) * logoHeight;
-                    doc.addImage(logo.dataURL, 'PNG', margin, 8, logoWidth, logoHeight);
+                    doc.saveGraphicsState();
+                    doc.setGState(new doc.GState({
+                        opacity: 0.2
+                    }));
+                    const wmWidth = 100;
+                    const wmHeight = (watermark.height / watermark.width) * wmWidth;
+                    const x = (pageWidth - wmWidth) / 2;
+                    const y = (pageHeight - wmHeight) / 2;
+                    doc.addImage(watermark.dataURL, 'PNG', x, y, wmWidth, wmHeight);
+                    doc.restoreGraphicsState();
                 } catch (e) {
-                    console.warn('Impossible d\'ajouter le logo');
+                    console.warn('Impossible d\'ajouter le filigrane', e);
                 }
             }
 
-            doc.setFontSize(9);
-            doc.setTextColor(100);
-            doc.setFont('helvetica', 'normal');
-            const dateStr = 'Kinshasa, le ' + new Date().toLocaleDateString('fr-FR');
-            doc.text(dateStr, pageWidth - rightMargin, 12, {
-                align: 'right'
-            });
-
-            doc.setFontSize(12);
-            doc.setTextColor(0, 0, 0);
-            doc.setFont('helvetica', 'bold');
-            doc.text(headerStrings[0], pageWidth / 2, 25, {
-                align: 'center'
-            });
-
-            doc.setFontSize(11);
-            doc.text(headerStrings[1], pageWidth / 2, 32, {
-                align: 'center'
-            });
-
-            doc.setFontSize(14);
-            doc.setTextColor(255, 0, 0);
-            doc.text(headerStrings[2], pageWidth / 2, 42, {
-                align: 'center'
-            });
-
-            doc.setDrawColor(200);
-            doc.setLineWidth(0.5);
-            doc.line(margin, 48, pageWidth - rightMargin, 48);
-
-            headerAdded = true;
-        }
-
-        function addFooter(pageNumber) {
-            const footerY = pageHeight - 15;
-            const lineY = pageHeight - 20;
-            const lineWidth = pageWidth - margin - rightMargin;
-            const segmentWidth = lineWidth / 3;
-
-            doc.setFillColor(0, 162, 232);
-            doc.rect(margin, lineY, segmentWidth, 1, 'F');
-
-            doc.setFillColor(255, 215, 0);
-            doc.rect(margin + segmentWidth, lineY, segmentWidth, 1, 'F');
-
-            doc.setFillColor(239, 43, 45);
-            doc.rect(margin + (2 * segmentWidth), lineY, segmentWidth, 1, 'F');
-
-            if (qrCode.dataURL) {
-                try {
-                    const qrSize = 8;
-                    const qrX = pageWidth - rightMargin - qrSize;
-                    const qrY = lineY - qrSize;
-                    doc.addImage(qrCode.dataURL, 'PNG', qrX, qrY, qrSize, qrSize);
-                } catch (e) {
-                    console.warn('Impossible d\'ajouter le QR code');
+            function addFirstPageHeader() {
+                if (logo.dataURL) {
+                    try {
+                        const logoHeight = 18;
+                        const logoWidth = (logo.width / logo.height) * logoHeight;
+                        doc.addImage(logo.dataURL, 'PNG', margin, 8, logoWidth, logoHeight);
+                    } catch (e) {
+                        console.warn('Impossible d\'ajouter le logo');
+                    }
                 }
-            }
 
-            doc.setFontSize(7);
-            doc.setTextColor(100);
-            doc.setFont('helvetica', 'normal');
-            doc.text(
-                'Inspectorat Général des FARDC, Avenue des écuries, N°54, Quartier Joli Parc, Commune de NGALIEMA',
-                pageWidth / 2, footerY, {
+                doc.setFontSize(9);
+                doc.setTextColor(100);
+                doc.setFont('helvetica', 'normal');
+                const dateStr = 'Kinshasa, le ' + new Date().toLocaleDateString('fr-FR');
+                doc.text(dateStr, pageWidth - rightMargin, 12, {
+                    align: 'right'
+                });
+
+                doc.setFontSize(12);
+                doc.setTextColor(0, 0, 0);
+                doc.setFont('helvetica', 'bold');
+                doc.text(headerStrings[0], pageWidth / 2, 25, {
                     align: 'center'
-                }
-            );
-            doc.setFont('times', 'italic');
-            doc.text('Emails : infoigfardc2017@gmail.com; igfardc2017@yahoo.fr',
-                pageWidth / 2, footerY + 5, {
+                });
+
+                doc.setFontSize(11);
+                doc.text(headerStrings[1], pageWidth / 2, 32, {
                     align: 'center'
-                }
-            );
-            doc.setFont('helvetica', 'normal');
-            doc.setFontSize(6);
-            doc.text(`Page ${pageNumber}`, pageWidth - rightMargin, pageHeight - 8, {
-                align: 'right'
-            });
-        }
+                });
 
-        doc.autoTable({
-            head: [headers],
-            body: data,
-            startY: topMargin,
-            margin: {
-                left: margin,
-                right: rightMargin,
-                bottom: bottomMargin
-            },
-            styles: {
-                fontSize: 7,
-                cellPadding: 2,
-                font: 'helvetica',
-                halign: 'left',
-                valign: 'middle',
-                lineColor: [200, 200, 200],
-                lineWidth: 0.1
-            },
-            headStyles: {
-                fillColor: [255, 255, 255],
-                textColor: [0, 0, 0],
-                fontStyle: 'bold',
-                halign: 'center',
-                fontSize: 7,
-                lineColor: [200, 200, 200],
-                lineWidth: 0.1
-            },
-            columnStyles: columnStyles,
-            showHead: 'firstPage',
-            didDrawPage: function(data) {
-                addWatermark();
-                if (data.pageNumber === 1 && !headerAdded) {
-                    addFirstPageHeader();
-                }
-                addFooter(data.pageNumber);
+                doc.setFontSize(14);
+                doc.setTextColor(255, 0, 0);
+                doc.text(headerStrings[2], pageWidth / 2, 42, {
+                    align: 'center'
+                });
+
+                doc.setDrawColor(200);
+                doc.setLineWidth(0.5);
+                doc.line(margin, 48, pageWidth - rightMargin, 48);
+
+                headerAdded = true;
             }
-        });
 
-        return doc.output('blob');
-    }
+            function addFooter(pageNumber) {
+                const footerY = pageHeight - 15;
+                const lineY = pageHeight - 20;
+                const lineWidth = pageWidth - margin - rightMargin;
+                const segmentWidth = lineWidth / 3;
 
-    // --- Export CSV ---
-    $('#export-csv').on('click', function() {
-        const filters = {
-            mention: $('#mention-filter').val(),
-            statut: $('#statut-filter').val(),
-            zone: $('#zone-filter').val(),
-            categorie: $('#categorie-filter').val(),
-            garnison: $('#garnison-filter').val(),
-            date_debut: $('#date-debut').val(),
-            date_fin: $('#date-fin').val()
-        };
-        $.get('?ajax=log_export', {
-            type: 'CSV',
-            filtres: JSON.stringify(filters)
-        });
+                doc.setFillColor(0, 162, 232);
+                doc.rect(margin, lineY, segmentWidth, 1, 'F');
 
-        const exportData = prepareExportData(false);
-        if (!exportData || exportData.data.length === 0) {
-            return Swal.fire('Aucune donnée à exporter', '', 'info');
-        }
-        const csvHeaderLines = exportData.headerLines.map(line => line[0]);
-        const csvContent = [...csvHeaderLines, '', exportData.headers.join(';'), ...exportData.data.map(
-            r => r.join(';'))].join('\n');
-        const blob = new Blob(["\uFEFF" + csvContent], {
-            type: 'text/csv;charset=utf-8;'
-        });
-        const link = document.createElement('a');
-        link.href = URL.createObjectURL(blob);
-        link.download = `controles_${getTimestamp()}.csv`;
-        link.click();
-    });
+                doc.setFillColor(255, 215, 0);
+                doc.rect(margin + segmentWidth, lineY, segmentWidth, 1, 'F');
 
-    // --- Export Excel ---
-    $('#export-excel').on('click', function() {
-        const filters = {
-            mention: $('#mention-filter').val(),
-            statut: $('#statut-filter').val(),
-            zone: $('#zone-filter').val(),
-            categorie: $('#categorie-filter').val(),
-            garnison: $('#garnison-filter').val(),
-            date_debut: $('#date-debut').val(),
-            date_fin: $('#date-fin').val()
-        };
-        $.get('?ajax=log_export', {
-            type: 'Excel',
-            filtres: JSON.stringify(filters)
-        });
+                doc.setFillColor(239, 43, 45);
+                doc.rect(margin + (2 * segmentWidth), lineY, segmentWidth, 1, 'F');
 
-        const exportData = prepareExportData(false);
-        if (!exportData || exportData.data.length === 0) {
-            return Swal.fire('Aucune donnée à exporter', '', 'info');
-        }
-        const worksheetData = [...exportData.headerLines, [], exportData.headers, ...exportData.data];
-        const wb = XLSX.utils.book_new();
-        const ws = XLSX.utils.aoa_to_sheet(worksheetData);
-        const range = XLSX.utils.decode_range(ws['!ref']);
-        if (!ws['!merges']) ws['!merges'] = [];
-        for (let i = 0; i < 3; i++) {
-            ws['!merges'].push({
-                s: {
-                    r: i,
-                    c: 0
+                if (qrCode.dataURL) {
+                    try {
+                        const qrSize = 8;
+                        const qrX = pageWidth - rightMargin - qrSize;
+                        const qrY = lineY - qrSize;
+                        doc.addImage(qrCode.dataURL, 'PNG', qrX, qrY, qrSize, qrSize);
+                    } catch (e) {
+                        console.warn('Impossible d\'ajouter le QR code');
+                    }
+                }
+
+                doc.setFontSize(7);
+                doc.setTextColor(100);
+                doc.setFont('helvetica', 'normal');
+                doc.text(
+                    'Inspectorat Général des FARDC, Avenue des écuries, N°54, Quartier Joli Parc, Commune de NGALIEMA',
+                    pageWidth / 2, footerY, {
+                        align: 'center'
+                    }
+                );
+                doc.setFont('times', 'italic');
+                doc.text('Emails : infoigfardc2017@gmail.com; igfardc2017@yahoo.fr',
+                    pageWidth / 2, footerY + 5, {
+                        align: 'center'
+                    }
+                );
+                doc.setFont('helvetica', 'normal');
+                doc.setFontSize(6);
+                doc.text(`Page ${pageNumber}`, pageWidth - rightMargin, pageHeight - 8, {
+                    align: 'right'
+                });
+            }
+
+            doc.autoTable({
+                head: [headers],
+                body: data,
+                startY: topMargin,
+                margin: {
+                    left: margin,
+                    right: rightMargin,
+                    bottom: bottomMargin
                 },
-                e: {
-                    r: i,
-                    c: exportData.headers.length - 1
+                styles: {
+                    fontSize: 7,
+                    cellPadding: 2,
+                    font: 'helvetica',
+                    halign: 'left',
+                    valign: 'middle',
+                    lineColor: [200, 200, 200],
+                    lineWidth: 0.1
+                },
+                headStyles: {
+                    fillColor: [255, 255, 255],
+                    textColor: [0, 0, 0],
+                    fontStyle: 'bold',
+                    halign: 'center',
+                    fontSize: 7,
+                    lineColor: [200, 200, 200],
+                    lineWidth: 0.1
+                },
+                columnStyles: columnStyles,
+                showHead: 'firstPage',
+                didDrawPage: function(data) {
+                    addWatermark();
+                    if (data.pageNumber === 1 && !headerAdded) {
+                        addFirstPageHeader();
+                    }
+                    addFooter(data.pageNumber);
                 }
             });
+
+            return doc.output('blob');
         }
-        XLSX.utils.book_append_sheet(wb, ws, 'CONTRÔLES');
-        XLSX.writeFile(wb, `controles_${getTimestamp()}.xlsx`);
-    });
 
-    // --- Export PDF ---
-    $('#export-pdf').on('click', async function() {
-        const filters = {
-            mention: $('#mention-filter').val(),
-            statut: $('#statut-filter').val(),
-            zone: $('#zone-filter').val(),
-            categorie: $('#categorie-filter').val(),
-            garnison: $('#garnison-filter').val(),
-            date_debut: $('#date-debut').val(),
-            date_fin: $('#date-fin').val()
-        };
-        $.get('?ajax=log_export', {
-            type: 'PDF',
-            filtres: JSON.stringify(filters)
-        });
-
-        const exportData = prepareExportData(true);
-        if (!exportData || exportData.data.length === 0) {
-            return Swal.fire({
-                icon: 'info',
-                title: 'Aucune donnée à exporter',
-                text: 'Veuillez sélectionner des lignes ou vérifier vos filtres.'
+        // --- Export CSV ---
+        $('#export-csv').on('click', function() {
+            const filters = {
+                mention: $('#mention-filter').val(),
+                statut: $('#statut-filter').val(),
+                zone: $('#zone-filter').val(),
+                categorie: $('#categorie-filter').val(),
+                garnison: $('#garnison-filter').val(),
+                date_debut: $('#date-debut').val(),
+                date_fin: $('#date-fin').val()
+            };
+            $.get('?ajax=log_export', {
+                type: 'CSV',
+                filtres: JSON.stringify(filters)
             });
-        }
 
-        Swal.fire({
-            title: 'Préparation du PDF...',
-            text: 'Chargement des images',
-            allowOutsideClick: false,
-            didOpen: () => Swal.showLoading()
-        });
-
-        try {
-            const pdfBlob = await generatePDFBlob(exportData);
-            const link = document.createElement('a');
-            link.href = URL.createObjectURL(pdfBlob);
-            link.download = `controles_${getTimestamp()}.pdf`;
-            link.click();
-            Swal.close();
-        } catch (error) {
-            Swal.close();
-            console.error('Erreur PDF:', error);
-            Swal.fire({
-                icon: 'error',
-                title: 'Erreur',
-                text: 'Une erreur est survenue lors de la génération du PDF.'
-            });
-        }
-    });
-
-    // --- Export ZIP ---
-    $('#export-zip').on('click', async function() {
-        const filters = {
-            mention: $('#mention-filter').val(),
-            statut: $('#statut-filter').val(),
-            zone: $('#zone-filter').val(),
-            categorie: $('#categorie-filter').val(),
-            garnison: $('#garnison-filter').val(),
-            date_debut: $('#date-debut').val(),
-            date_fin: $('#date-fin').val()
-        };
-        $.get('?ajax=log_export', {
-            type: 'ZIP',
-            filtres: JSON.stringify(filters)
-        });
-
-        const exportDataFull = prepareExportData(false);
-        const exportDataAbbr = prepareExportData(true);
-        if (!exportDataFull || exportDataFull.data.length === 0) {
-            return Swal.fire('Aucune donnée à exporter', '', 'info');
-        }
-
-        Swal.fire({
-            title: 'Génération du ZIP...',
-            text: 'Préparation des fichiers',
-            allowOutsideClick: false,
-            didOpen: () => Swal.showLoading()
-        });
-
-        try {
-            // 1. Fichier CSV
-            const csvHeaderLines = exportDataFull.headerLines.map(line => line[0]);
-            const csvContent = [
-                ...csvHeaderLines,
-                '',
-                exportDataFull.headers.join(';'),
-                ...exportDataFull.data.map(r => r.join(';'))
+            const exportData = prepareExportData(false);
+            if (!exportData || exportData.data.length === 0) {
+                return Swal.fire('Aucune donnée à exporter', '', 'info');
+            }
+            const csvHeaderLines = exportData.headerLines.map(line => line[0]);
+            const csvContent = [...csvHeaderLines, '', exportData.headers.join(';'), ...exportData.data
+                .map(
+                    r => r.join(';'))
             ].join('\n');
-            const csvBlob = new Blob(["\uFEFF" + csvContent], {
+            const blob = new Blob(["\uFEFF" + csvContent], {
                 type: 'text/csv;charset=utf-8;'
             });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = `controles_${getTimestamp()}.csv`;
+            link.click();
+        });
 
-            // 2. Fichier Excel (XLSX)
-            const worksheetData = [
-                ...exportDataFull.headerLines,
-                [],
-                exportDataFull.headers,
-                ...exportDataFull.data
+        // --- Export Excel ---
+        $('#export-excel').on('click', function() {
+            const filters = {
+                mention: $('#mention-filter').val(),
+                statut: $('#statut-filter').val(),
+                zone: $('#zone-filter').val(),
+                categorie: $('#categorie-filter').val(),
+                garnison: $('#garnison-filter').val(),
+                date_debut: $('#date-debut').val(),
+                date_fin: $('#date-fin').val()
+            };
+            $.get('?ajax=log_export', {
+                type: 'Excel',
+                filtres: JSON.stringify(filters)
+            });
+
+            const exportData = prepareExportData(false);
+            if (!exportData || exportData.data.length === 0) {
+                return Swal.fire('Aucune donnée à exporter', '', 'info');
+            }
+            const worksheetData = [...exportData.headerLines, [], exportData.headers, ...exportData
+                .data
             ];
             const wb = XLSX.utils.book_new();
             const ws = XLSX.utils.aoa_to_sheet(worksheetData);
@@ -1930,45 +1936,164 @@ $(document).ready(function() {
                     },
                     e: {
                         r: i,
-                        c: exportDataFull.headers.length - 1
+                        c: exportData.headers.length - 1
                     }
                 });
             }
             XLSX.utils.book_append_sheet(wb, ws, 'CONTRÔLES');
-            const excelBlob = new Blob([XLSX.write(wb, {
-                bookType: 'xlsx',
-                type: 'array'
-            })], {
-                type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+            XLSX.writeFile(wb, `controles_${getTimestamp()}.xlsx`);
+        });
+
+        // --- Export PDF ---
+        $('#export-pdf').on('click', async function() {
+            const filters = {
+                mention: $('#mention-filter').val(),
+                statut: $('#statut-filter').val(),
+                zone: $('#zone-filter').val(),
+                categorie: $('#categorie-filter').val(),
+                garnison: $('#garnison-filter').val(),
+                date_debut: $('#date-debut').val(),
+                date_fin: $('#date-fin').val()
+            };
+            $.get('?ajax=log_export', {
+                type: 'PDF',
+                filtres: JSON.stringify(filters)
             });
 
-            // 3. Fichier PDF (avec en-têtes abrégés)
-            const pdfBlob = await generatePDFBlob(exportDataAbbr);
+            const exportData = prepareExportData(true);
+            if (!exportData || exportData.data.length === 0) {
+                return Swal.fire({
+                    icon: 'info',
+                    title: 'Aucune donnée à exporter',
+                    text: 'Veuillez sélectionner des lignes ou vérifier vos filtres.'
+                });
+            }
 
-            // Création de l'archive ZIP
-            const zip = new JSZip();
-            zip.file("controles.csv", csvBlob);
-            zip.file("controles.xlsx", excelBlob);
-            zip.file("controles.pdf", pdfBlob);
-
-            const zipBlob = await zip.generateAsync({
-                type: "blob"
-            });
-            const link = document.createElement('a');
-            link.href = URL.createObjectURL(zipBlob);
-            link.download = `controles_${getTimestamp()}.zip`;
-            link.click();
-
-            Swal.close();
-        } catch (error) {
-            Swal.close();
-            console.error('Erreur ZIP:', error);
             Swal.fire({
-                icon: 'error',
-                title: 'Erreur',
-                text: 'Une erreur est survenue lors de la création du ZIP.'
+                title: 'Préparation du PDF...',
+                text: 'Chargement des images',
+                allowOutsideClick: false,
+                didOpen: () => Swal.showLoading()
             });
-        }
+
+            try {
+                const pdfBlob = await generatePDFBlob(exportData);
+                const link = document.createElement('a');
+                link.href = URL.createObjectURL(pdfBlob);
+                link.download = `controles_${getTimestamp()}.pdf`;
+                link.click();
+                Swal.close();
+            } catch (error) {
+                Swal.close();
+                console.error('Erreur PDF:', error);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Erreur',
+                    text: 'Une erreur est survenue lors de la génération du PDF.'
+                });
+            }
+        });
+
+        // --- Export ZIP ---
+        $('#export-zip').on('click', async function() {
+            const filters = {
+                mention: $('#mention-filter').val(),
+                statut: $('#statut-filter').val(),
+                zone: $('#zone-filter').val(),
+                categorie: $('#categorie-filter').val(),
+                garnison: $('#garnison-filter').val(),
+                date_debut: $('#date-debut').val(),
+                date_fin: $('#date-fin').val()
+            };
+            $.get('?ajax=log_export', {
+                type: 'ZIP',
+                filtres: JSON.stringify(filters)
+            });
+
+            const exportDataFull = prepareExportData(false);
+            const exportDataAbbr = prepareExportData(true);
+            if (!exportDataFull || exportDataFull.data.length === 0) {
+                return Swal.fire('Aucune donnée à exporter', '', 'info');
+            }
+
+            Swal.fire({
+                title: 'Génération du ZIP...',
+                text: 'Préparation des fichiers',
+                allowOutsideClick: false,
+                didOpen: () => Swal.showLoading()
+            });
+
+            try {
+                // 1. Fichier CSV
+                const csvHeaderLines = exportDataFull.headerLines.map(line => line[0]);
+                const csvContent = [
+                    ...csvHeaderLines,
+                    '',
+                    exportDataFull.headers.join(';'),
+                    ...exportDataFull.data.map(r => r.join(';'))
+                ].join('\n');
+                const csvBlob = new Blob(["\uFEFF" + csvContent], {
+                    type: 'text/csv;charset=utf-8;'
+                });
+
+                // 2. Fichier Excel (XLSX)
+                const worksheetData = [
+                    ...exportDataFull.headerLines,
+                    [],
+                    exportDataFull.headers,
+                    ...exportDataFull.data
+                ];
+                const wb = XLSX.utils.book_new();
+                const ws = XLSX.utils.aoa_to_sheet(worksheetData);
+                const range = XLSX.utils.decode_range(ws['!ref']);
+                if (!ws['!merges']) ws['!merges'] = [];
+                for (let i = 0; i < 3; i++) {
+                    ws['!merges'].push({
+                        s: {
+                            r: i,
+                            c: 0
+                        },
+                        e: {
+                            r: i,
+                            c: exportDataFull.headers.length - 1
+                        }
+                    });
+                }
+                XLSX.utils.book_append_sheet(wb, ws, 'CONTRÔLES');
+                const excelBlob = new Blob([XLSX.write(wb, {
+                    bookType: 'xlsx',
+                    type: 'array'
+                })], {
+                    type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+                });
+
+                // 3. Fichier PDF (avec en-têtes abrégés)
+                const pdfBlob = await generatePDFBlob(exportDataAbbr);
+
+                // Création de l'archive ZIP
+                const zip = new JSZip();
+                zip.file("controles.csv", csvBlob);
+                zip.file("controles.xlsx", excelBlob);
+                zip.file("controles.pdf", pdfBlob);
+
+                const zipBlob = await zip.generateAsync({
+                    type: "blob"
+                });
+                const link = document.createElement('a');
+                link.href = URL.createObjectURL(zipBlob);
+                link.download = `controles_${getTimestamp()}.zip`;
+                link.click();
+
+                Swal.close();
+            } catch (error) {
+                Swal.close();
+                console.error('Erreur ZIP:', error);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Erreur',
+                    text: 'Une erreur est survenue lors de la création du ZIP.'
+                });
+            }
+        });
     });
-});
-</script>
+    </script>

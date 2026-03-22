@@ -936,6 +936,11 @@ function update_last_backup_time()
  * Génère une sauvegarde ZIP des tables controles et litiges
  * @return bool True si succès, False sinon
  */
+/**
+ * Génère une sauvegarde ZIP des tables controles et litiges
+ * avec export CSV compatible Excel (UTF-8 + BOM)
+ * @return bool True si succès, False sinon
+ */
 function generate_backup()
 {
     global $pdo;
@@ -952,34 +957,55 @@ function generate_backup()
         return false;
     }
 
-    // Export de la table controles
-    $stmt = $pdo->query("SELECT * FROM controles");
-    $controles = $stmt->fetchAll(PDO::FETCH_ASSOC);
-    if (!empty($controles)) {
-        $csv = fopen('php://temp', 'r+');
-        fputcsv($csv, array_keys($controles[0]));
-        foreach ($controles as $row) {
-            fputcsv($csv, $row);
-        }
-        rewind($csv);
-        $csv_content = stream_get_contents($csv);
-        fclose($csv);
-        $zip->addFromString('controles_' . $timestamp . '.csv', $csv_content);
-    }
+    // Export d'une table en CSV avec BOM UTF-8
+    $tables = ['controles', 'litiges'];
 
-    // Export de la table litiges
-    $stmt = $pdo->query("SELECT * FROM litiges");
-    $litiges = $stmt->fetchAll(PDO::FETCH_ASSOC);
-    if (!empty($litiges)) {
-        $csv = fopen('php://temp', 'r+');
-        fputcsv($csv, array_keys($litiges[0]));
-        foreach ($litiges as $row) {
-            fputcsv($csv, $row);
+    foreach ($tables as $table) {
+        try {
+            // Vérifier que la table existe
+            $check = $pdo->query("SHOW TABLES LIKE '$table'");
+            if ($check->rowCount() == 0) {
+                error_log("Table $table inexistante, export ignoré.");
+                continue;
+            }
+
+            // Récupérer toutes les données
+            $stmt = $pdo->query("SELECT * FROM $table");
+            $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+            if (empty($rows)) {
+                error_log("Table $table vide, export ignoré.");
+                continue;
+            }
+
+            // Créer un flux mémoire
+            $stream = fopen('php://temp', 'r+');
+            if (!$stream) {
+                error_log("Impossible d'ouvrir le flux mémoire pour $table");
+                continue;
+            }
+
+            // Écrire le BOM UTF-8 (EF BB BF)
+            fwrite($stream, "\xEF\xBB\xBF");
+
+            // Écrire l'en-tête (noms des colonnes)
+            fputcsv($stream, array_keys($rows[0]));
+
+            // Écrire chaque ligne de données
+            foreach ($rows as $row) {
+                fputcsv($stream, $row);
+            }
+
+            // Récupérer le contenu du flux
+            rewind($stream);
+            $csv_content = stream_get_contents($stream);
+            fclose($stream);
+
+            // Ajouter le fichier CSV dans l'archive ZIP
+            $zip->addFromString($table . '_' . $timestamp . '.csv', $csv_content);
+        } catch (PDOException $e) {
+            error_log("Erreur lors de l'export de $table : " . $e->getMessage());
         }
-        rewind($csv);
-        $csv_content = stream_get_contents($csv);
-        fclose($csv);
-        $zip->addFromString('litiges_' . $timestamp . '.csv', $csv_content);
     }
 
     $zip->close();

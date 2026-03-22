@@ -3,7 +3,6 @@
 /**
  * Fichier : includes/functions.php
  * Description : Fonctions utilitaires pour l'application
- * Version : 3.0 avec sauvegarde automatique toutes les 2 minutes incluant les non-vus
  */
 
 // Démarrer la session si ce n'est pas déjà fait
@@ -39,16 +38,7 @@ function redirect_with_flash($url, $type = 'info', $message = '')
     exit;
 }
 
-/**
- * ============================================
- * FONCTIONS DE VÉRIFICATION ET CRÉATION DE TABLES
- * ============================================
- */
-
-/**
- * Vérifie et crée la table logs si elle n'existe pas
- * Structure complète avec clé étrangère vers utilisateurs
- * 
+/*
  * @return bool True si la table a été créée, False sinon
  */
 function check_logs_table()
@@ -89,9 +79,7 @@ function check_logs_table()
     return false;
 }
 
-/**
- * Journalise une action seulement si l'utilisateur est ADMIN_IG ou OPERATEUR
- * Wrapper pratique autour de log_action pour centraliser la règle métier
+/** 
  *
  * @param string $action
  * @param string|null $table
@@ -102,7 +90,7 @@ function check_logs_table()
 function audit_action($action, $table = null, $record_id = null, $details = null)
 {
     // Profils à logger systématiquement
-    $profils_a_logger = ['ADMIN_IG', 'OPERATEUR'];
+    $profils_a_logger = ['ADMIN_IG', 'OPERATEUR', 'CONTROLEUR'];
     $user_profil = isset($_SESSION['user_profil']) ? strtoupper(trim($_SESSION['user_profil'])) : '';
 
     if (in_array($user_profil, $profils_a_logger, true)) {
@@ -240,16 +228,7 @@ check_logs_table();
 check_preferences_column();
 check_remember_columns();
 
-/**
- * ============================================
- * FONCTIONS DE JOURNALISATION (LOGS)
- * ============================================
- */
-
-/**
- * Journalise une action dans la table logs ou logs_actions
- * Tente d'abord d'utiliser la table logs, puis logs_actions en fallback
- *
+/*
  * @param string $action  Nom de l'action (ex: 'CONNEXION', 'AJOUT', 'MODIFICATION', 'SUPPRESSION')
  * @param string|null $table Table concernée (ex: 'utilisateurs', 'materiel', 'interventions')
  * @param int|null $record_id Identifiant de l'enregistrement concerné
@@ -397,14 +376,7 @@ function nettoyer_anciens_logs($jours = 90)
     }
 }
 
-/**
- * ============================================
- * FONCTIONS DE GESTION DES UTILISATEURS ET RÔLES
- * ============================================
- */
-
-/**
- * Vérifie si l'utilisateur a un rôle spécifique
+/* * Vérifie si l'utilisateur a un rôle spécifique
  *
  * @param string $role Rôle à vérifier (ex: 'ADMIN_IG', 'UTILISATEUR', 'CHEF', etc.)
  * @return bool True si l'utilisateur a le rôle, False sinon
@@ -562,12 +534,8 @@ function update_user_preferences($user_id, $preferences)
 }
 
 /**
- * ============================================
- * FONCTIONS DE SÉCURITÉ
- * ============================================
- */
 
-/**
+/
  * Sécurise une chaîne pour l'affichage HTML
  * Alias pour htmlspecialchars avec UTF-8
  *
@@ -617,12 +585,6 @@ function verify_csrf_token($token)
     }
     return hash_equals($_SESSION['csrf_token'], $token);
 }
-
-/**
- * ============================================
- * FONCTIONS DE FORMATAGE
- * ============================================
- */
 
 /**
  * Formate une date
@@ -679,12 +641,6 @@ function truncate_text($text, $length = 100, $append = '...')
 
     return mb_substr($text, 0, $length, 'UTF-8') . $append;
 }
-
-/**
- * ============================================
- * FONCTIONS DE GESTION DES AVATARS
- * ============================================
- */
 
 /**
  * Récupère l'URL complète de l'avatar
@@ -758,12 +714,6 @@ function upload_avatar($file, $user_id)
 }
 
 /**
- * ============================================
- * FONCTIONS DE GESTION DES MESSAGES FLASH
- * ============================================
- */
-
-/**
  * Affiche et efface le message flash avec auto-fermeture
  * À appeler dans les vues (ex: index.php, dashboard.php)
  *
@@ -823,12 +773,6 @@ function get_flash_icon($type)
 }
 
 /**
- * ============================================
- * FONCTIONS DIVERSES
- * ============================================
- */
-
-/**
  * Génère un mot de passe aléatoire sécurisé
  *
  * @param int $length Longueur du mot de passe
@@ -872,12 +816,6 @@ function json_response($data, $status_code = 200)
     echo json_encode($data, JSON_UNESCAPED_UNICODE);
     exit;
 }
-
-/**
- * ============================================
- * FONCTIONS SPÉCIFIQUES AU TABLEAU DE BORD ET SAUVEGARDE
- * ============================================
- */
 
 // Tableaux globaux pour les tris et catégories
 $gradeOrder = [

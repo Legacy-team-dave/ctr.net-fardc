@@ -141,7 +141,6 @@ $zones_defense_libelles = [
     '2ZDEF' => '2ZDef',
     '3ZDEF' => '3ZDef'
 ];
-
 // ============================================
 // Récupération des préférences utilisateur
 // ============================================
@@ -2038,10 +2037,9 @@ h3.card-title {
                                     <div class="table-responsive">
                                         <table class="table table-modern">
                                             <thead>
-                                                <tr>
-                                                    <th>Mention</th>
-                                                    <th>Nombre</th>
-                                                    <th>%</th>
+                                                32<th>Mention</th>
+                                                <th>Nombre</th>
+                                                <th>%</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
@@ -2298,10 +2296,10 @@ h3.card-title {
                                     foreach ($derniers_militaires as $row):
                                     ?>
                                     <tr>
-                                        <td><?= ($row['noms']) ?></td>
-                                        <td><?= ($row['grade']) ?></td>
-                                        <td><?= ($row['unite'] ?? 'N/A') ?></td>
-                                        <td><?= ($row['province'] ?? 'N/A') ?></td>
+                                        <td><?= h($row['noms']) ?></td>
+                                        <td><?= h($row['grade']) ?></td>
+                                        <td><?= h($row['unite'] ?? 'N/A') ?></td>
+                                        <td><?= h($row['province'] ?? 'N/A') ?></td>
                                         <!-- Cellule catégorie supprimée -->
                                     </tr>
                                     <?php endforeach; ?>
@@ -2362,11 +2360,11 @@ h3.card-title {
                                     ?>
                                     <tr>
                                         <td><?= date('d/m/Y', strtotime($log['date_controle'])) ?></td>
-                                        <td><?= ($log['noms']) ?><br><small><?= ($log['grade'] ?? '') ?>
-                                                <?= !empty($log['unite']) ? '- '($log['unite']) : '' ?></small></td>
+                                        <td><?= h($log['noms']) ?><br><small><?= h($log['grade'] ?? '') ?>
+                                                <?= !empty($log['unite']) ? '- ' . h($log['unite']) : '' ?></small></td>
                                         <td><span class="badge bg-<?= $mentionClass ?>"><i
                                                     class="fas <?= $mentionIcon ?> mr-1"></i>
-                                                <?= ($mention ?: 'Non spécifié') ?></span></td>
+                                                <?= h($mention ?: 'Non spécifié') ?></span></td>
                                         <!-- Cellule type supprimée -->
                                     </tr>
                                     <?php endforeach; ?>
@@ -3063,22 +3061,39 @@ function getTimestamp() {
     return `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}_${String(now.getHours()).padStart(2,'0')}h${String(now.getMinutes()).padStart(2,'0')}`;
 }
 
+// Fonction pour formater une liste avec "et"
+function formatListWithAnd(list) {
+    if (!list || list.length === 0) return '';
+    if (list.length === 1) return list[0];
+    if (list.length === 2) return `${list[0]} et ${list[1]}`;
+    const allButLast = list.slice(0, -1).join(', ');
+    return `${allButLast} et ${list[list.length - 1]}`;
+}
+
 function getExportTitle() {
-    let parts = [];
+    let garnisonStr = '';
+    let zoneStr = '';
+
     if (filteredGarnisons.length > 0) {
-        parts.push(`${filteredGarnisons.join(', ')}`);
+        garnisonStr = formatListWithAnd(filteredGarnisons);
     }
     if (nonVusZones.length > 0) {
-        if (nonVusZones.length === 1) {
-            parts.push(`${nonVusZones[0]}`);
-        } else {
-            parts.push(`${nonVusZones.join(', ')}`);
-        }
+        zoneStr = formatListWithAnd(nonVusZones);
     }
-    if (parts.length === 0) {
-        return "LISTE DES MILITAIRES NON-VUS AU CONTROLE";
+
+    let suffix = '';
+    if (garnisonStr && zoneStr) {
+        suffix = `${garnisonStr} - ${zoneStr}`;
+    } else if (garnisonStr) {
+        suffix = garnisonStr;
+    } else if (zoneStr) {
+        suffix = zoneStr;
+    }
+
+    if (suffix) {
+        return `LISTE DES MILITAIRES NON-VUS AU CONTROLE (${suffix})`;
     } else {
-        return `LISTE DES MILITAIRES NON-VUS AU CONTROLE (${parts.join(' - ')})`;
+        return "LISTE DES MILITAIRES NON-VUS AU CONTROLE";
     }
 }
 

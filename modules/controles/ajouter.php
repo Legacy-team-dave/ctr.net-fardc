@@ -3,7 +3,7 @@ require_once '../../includes/functions.php';
 require_login();
 
 // MODIFICATION : Vérifier que seuls les profils autorisés accèdent à cette page
-check_profil(['OPERATEUR', 'CONTROLEUR']);
+check_profil(['ADMIN_IG', 'OPERATEUR', 'CONTROLEUR']);
 
 // --- AJAX : recherche en temps réel ---
 if (isset($_GET['ajax']) && $_GET['ajax'] === 'search' && isset($_GET['q'])) {
@@ -239,6 +239,8 @@ $is_controleur = isset($_SESSION['user_profil']) && $_SESSION['user_profil'] ===
     body {
         font-family: 'Barlow', sans-serif;
         background: #f5f5f5;
+        padding: 12px;
+        font-size: 16px;
     }
 
     .card-modern {
@@ -251,7 +253,8 @@ $is_controleur = isset($_SESSION['user_profil']) && $_SESSION['user_profil'] ===
 
     .card-modern .card-header {
         background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
-        padding: 15px 25px;
+        padding: 18px 25px;
+        /* augmenté */
         border: none;
         color: white;
         display: flex;
@@ -264,7 +267,8 @@ $is_controleur = isset($_SESSION['user_profil']) && $_SESSION['user_profil'] ===
     .card-modern .card-header h3 {
         margin: 0;
         font-weight: 600;
-        font-size: 1.3rem;
+        font-size: 1.4rem;
+        /* augmenté */
     }
 
     .card-modern .card-header h3 i {
@@ -272,7 +276,8 @@ $is_controleur = isset($_SESSION['user_profil']) && $_SESSION['user_profil'] ===
     }
 
     .card-modern .card-body {
-        padding: 20px;
+        padding: 24px;
+        /* augmenté */
     }
 
     .btn-gradient {
@@ -292,17 +297,20 @@ $is_controleur = isset($_SESSION['user_profil']) && $_SESSION['user_profil'] ===
     }
 
     .btn-mention {
-        border-radius: 20px;
-        padding: 4px 12px;
+        border-radius: 30px;
+        /* plus arrondi */
+        padding: 8px 18px;
+        /* augmenté */
         font-weight: 600;
-        font-size: 0.8rem;
+        font-size: 0.9rem;
+        /* augmenté */
         border: none;
         cursor: pointer;
         margin: 3px;
         box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
         display: inline-flex;
         align-items: center;
-        gap: 6px;
+        gap: 8px;
         transition: all 0.3s;
     }
 
@@ -341,8 +349,8 @@ $is_controleur = isset($_SESSION['user_profil']) && $_SESSION['user_profil'] ===
     }
 
     .btn-new-search {
-        border-radius: 20px;
-        padding: 5px 15px;
+        border-radius: 30px;
+        padding: 6px 16px;
         background: transparent;
         border: 1px solid white;
         color: white;
@@ -351,6 +359,7 @@ $is_controleur = isset($_SESSION['user_profil']) && $_SESSION['user_profil'] ===
         display: inline-flex;
         align-items: center;
         gap: 5px;
+        font-size: 0.9rem;
     }
 
     .btn-new-search:hover {
@@ -360,9 +369,9 @@ $is_controleur = isset($_SESSION['user_profil']) && $_SESSION['user_profil'] ===
 
     .badge-statut {
         display: inline-block;
-        padding: 3px 10px;
-        border-radius: 20px;
-        font-size: 0.75rem;
+        padding: 4px 12px;
+        border-radius: 30px;
+        font-size: 0.8rem;
         font-weight: 600;
         margin-left: 10px;
         color: white;
@@ -371,37 +380,30 @@ $is_controleur = isset($_SESSION['user_profil']) && $_SESSION['user_profil'] ===
     /* === BADGES GRANDS (pour la fiche militaire) === */
     .badge-actif {
         background: var(--success);
-        /* Vert */
     }
 
     .badge-decede-av-bio {
         background: #6c757d;
-        /* Gris uni (Décédé Avant Bio) */
     }
 
     .badge-dcd-ap-bio {
         background: linear-gradient(135deg, #6f42c1, #6610f2);
-        /* Violet dégradé */
     }
 
     .badge-retraite {
         background: linear-gradient(135deg, #0d6efd, #0a58ca);
-        /* Dégradé bleu */
     }
 
     .badge-integre {
         background: linear-gradient(135deg, #dc3545, #b02a37);
-        /* Dégradé rouge */
     }
-
-    /* ============================================== */
 
     /* === MINI-BADGES (pour les résultats de recherche) === */
     #search-results .badge-statut-mini {
         display: inline-block;
-        padding: 2px 5px;
-        border-radius: 8px;
-        font-size: 0.6rem;
+        padding: 2px 6px;
+        border-radius: 12px;
+        font-size: 0.65rem;
         font-weight: 600;
         margin-left: 5px;
         color: white;
@@ -432,9 +434,9 @@ $is_controleur = isset($_SESSION['user_profil']) && $_SESSION['user_profil'] ===
     .militaire-info {
         background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
         color: white;
-        padding: 1rem 1.5rem;
-        border-radius: 10px;
-        margin-bottom: 1.5rem;
+        padding: 1.2rem 1.8rem;
+        border-radius: 12px;
+        margin-bottom: 1.8rem;
         box-shadow: 0 4px 15px rgba(46, 125, 50, 0.3);
     }
 
@@ -448,8 +450,8 @@ $is_controleur = isset($_SESSION['user_profil']) && $_SESSION['user_profil'] ===
     .militaire-info .info-item {
         display: flex;
         align-items: center;
-        gap: 0.3rem;
-        font-size: 0.9rem;
+        gap: 0.4rem;
+        font-size: 1rem;
     }
 
     .militaire-info .info-label {
@@ -470,13 +472,19 @@ $is_controleur = isset($_SESSION['user_profil']) && $_SESSION['user_profil'] ===
     .statut-temp {
         background: var(--light);
         border-radius: 10px;
-        padding: 10px;
-        margin: 10px 0;
+        padding: 12px;
+        margin: 12px 0;
         border-left: 4px solid var(--primary);
     }
 
     .statut-temp .form-check-inline {
-        margin-right: 0.8rem;
+        margin-right: 1rem;
+    }
+
+    .statut-temp .form-check-input {
+        width: 1.2rem;
+        height: 1.2rem;
+        margin-top: 0.2rem;
     }
 
     .statut-temp .form-check-input:checked {
@@ -487,14 +495,14 @@ $is_controleur = isset($_SESSION['user_profil']) && $_SESSION['user_profil'] ===
     .liens-grid {
         display: grid;
         grid-template-columns: repeat(2, 1fr);
-        gap: 10px;
-        margin-bottom: 10px;
+        gap: 12px;
+        margin-bottom: 12px;
     }
 
     .lien-groupe {
         border: 1px solid #e0e0e0;
-        border-radius: 8px;
-        padding: 8px;
+        border-radius: 10px;
+        padding: 10px;
         background: var(--light);
         height: 100%;
         display: flex;
@@ -504,16 +512,16 @@ $is_controleur = isset($_SESSION['user_profil']) && $_SESSION['user_profil'] ===
     .lien-groupe label {
         font-weight: 600;
         color: var(--primary);
-        margin-bottom: 5px;
+        margin-bottom: 8px;
         display: block;
         border-bottom: 1px solid #dee2e6;
-        padding-bottom: 3px;
-        font-size: 0.85rem;
+        padding-bottom: 5px;
+        font-size: 0.9rem;
     }
 
     .lien-groupe .form-check {
-        margin-bottom: 4px;
-        font-size: 0.8rem;
+        margin-bottom: 5px;
+        font-size: 0.85rem;
     }
 
     .lien-groupe small {
@@ -523,12 +531,12 @@ $is_controleur = isset($_SESSION['user_profil']) && $_SESSION['user_profil'] ===
     }
 
     .form-control-modern {
-        border-radius: 6px;
+        border-radius: 8px;
         border: 1px solid #ced4da;
-        padding: 6px 10px;
+        padding: 8px 12px;
         width: 100%;
         transition: all 0.3s;
-        font-size: 0.85rem;
+        font-size: 0.9rem;
     }
 
     .form-control-modern:focus {
@@ -540,50 +548,50 @@ $is_controleur = isset($_SESSION['user_profil']) && $_SESSION['user_profil'] ===
     /* Styles pour les cartes bénéficiaires */
     .beneficiaire-card {
         background: white;
-        border-radius: 8px;
-        padding: 10px;
+        border-radius: 10px;
+        padding: 12px;
         box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
         border: 1px solid #e0e0e0;
         height: 100%;
     }
 
     .beneficiaire-card.compact {
-        padding: 8px 10px;
+        padding: 10px 12px;
     }
 
     .beneficiaire-card .form-control-modern {
-        padding: 4px 8px;
-        font-size: 0.8rem;
+        padding: 6px 10px;
+        font-size: 0.85rem;
     }
 
     .beneficiaire-card .bg-light {
         background-color: #f1f3f5 !important;
-        padding: 6px 10px;
-        font-size: 0.9rem;
+        padding: 8px 12px;
+        font-size: 0.95rem;
         word-break: break-word;
     }
 
     .observations-group {
         background: var(--light);
-        border-radius: 8px;
-        padding: 10px;
-        margin: 10px 0;
+        border-radius: 10px;
+        padding: 12px;
+        margin: 12px 0;
         border: 1px solid #e0e0e0;
     }
 
     .observations-group textarea {
-        min-height: 70px;
+        min-height: 80px;
         resize: vertical;
         font-family: 'Barlow', sans-serif;
-        font-size: 0.85rem;
+        font-size: 0.9rem;
     }
 
     .actions-container {
         display: flex;
         justify-content: flex-end;
-        gap: 10px;
-        margin-top: 10px;
-        padding-top: 10px;
+        gap: 12px;
+        margin-top: 12px;
+        padding-top: 12px;
         border-top: 2px dashed #dee2e6;
     }
 
@@ -591,13 +599,13 @@ $is_controleur = isset($_SESSION['user_profil']) && $_SESSION['user_profil'] ===
         cursor: pointer;
         border-left: none;
         border-right: none;
-        padding: 8px 12px;
+        padding: 10px 15px;
         transition: background 0.2s;
-        font-size: 0.85rem;
+        font-size: 0.9rem;
     }
 
     #search-results .list-group-item small {
-        font-size: 0.7rem;
+        font-size: 0.75rem;
     }
 
     /* Ajustement pour que la liste des résultats s'allonge selon le contenu */
@@ -618,7 +626,7 @@ $is_controleur = isset($_SESSION['user_profil']) && $_SESSION['user_profil'] ===
         background: linear-gradient(135deg, var(--success) 0%, #218838 100%);
         color: white;
         padding: 15px 25px;
-        border-radius: 10px;
+        border-radius: 12px;
         box-shadow: 0 5px 20px rgba(40, 167, 69, 0.3);
         display: flex;
         align-items: center;
@@ -626,7 +634,8 @@ $is_controleur = isset($_SESSION['user_profil']) && $_SESSION['user_profil'] ===
         margin-bottom: 10px;
         animation: slideIn 0.3s ease-out, fadeOut 0.5s ease-out 2.5s forwards;
         font-weight: 500;
-        min-width: 300px;
+        min-width: 320px;
+        font-size: 0.95rem;
     }
 
     .toast-message i {
@@ -669,30 +678,30 @@ $is_controleur = isset($_SESSION['user_profil']) && $_SESSION['user_profil'] ===
 
     /* === STYLES COMPACTS POUR LA CARTE BÉNÉFICIAIRE === */
     .compact-form .liens-grid {
-        gap: 6px;
+        gap: 8px;
     }
 
     .compact-form .lien-groupe.compact {
-        padding: 6px;
+        padding: 8px;
     }
 
     .compact-form .lien-groupe.compact label {
-        font-size: 0.8rem;
-        margin-bottom: 3px;
-        padding-bottom: 2px;
+        font-size: 0.85rem;
+        margin-bottom: 5px;
+        padding-bottom: 3px;
     }
 
     .compact-form .lien-groupe.compact .form-check {
-        margin-bottom: 2px;
-        font-size: 0.75rem;
+        margin-bottom: 3px;
+        font-size: 0.8rem;
     }
 
     .compact-form .lien-groupe.compact .form-check small {
-        font-size: 0.65rem;
+        font-size: 0.7rem;
     }
 
     .compact-form .observations-group.compact {
-        padding: 8px;
+        padding: 10px;
         margin: 0;
         height: 100%;
         display: flex;
@@ -700,14 +709,14 @@ $is_controleur = isset($_SESSION['user_profil']) && $_SESSION['user_profil'] ===
     }
 
     .compact-form .observations-group.compact textarea {
-        min-height: 80px;
+        min-height: 100px;
         flex: 1;
-        font-size: 0.8rem;
+        font-size: 0.85rem;
     }
 
     .compact-form .actions-container.compact {
-        margin-top: 8px;
-        padding-top: 8px;
+        margin-top: 10px;
+        padding-top: 10px;
     }
 
     /* Pour les écrans étroits, on empile les colonnes */
@@ -723,7 +732,7 @@ $is_controleur = isset($_SESSION['user_profil']) && $_SESSION['user_profil'] ===
         }
 
         .compact-form .observations-group.compact {
-            margin-top: 8px;
+            margin-top: 10px;
         }
 
         .liens-grid {
@@ -755,7 +764,7 @@ $is_controleur = isset($_SESSION['user_profil']) && $_SESSION['user_profil'] ===
         }
 
         .toast-message {
-            min-width: 250px;
+            min-width: 280px;
             padding: 12px 20px;
         }
     }
@@ -776,32 +785,32 @@ $is_controleur = isset($_SESSION['user_profil']) && $_SESSION['user_profil'] ===
     }
 
     body.controleur-mode .card-modern .card-header {
-        padding: 16px 20px;
+        padding: 20px 25px;
     }
 
     body.controleur-mode .card-modern .card-header h3 {
-        font-size: 1.3rem;
+        font-size: 1.5rem;
     }
 
     body.controleur-mode .card-modern .card-body {
-        padding: 20px;
+        padding: 24px;
     }
 
     body.controleur-mode .btn-mention {
-        padding: 12px 20px;
+        padding: 12px 24px;
         font-size: 1.1rem;
         border-radius: 40px;
         margin: 5px;
     }
 
     body.controleur-mode .btn-present {
-        padding: 14px 24px;
+        padding: 14px 28px;
         font-size: 1.2rem;
     }
 
     body.controleur-mode .btn-new-search {
-        padding: 8px 16px;
-        font-size: 0.9rem;
+        padding: 8px 18px;
+        font-size: 0.95rem;
     }
 
     body.controleur-mode .form-control-modern,
@@ -822,8 +831,8 @@ $is_controleur = isset($_SESSION['user_profil']) && $_SESSION['user_profil'] ===
     }
 
     body.controleur-mode .militaire-info {
-        padding: 1.2rem;
-        margin-bottom: 1.8rem;
+        padding: 1.3rem;
+        margin-bottom: 2rem;
     }
 
     body.controleur-mode .militaire-info .info-item {
@@ -831,7 +840,7 @@ $is_controleur = isset($_SESSION['user_profil']) && $_SESSION['user_profil'] ===
     }
 
     body.controleur-mode .lien-groupe {
-        padding: 10px;
+        padding: 12px;
     }
 
     body.controleur-mode .lien-groupe label {
@@ -1102,11 +1111,11 @@ $is_controleur = isset($_SESSION['user_profil']) && $_SESSION['user_profil'] ===
                                 <div class="beneficiaire-card compact h-100">
                                     <label class="fw-bold small"><i class="fas fa-user-tie"></i> Bénéficiaire existant</label>
                                     <?php if ($benef_nom): ?>
-                                        <div class="fw-bold text-success mt-1" style="font-size:0.9rem;">
+                                        <div class="fw-bold text-success mt-1" style="font-size:0.95rem;">
                                             <?= htmlspecialchars($benef_nom) ?></div>
                                         <input type="hidden" name="beneficiaire" value="<?= htmlspecialchars($benef_nom) ?>">
                                     <?php else: ?>
-                                        <div class="text-muted mt-1" style="font-size:0.9rem;">Aucun bénéficiaire existant</div>
+                                        <div class="text-muted mt-1" style="font-size:0.95rem;">Aucun bénéficiaire existant</div>
                                     <?php endif; ?>
                                 </div>
                             </div>

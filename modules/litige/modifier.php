@@ -34,7 +34,7 @@ include '../../includes/header.php';
 
 <link rel="stylesheet" href="../../assets/fontawesome/css/all.min.css">
 <style>
-/* ===== STYLES IDENTIQUES À AJOUTER.PHP ===== */
+/* ===== STYLES AGRANDIS (comme ajouter.php) ===== */
 * {
     margin: 0;
     padding: 0;
@@ -44,38 +44,39 @@ include '../../includes/header.php';
 body {
     font-family: 'Barlow', sans-serif;
     background: #f0f2f5;
-    padding: 8px;
+    padding: 12px;
+    font-size: 16px;
 }
 
 .container {
     max-width: 1200px;
     margin: 0 auto;
     background: white;
-    border-radius: 8px;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
-    padding: 12px;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    padding: 20px;
 }
 
 h2 {
     color: #2e7d32;
-    font-size: 1.2rem;
-    margin-bottom: 10px;
-    padding-bottom: 4px;
+    font-size: 1.6rem;
+    margin-bottom: 16px;
+    padding-bottom: 8px;
     border-bottom: 2px solid #ffc107;
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: 10px;
 }
 
 .section-title {
     color: #2e7d32;
-    font-size: 1rem;
-    margin: 15px 0 8px 0;
-    padding-bottom: 3px;
+    font-size: 1.2rem;
+    margin: 20px 0 12px 0;
+    padding-bottom: 6px;
     border-bottom: 1px solid #ddd;
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: 8px;
 }
 
 .section-title:first-of-type {
@@ -84,15 +85,15 @@ h2 {
 
 .section-title i {
     color: #2e7d32;
-    font-size: 0.95rem;
-    width: 18px;
+    font-size: 1.1rem;
+    width: 24px;
 }
 
 .detail-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-    gap: 8px;
-    margin-bottom: 15px;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 16px;
+    margin-bottom: 20px;
 }
 
 .form-grid {
@@ -101,8 +102,8 @@ h2 {
 
 .detail-item {
     background: #f8f9fa;
-    border-radius: 5px;
-    padding: 6px 8px;
+    border-radius: 8px;
+    padding: 12px;
     border-left: none;
 }
 
@@ -112,19 +113,19 @@ h2 {
 
 .detail-label {
     font-weight: 600;
-    font-size: 0.65rem;
+    font-size: 0.85rem;
     text-transform: uppercase;
-    letter-spacing: 0.3px;
+    letter-spacing: 0.5px;
     color: #6c757d;
-    margin-bottom: 2px;
+    margin-bottom: 6px;
     display: flex;
     align-items: center;
-    gap: 3px;
+    gap: 6px;
 }
 
 .detail-label i {
     color: #2e7d32;
-    font-size: 0.75rem;
+    font-size: 0.9rem;
     width: 18px;
 }
 
@@ -136,10 +137,10 @@ h2 {
 .detail-item textarea,
 .detail-item select {
     width: 100%;
-    padding: 4px 6px;
+    padding: 8px 10px;
     border: 1px solid #ddd;
-    border-radius: 4px;
-    font-size: 0.8rem;
+    border-radius: 6px;
+    font-size: 0.95rem;
     transition: all 0.2s;
     background: white;
 }
@@ -149,46 +150,47 @@ h2 {
 .detail-item select:focus {
     border-color: #2e7d32;
     outline: none;
-    box-shadow: 0 0 0 2px rgba(46, 125, 50, 0.1);
+    box-shadow: 0 0 0 3px rgba(46, 125, 50, 0.2);
 }
 
 .detail-item textarea {
     resize: vertical;
-    min-height: 50px;
+    min-height: 80px;
 }
 
 .auto-date-indicator {
-    font-size: 0.7rem;
+    font-size: 0.85rem;
     color: #2e7d32;
-    margin-top: 2px;
+    margin-top: 6px;
+    margin-bottom: 12px;
     display: flex;
     align-items: center;
-    gap: 3px;
+    gap: 6px;
 }
 
 .button-bar {
     display: flex;
-    gap: 6px;
+    gap: 12px;
     justify-content: center;
-    margin-top: 15px;
-    padding-top: 8px;
+    margin-top: 24px;
+    padding-top: 16px;
     border-top: 1px solid #eee;
     flex-wrap: wrap;
 }
 
 .btn {
-    padding: 4px 12px;
-    border-radius: 18px;
+    padding: 8px 20px;
+    border-radius: 30px;
     font-weight: 600;
-    font-size: 0.75rem;
+    font-size: 0.9rem;
     border: none;
     cursor: pointer;
     display: inline-flex;
     align-items: center;
-    gap: 4px;
+    gap: 8px;
     text-decoration: none;
     transition: all 0.2s;
-    min-width: 80px;
+    min-width: 110px;
     justify-content: center;
 }
 
@@ -200,7 +202,7 @@ h2 {
 .btn-save:hover:not(:disabled) {
     background: #1b5e20;
     transform: translateY(-2px);
-    box-shadow: 0 3px 6px rgba(46, 125, 50, 0.3);
+    box-shadow: 0 4px 8px rgba(46, 125, 50, 0.3);
 }
 
 .btn-save:disabled {
@@ -216,7 +218,7 @@ h2 {
 .btn-cancel:hover {
     background: #545b62;
     transform: translateY(-2px);
-    box-shadow: 0 3px 6px rgba(108, 117, 125, 0.3);
+    box-shadow: 0 4px 8px rgba(108, 117, 125, 0.3);
 }
 
 .loading-overlay {
@@ -225,7 +227,7 @@ h2 {
     left: 0;
     width: 100%;
     height: 100%;
-    background: rgba(255, 255, 255, 0.8);
+    background: rgba(255, 255, 255, 0.85);
     display: flex;
     justify-content: center;
     align-items: center;
@@ -241,10 +243,10 @@ h2 {
 }
 
 .loading-spinner {
-    width: 40px;
-    height: 40px;
-    border: 4px solid #f3f3f3;
-    border-top: 4px solid #2e7d32;
+    width: 50px;
+    height: 50px;
+    border: 5px solid #f3f3f3;
+    border-top: 5px solid #2e7d32;
     border-radius: 50%;
     animation: spin 1s linear infinite;
 }
@@ -259,7 +261,7 @@ h2 {
     }
 }
 
-/* ===== STYLES POUR LES TOASTS ===== */
+/* ===== STYLES POUR LES TOASTS AGRANDIS ===== */
 :root {
     --success: #28a745;
     --danger: #dc3545;
@@ -276,25 +278,26 @@ h2 {
 .toast-message {
     background: linear-gradient(135deg, var(--success) 0%, #218838 100%);
     color: white;
-    padding: 15px 25px;
-    border-radius: 10px;
-    box-shadow: 0 5px 20px rgba(40, 167, 69, 0.3);
+    padding: 16px 28px;
+    border-radius: 12px;
+    box-shadow: 0 6px 20px rgba(40, 167, 69, 0.4);
     display: flex;
     align-items: center;
-    gap: 10px;
-    margin-bottom: 10px;
+    gap: 12px;
+    margin-bottom: 12px;
     animation: slideIn 0.3s ease-out, fadeOut 0.5s ease-out 2.5s forwards;
     font-weight: 500;
-    min-width: 300px;
+    font-size: 0.95rem;
+    min-width: 320px;
 }
 
 .toast-message i {
-    font-size: 1.2rem;
+    font-size: 1.3rem;
 }
 
 .toast-message.error {
     background: linear-gradient(135deg, var(--danger) 0%, #c82333 100%);
-    box-shadow: 0 5px 20px rgba(220, 53, 69, 0.3);
+    box-shadow: 0 6px 20px rgba(220, 53, 69, 0.4);
 }
 
 .toast-message.warning {
@@ -328,12 +331,22 @@ h2 {
 
 @media (max-width: 768px) {
     .toast-message {
-        min-width: 250px;
-        padding: 12px 20px;
+        min-width: 280px;
+        padding: 14px 20px;
     }
 
     .detail-grid {
         grid-template-columns: 1fr;
+        gap: 12px;
+    }
+
+    .container {
+        padding: 16px;
+    }
+
+    .btn {
+        padding: 6px 16px;
+        min-width: 90px;
     }
 }
 </style>
@@ -458,7 +471,7 @@ h2 {
 
             <div class="detail-item full-width">
                 <div class="detail-label"><i class="fas fa-comment"></i> Observations</div>
-                <textarea name="observations" id="observations" rows="2"
+                <textarea name="observations" id="observations" rows="3"
                     placeholder="Détails..."><?= htmlspecialchars($litige['observations'] ?? '') ?></textarea>
             </div>
         </div>

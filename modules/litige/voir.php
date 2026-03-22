@@ -31,31 +31,6 @@ try {
     exit;
 }
 
-// Fonction de détermination de la zone de défense
-function getZdefValue($province)
-{
-    if (empty($province)) return ['value' => 'N/A', 'code' => 'N/A'];
-
-    $province = strtoupper(trim($province));
-
-    $groupe_2zdef = ['HAUT-KATANGA', 'HAUT-LOMAMI', 'LUALABA', 'TANGANYIKA', 'KASAI', 'KASAI-CENTRAL', 'KASAI-ORIENTAL', 'SANKURU', 'LOMAMI'];
-    if (in_array($province, $groupe_2zdef)) {
-        return ['value' => '2ZDEF', 'code' => '2ZDEF'];
-    }
-
-    $groupe_1zdef = ['EQUATEUR', 'MONGALA', 'NORD-UBANGI', 'SUD-UBANGI', 'TSHUAPA', 'KWILU', 'KWANGO', 'MAI-NDOMBE', 'KONGO-CENTRAL', 'KINSHASA'];
-    if (in_array($province, $groupe_1zdef)) {
-        return ['value' => '1ZDEF', 'code' => '1ZDEF'];
-    }
-
-    $groupe_3zdef = ['HAUT-UELE', 'BAS-UELE', 'ITURI', 'TSHOPO', 'NORD-KIVU', 'SUD-KIVU', 'MANIEMA'];
-    if (in_array($province, $groupe_3zdef)) {
-        return ['value' => '3ZDEF', 'code' => '3ZDEF'];
-    }
-
-    return ['value' => 'AUTRE', 'code' => 'AUTRE'];
-}
-
 $zone = getZdefValue($litige['province'] ?? '');
 $zdef_class = '';
 if ($zone['code'] === '1ZDEF') $zdef_class = 'zdef-badge-1';
@@ -65,7 +40,7 @@ elseif ($zone['code'] === '3ZDEF') $zdef_class = 'zdef-badge-3';
 
 <link rel="stylesheet" href="../../assets/fontawesome/css/all.min.css">
 <style>
-/* ===== STYLES COMPACTS REPRIS DE modules/controle/voir.php ===== */
+/* ===== STYLES AGRANDIS (comme ajouter.php) ===== */
 * {
     margin: 0;
     padding: 0;
@@ -75,39 +50,40 @@ elseif ($zone['code'] === '3ZDEF') $zdef_class = 'zdef-badge-3';
 body {
     font-family: 'Barlow', sans-serif;
     background: #f0f2f5;
-    padding: 8px;
+    padding: 12px;
+    font-size: 16px;
 }
 
 .container {
     max-width: 1200px;
     margin: 0 auto;
     background: white;
-    border-radius: 8px;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
-    padding: 12px;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    padding: 20px;
 }
 
 h2 {
     color: #2e7d32;
-    font-size: 1.2rem;
-    margin-bottom: 10px;
-    padding-bottom: 4px;
+    font-size: 1.6rem;
+    margin-bottom: 16px;
+    padding-bottom: 8px;
     border-bottom: 2px solid #ffc107;
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: 10px;
 }
 
 /* Titres de sections */
 .section-title {
     color: #2e7d32;
-    font-size: 1rem;
-    margin: 15px 0 8px 0;
-    padding-bottom: 3px;
+    font-size: 1.2rem;
+    margin: 20px 0 12px 0;
+    padding-bottom: 6px;
     border-bottom: 1px solid #ddd;
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: 8px;
 }
 
 .section-title:first-of-type {
@@ -116,21 +92,21 @@ h2 {
 
 .section-title i {
     color: #2e7d32;
-    font-size: 0.95rem;
-    width: 18px;
+    font-size: 1.1rem;
+    width: 24px;
 }
 
 /* Badge zone de défense */
 .zdef-badge {
     display: inline-block;
-    padding: 3px 8px;
-    border-radius: 16px;
+    padding: 5px 12px;
+    border-radius: 30px;
     font-weight: 700;
-    font-size: 0.7rem;
+    font-size: 0.8rem;
     background: #2e7d32;
     color: white;
     text-transform: uppercase;
-    margin-left: 8px;
+    margin-left: 10px;
 }
 
 .zdef-badge-1 {
@@ -149,15 +125,15 @@ h2 {
 /* Grille de détails */
 .detail-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-    gap: 8px;
-    margin-bottom: 15px;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 16px;
+    margin-bottom: 20px;
 }
 
 .detail-item {
     background: #f8f9fa;
-    border-radius: 5px;
-    padding: 6px 8px;
+    border-radius: 8px;
+    padding: 12px;
     border-left: none;
 }
 
@@ -167,24 +143,24 @@ h2 {
 
 .detail-label {
     font-weight: 600;
-    font-size: 0.65rem;
+    font-size: 0.85rem;
     text-transform: uppercase;
-    letter-spacing: 0.3px;
+    letter-spacing: 0.5px;
     color: #6c757d;
-    margin-bottom: 2px;
+    margin-bottom: 6px;
     display: flex;
     align-items: center;
-    gap: 3px;
+    gap: 6px;
 }
 
 .detail-label i {
     color: #2e7d32;
-    font-size: 0.75rem;
-    width: 14px;
+    font-size: 0.9rem;
+    width: 18px;
 }
 
 .detail-value {
-    font-size: 0.85rem;
+    font-size: 0.95rem;
     color: #333;
     font-weight: 500;
     word-break: break-word;
@@ -198,30 +174,30 @@ h2 {
     text-transform: none;
 }
 
-/* Boutons compacts */
+/* Boutons */
 .button-bar {
     display: flex;
-    gap: 6px;
+    gap: 12px;
     justify-content: flex-end;
-    margin-top: 15px;
-    padding-top: 8px;
+    margin-top: 24px;
+    padding-top: 16px;
     border-top: 1px solid #eee;
     flex-wrap: wrap;
 }
 
 .btn {
-    padding: 4px 12px;
-    border-radius: 18px;
+    padding: 8px 20px;
+    border-radius: 30px;
     font-weight: 600;
-    font-size: 0.75rem;
+    font-size: 0.9rem;
     border: none;
     cursor: pointer;
     display: inline-flex;
     align-items: center;
-    gap: 4px;
+    gap: 8px;
     text-decoration: none;
     transition: all 0.2s;
-    min-width: 80px;
+    min-width: 110px;
     justify-content: center;
 }
 
@@ -233,7 +209,7 @@ h2 {
 .btn-edit:hover {
     background: #e0a800;
     transform: translateY(-2px);
-    box-shadow: 0 3px 6px rgba(255, 193, 7, 0.3);
+    box-shadow: 0 4px 8px rgba(255, 193, 7, 0.3);
 }
 
 .btn-back {
@@ -244,7 +220,7 @@ h2 {
 .btn-back:hover {
     background: #545b62;
     transform: translateY(-2px);
-    box-shadow: 0 3px 6px rgba(108, 117, 125, 0.3);
+    box-shadow: 0 4px 8px rgba(108, 117, 125, 0.3);
 }
 
 .btn-list {
@@ -255,39 +231,39 @@ h2 {
 .btn-list:hover {
     background: #1b5e20;
     transform: translateY(-2px);
-    box-shadow: 0 3px 6px rgba(46, 125, 50, 0.3);
+    box-shadow: 0 4px 8px rgba(46, 125, 50, 0.3);
 }
 
-/* Notification compacte */
+/* Notification */
 .notification {
     position: fixed;
-    top: 15px;
-    right: 15px;
+    top: 20px;
+    right: 20px;
     background: white;
-    border-radius: 6px;
-    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.15);
-    padding: 8px 15px;
+    border-radius: 12px;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+    padding: 12px 20px;
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 12px;
     transform: translateX(400px);
     animation: slideIn 0.3s ease forwards;
     z-index: 10000;
-    min-width: 250px;
-    max-width: 320px;
-    font-size: 0.8rem;
+    min-width: 280px;
+    max-width: 360px;
+    font-size: 0.9rem;
 }
 
 .notification.success {
-    border-left: 4px solid #2e7d32;
+    border-left: 5px solid #2e7d32;
 }
 
 .notification.error {
-    border-left: 4px solid #dc3545;
+    border-left: 5px solid #dc3545;
 }
 
 .notification i {
-    font-size: 1rem;
+    font-size: 1.2rem;
 }
 
 .notification.success i {
@@ -307,7 +283,7 @@ h2 {
 .notification .close-notif {
     cursor: pointer;
     color: #999;
-    font-size: 0.9rem;
+    font-size: 1rem;
     transition: color 0.2s;
 }
 
@@ -332,14 +308,14 @@ h2 {
     animation: slideOut 0.3s ease forwards;
 }
 
-/* Loading overlay (inactif mais conservé) */
+/* Loading overlay */
 .loading-overlay {
     position: fixed;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
-    background: rgba(255, 255, 255, 0.8);
+    background: rgba(255, 255, 255, 0.85);
     display: flex;
     justify-content: center;
     align-items: center;
@@ -355,10 +331,10 @@ h2 {
 }
 
 .loading-spinner {
-    width: 40px;
-    height: 40px;
-    border: 4px solid #f3f3f3;
-    border-top: 4px solid #2e7d32;
+    width: 50px;
+    height: 50px;
+    border: 5px solid #f3f3f3;
+    border-top: 5px solid #2e7d32;
     border-radius: 50%;
     animation: spin 1s linear infinite;
 }
@@ -377,11 +353,21 @@ h2 {
 @media (max-width: 768px) {
     .detail-grid {
         grid-template-columns: 1fr;
+        gap: 12px;
+    }
+
+    .container {
+        padding: 16px;
+    }
+
+    .btn {
+        padding: 6px 16px;
+        min-width: 90px;
     }
 }
 </style>
 
-<!-- Loading overlay (inactif mais présent) -->
+<!-- Loading overlay -->
 <div class="loading-overlay" id="loadingOverlay">
     <div class="loading-spinner"></div>
 </div>
@@ -389,7 +375,7 @@ h2 {
 <div class="container">
     <h2><i class="fas fa-eye"></i> Détails du litige #<?= $litige['id'] ?></h2>
 
-    <!-- SECTION 1 : INFORMATIONS MILITAIRES (avec badge zone) -->
+    <!-- SECTION 1 : INFORMATIONS MILITAIRES -->
     <div class="section-title">
         <i class="fas fa-shield-alt"></i> Informations militaires
         <?php if ($zdef_class): ?>
@@ -397,31 +383,26 @@ h2 {
         <?php endif; ?>
     </div>
     <div class="detail-grid">
-        <!-- Matricule -->
         <div class="detail-item">
             <div class="detail-label"><i class="fas fa-id-card"></i> Matricule</div>
             <div class="detail-value"><?= htmlspecialchars($litige['matricule'] ?? '') ?></div>
         </div>
 
-        <!-- Noms -->
         <div class="detail-item">
             <div class="detail-label"><i class="fas fa-user"></i> Noms</div>
             <div class="detail-value"><?= htmlspecialchars($litige['noms'] ?? '') ?></div>
         </div>
 
-        <!-- Grade (nouveau) -->
         <div class="detail-item">
             <div class="detail-label"><i class="fas fa-star"></i> Grade</div>
             <div class="detail-value"><?= htmlspecialchars($litige['grade'] ?? '') ?: 'Non renseigné' ?></div>
         </div>
 
-        <!-- Garnison -->
         <div class="detail-item">
             <div class="detail-label"><i class="fas fa-map-pin"></i> Garnison</div>
             <div class="detail-value"><?= htmlspecialchars($litige['garnison'] ?? '') ?: 'Non renseignée' ?></div>
         </div>
 
-        <!-- Province -->
         <div class="detail-item">
             <div class="detail-label"><i class="fas fa-map-marked-alt"></i> Province</div>
             <div class="detail-value"><?= htmlspecialchars($litige['province'] ?? '') ?: 'Non renseignée' ?></div>
@@ -433,14 +414,12 @@ h2 {
         <i class="fas fa-users"></i> Informations bénéficiaires
     </div>
     <div class="detail-grid">
-        <!-- Bénéficiaire -->
         <div class="detail-item">
             <div class="detail-label"><i class="fas fa-user-tie"></i> Bénéficiaire</div>
             <div class="detail-value"><?= htmlspecialchars($litige['nom_beneficiaire'] ?? '') ?: 'Non renseigné' ?>
             </div>
         </div>
 
-        <!-- Lien parenté -->
         <div class="detail-item">
             <div class="detail-label"><i class="fas fa-link"></i> Lien parenté</div>
             <div class="detail-value"><?= htmlspecialchars($litige['lien_parente'] ?? '') ?: 'Non renseigné' ?></div>
@@ -452,19 +431,16 @@ h2 {
         <i class="fas fa-clipboard-check"></i> Informations de contrôle
     </div>
     <div class="detail-grid">
-        <!-- Type contrôle -->
         <div class="detail-item">
             <div class="detail-label"><i class="fas fa-clipboard-list"></i> Type contrôle</div>
             <div class="detail-value"><?= htmlspecialchars($litige['type_controle'] ?? '') ?: 'Non renseigné' ?></div>
         </div>
 
-        <!-- Date contrôle -->
         <div class="detail-item">
             <div class="detail-label"><i class="fas fa-calendar-check"></i> Date contrôle</div>
             <div class="detail-value"><?= date('d/m/Y', strtotime($litige['date_controle'])) ?></div>
         </div>
 
-        <!-- Observations (pleine largeur) -->
         <div class="detail-item full-width">
             <div class="detail-label"><i class="fas fa-comment"></i> Observations</div>
             <div class="detail-value" style="white-space: pre-wrap;">
@@ -488,7 +464,6 @@ h2 {
 </div>
 
 <script>
-// Script minimal pour les notifications éventuelles
 function showNotification(message, type = 'success', duration = 5000) {
     const notif = document.createElement('div');
     notif.className = `notification ${type}`;
@@ -508,7 +483,6 @@ function showNotification(message, type = 'success', duration = 5000) {
     }, duration);
 }
 
-// Si un message flash est présent, on l'affiche
 <?php if (isset($_SESSION['flash_success'])): ?>
 showNotification('<?= addslashes($_SESSION['flash_success']) ?>', 'success');
 <?php unset($_SESSION['flash_success']); ?>

@@ -49,12 +49,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             try {
                 if (empty($mot_de_passe)) {
                     // Pas de changement de mot de passe
-                    $sql = "UPDATE utilisateurs SET login = ?, nom_complet = ?, email = ?, profil = ?, actif = ? WHERE id = ?";
+                    $sql = "UPDATE utilisateurs SET login = ?, nom_complet = ?, email = ?, profil = ?, actif = ? WHERE id_utilisateur = ?";
                     $params = [$login, $nom_complet, $email, $profil, $actif, $id];
                 } else {
                     // Avec nouveau mot de passe
                     $hash = password_hash($mot_de_passe, PASSWORD_DEFAULT);
-                    $sql = "UPDATE utilisateurs SET login = ?, mot_de_passe = ?, nom_complet = ?, email = ?, profil = ?, actif = ? WHERE id = ?";
+                    $sql = "UPDATE utilisateurs SET login = ?, mot_de_passe = ?, nom_complet = ?, email = ?, profil = ?, actif = ? WHERE id_utilisateur = ?";
                     $params = [$login, $hash, $nom_complet, $email, $profil, $actif, $id];
                 }
 
@@ -80,356 +80,364 @@ include '../../includes/header.php';
 <script src="../../assets/js/sweetalert2.all.min.js"></script>
 
 <style>
-/* Copier ici le même bloc CSS que dans ajouter_utilisateur.php */
-:root {
-    --primary: #2e7d32;
-    --primary-dark: #1b5e20;
-    --success: #28a745;
-    --danger: #dc3545;
-    --warning: #ffc107;
-    --gray: #6c757d;
-    --light: #f8f9fa;
-}
-
-body {
-    font-family: 'Barlow', sans-serif;
-    background: #f4f6f9;
-}
-
-.container-fluid {
-    padding: 15px;
-}
-
-.register-wrapper {
-    width: 100%;
-    max-width: none;
-    margin: 0;
-    padding: 0 15px;
-    animation: fadeInUp 0.4s ease-out;
-}
-
-@keyframes fadeInUp {
-    from {
-        opacity: 0;
-        transform: translateY(15px);
+    /* ===== DESIGN AGRANDI (identique à ajouter.php) ===== */
+    :root {
+        --primary: #2e7d32;
+        --primary-dark: #1b5e20;
+        --success: #28a745;
+        --danger: #dc3545;
+        --warning: #ffc107;
+        --gray: #6c757d;
+        --light: #f8f9fa;
     }
 
-    to {
-        opacity: 1;
-        transform: translateY(0);
+    body {
+        font-family: 'Barlow', sans-serif;
+        background: #f4f6f9;
+        padding: 12px;
+        font-size: 16px;
     }
-}
 
-.card-modern {
-    border: none;
-    border-radius: 12px;
-    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1) !important;
-    overflow: hidden;
-    background: white;
-    width: 100%;
-}
+    .container-fluid {
+        padding: 8px 15px;
+    }
 
-.card-modern .card-body {
-    padding: 20px 20px 10px;
-}
+    .register-wrapper {
+        width: 100%;
+        max-width: none;
+        margin: 0;
+        padding: 0 8px;
+        animation: fadeInUp 0.4s ease-out;
+    }
 
-.form-header {
-    text-align: center;
-    margin-bottom: 15px;
-}
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(15px);
+        }
 
-.form-header .title {
-    font-size: 1.5rem;
-    font-weight: 700;
-    color: var(--primary-dark);
-    margin-bottom: 5px;
-}
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
 
-.form-header .subtitle {
-    font-size: 0.85rem;
-    color: var(--gray);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 5px;
-}
+    .card-modern {
+        border: none;
+        border-radius: 12px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1) !important;
+        overflow: hidden;
+        background: white;
+        width: 100%;
+    }
 
-.form-header .subtitle i {
-    color: var(--primary);
-    font-size: 0.8rem;
-}
+    .card-modern .card-body {
+        padding: 20px 20px 12px;
+    }
 
-.row-two-cols {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 12px;
-    margin-bottom: 12px;
-}
+    .form-header {
+        text-align: center;
+        margin-bottom: 16px;
+    }
 
-.input-group-modern {
-    margin-bottom: 12px;
-    position: relative;
-}
+    .form-header .title {
+        font-size: 1.6rem;
+        font-weight: 700;
+        color: var(--primary-dark);
+        margin-bottom: 6px;
+    }
 
-.input-group-modern .input-icon {
-    position: absolute;
-    left: 10px;
-    top: 50%;
-    transform: translateY(-50%);
-    color: var(--primary);
-    z-index: 10;
-    font-size: 0.9rem;
-}
+    .form-header .subtitle {
+        font-size: 0.9rem;
+        color: var(--gray);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+    }
 
-.input-group-modern .form-control,
-.input-group-modern .form-select {
-    width: 100%;
-    padding: 8px 30px 8px 30px;
-    border: 1.5px solid #e0e0e0;
-    border-radius: 6px;
-    font-size: 0.85rem;
-    transition: all 0.3s;
-    font-family: 'Barlow', sans-serif;
-    height: 38px;
-    background-color: white;
-}
+    .form-header .subtitle i {
+        color: var(--primary);
+        font-size: 0.85rem;
+    }
 
-.input-group-modern .form-control:focus,
-.input-group-modern .form-select:focus {
-    border-color: var(--primary);
-    box-shadow: 0 0 0 0.1rem rgba(46, 125, 50, 0.15);
-    outline: none;
-}
-
-.input-group-modern .form-select {
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%232e7d32' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
-    background-repeat: no-repeat;
-    background-position: right 10px center;
-    background-size: 14px;
-    padding-right: 35px;
-}
-
-.validation-icon {
-    position: absolute;
-    right: 30px;
-    top: 50%;
-    transform: translateY(-50%);
-    font-size: 0.9rem;
-    pointer-events: none;
-    z-index: 10;
-}
-
-.validation-icon.valid {
-    color: var(--success);
-}
-
-.validation-icon.invalid {
-    color: var(--danger);
-}
-
-.password-toggle {
-    position: absolute;
-    right: 8px;
-    top: 50%;
-    transform: translateY(-50%);
-    cursor: pointer;
-    color: var(--gray);
-    z-index: 10;
-    background: white;
-    padding: 2px;
-    border-radius: 50%;
-    transition: all 0.2s;
-    font-size: 0.8rem;
-}
-
-.password-strength {
-    margin-top: 4px;
-    font-size: 0.7rem;
-    display: flex;
-    align-items: center;
-    gap: 5px;
-}
-
-.strength-bar {
-    flex: 1;
-    height: 4px;
-    background-color: #e0e0e0;
-    border-radius: 2px;
-    overflow: hidden;
-}
-
-.strength-bar-fill {
-    height: 100%;
-    width: 0%;
-    transition: width 0.3s, background-color 0.3s;
-}
-
-.strength-text {
-    min-width: 45px;
-    text-align: right;
-    color: var(--gray);
-}
-
-.field-error {
-    color: var(--danger);
-    font-size: 0.7rem;
-    margin-top: 2px;
-    padding-left: 30px;
-}
-
-.form-check-modern {
-    display: flex;
-    align-items: center;
-    margin: 15px 0 5px 0;
-    padding-left: 0;
-}
-
-.form-check-modern input[type="checkbox"] {
-    width: 18px;
-    height: 18px;
-    margin-right: 8px;
-    cursor: pointer;
-    accent-color: var(--primary);
-}
-
-.form-check-modern label {
-    display: flex;
-    align-items: center;
-    gap: 5px;
-    font-size: 0.9rem;
-    cursor: pointer;
-    color: #495057;
-}
-
-.form-check-modern label i {
-    color: var(--primary);
-}
-
-.info-card {
-    background: var(--light);
-    border-left: 4px solid var(--primary);
-    border-radius: 6px;
-    padding: 12px;
-    margin-bottom: 20px;
-    font-size: 0.8rem;
-}
-
-.info-card strong {
-    color: var(--primary-dark);
-}
-
-.info-card .profile-badge {
-    display: inline-block;
-    padding: 2px 8px;
-    border-radius: 12px;
-    background: #e0e0e0;
-    font-weight: 600;
-    margin: 2px 0;
-}
-
-.action-buttons {
-    display: flex;
-    gap: 10px;
-    justify-content: center;
-    flex-wrap: wrap;
-    margin-top: 20px;
-}
-
-.btn-modern {
-    border-radius: 6px;
-    padding: 8px 16px;
-    font-weight: 600;
-    font-size: 0.8rem;
-    text-transform: uppercase;
-    letter-spacing: 0.3px;
-    transition: all 0.3s;
-    border: none;
-    cursor: pointer;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 5px;
-    min-width: 110px;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-    text-decoration: none;
-    color: white;
-}
-
-.btn-modern i {
-    font-size: 0.9rem;
-}
-
-.btn-primary-modern {
-    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
-}
-
-.btn-primary-modern:hover:not(:disabled) {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 12px rgba(46, 125, 50, 0.3);
-}
-
-.btn-secondary-modern {
-    background: linear-gradient(135deg, var(--gray) 0%, #5a6268 100%);
-}
-
-.btn-secondary-modern:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 12px rgba(108, 117, 125, 0.3);
-}
-
-.btn-warning-modern {
-    background: linear-gradient(135deg, #ffc107 0%, #e0a800 100%);
-    color: #212529;
-}
-
-.btn-warning-modern:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 12px rgba(255, 193, 7, 0.3);
-}
-
-.btn-modern:disabled {
-    opacity: 0.7;
-    cursor: not-allowed;
-    transform: none;
-}
-
-.alert-modern {
-    border-radius: 6px;
-    border: none;
-    padding: 8px 12px;
-    margin-bottom: 15px;
-    font-size: 0.8rem;
-    display: flex;
-    align-items: center;
-    gap: 5px;
-}
-
-.alert-modern.error {
-    background: #fee2e2;
-    color: #991b1b;
-    border-left: 3px solid var(--danger);
-}
-
-.alert-modern.success {
-    background: #d4edda;
-    color: #155724;
-    border-left: 3px solid var(--success);
-}
-
-@media (max-width: 576px) {
     .row-two-cols {
-        grid-template-columns: 1fr;
-        gap: 0;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 16px;
+        margin-bottom: 16px;
+    }
+
+    .input-group-modern {
+        margin-bottom: 16px;
+        position: relative;
+    }
+
+    .input-group-modern .input-icon {
+        position: absolute;
+        left: 12px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--primary);
+        z-index: 10;
+        font-size: 1rem;
+    }
+
+    .input-group-modern .form-control,
+    .input-group-modern .form-select {
+        width: 100%;
+        padding: 10px 30px 10px 36px;
+        border: 1.5px solid #e0e0e0;
+        border-radius: 8px;
+        font-size: 0.95rem;
+        transition: all 0.3s;
+        font-family: 'Barlow', sans-serif;
+        height: 44px;
+        background-color: white;
+    }
+
+    .input-group-modern .form-control:focus,
+    .input-group-modern .form-select:focus {
+        border-color: var(--primary);
+        box-shadow: 0 0 0 0.2rem rgba(46, 125, 50, 0.2);
+        outline: none;
+    }
+
+    .input-group-modern .form-select {
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%232e7d32' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-position: right 12px center;
+        background-size: 14px;
+        padding-right: 32px;
+    }
+
+    .validation-icon {
+        position: absolute;
+        right: 30px;
+        top: 50%;
+        transform: translateY(-50%);
+        font-size: 1rem;
+        pointer-events: none;
+        z-index: 10;
+    }
+
+    .validation-icon.valid {
+        color: var(--success);
+    }
+
+    .validation-icon.invalid {
+        color: var(--danger);
+    }
+
+    .password-toggle {
+        position: absolute;
+        right: 8px;
+        top: 50%;
+        transform: translateY(-50%);
+        cursor: pointer;
+        color: var(--gray);
+        z-index: 10;
+        background: white;
+        padding: 4px;
+        border-radius: 50%;
+        transition: all 0.2s;
+        font-size: 0.9rem;
+    }
+
+    .password-strength {
+        margin-top: 6px;
+        font-size: 0.8rem;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .strength-bar {
+        flex: 1;
+        height: 5px;
+        background-color: #e0e0e0;
+        border-radius: 3px;
+        overflow: hidden;
+    }
+
+    .strength-bar-fill {
+        height: 100%;
+        width: 0%;
+        transition: width 0.3s, background-color 0.3s;
+    }
+
+    .strength-text {
+        min-width: 50px;
+        text-align: right;
+        color: var(--gray);
+    }
+
+    .field-error {
+        color: var(--danger);
+        font-size: 0.75rem;
+        margin-top: 4px;
+        padding-left: 36px;
+    }
+
+    .form-check-modern {
+        display: flex;
+        align-items: center;
+        margin: 12px 0 6px 0;
+        padding-left: 0;
+    }
+
+    .form-check-modern input[type="checkbox"] {
+        width: 20px;
+        height: 20px;
+        margin-right: 8px;
+        cursor: pointer;
+        accent-color: var(--primary);
+    }
+
+    .form-check-modern label {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 0.9rem;
+        cursor: pointer;
+        color: #495057;
+    }
+
+    .form-check-modern label i {
+        color: var(--primary);
+    }
+
+    .info-card {
+        background: var(--light);
+        border-left: 5px solid var(--primary);
+        border-radius: 8px;
+        padding: 12px 15px;
+        margin-bottom: 20px;
+        font-size: 0.85rem;
+    }
+
+    .info-card strong {
+        color: var(--primary-dark);
+    }
+
+    .info-card .profile-badge {
+        display: inline-block;
+        padding: 3px 8px;
+        border-radius: 20px;
+        background: #e0e0e0;
+        font-weight: 600;
+        margin: 3px 0;
     }
 
     .action-buttons {
-        flex-direction: column;
+        display: flex;
+        gap: 12px;
+        justify-content: center;
+        flex-wrap: wrap;
+        margin-top: 20px;
     }
 
     .btn-modern {
-        width: 100%;
+        border-radius: 30px;
+        padding: 8px 18px;
+        font-weight: 600;
+        font-size: 0.9rem;
+        text-transform: uppercase;
+        letter-spacing: 0.3px;
+        transition: all 0.3s;
+        border: none;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        min-width: 110px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        text-decoration: none;
+        color: white;
     }
-}
+
+    .btn-modern i {
+        font-size: 0.85rem;
+    }
+
+    .btn-primary-modern {
+        background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+    }
+
+    .btn-primary-modern:hover:not(:disabled) {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(46, 125, 50, 0.3);
+    }
+
+    .btn-secondary-modern {
+        background: linear-gradient(135deg, var(--gray) 0%, #5a6268 100%);
+    }
+
+    .btn-secondary-modern:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(108, 117, 125, 0.3);
+    }
+
+    .btn-warning-modern {
+        background: linear-gradient(135deg, #ffc107 0%, #e0a800 100%);
+        color: #212529;
+    }
+
+    .btn-warning-modern:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(255, 193, 7, 0.3);
+    }
+
+    .btn-modern:disabled {
+        opacity: 0.7;
+        cursor: not-allowed;
+        transform: none;
+    }
+
+    .alert-modern {
+        border-radius: 8px;
+        border: none;
+        padding: 8px 12px;
+        margin-bottom: 16px;
+        font-size: 0.85rem;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .alert-modern.error {
+        background: #fee2e2;
+        color: #991b1b;
+        border-left: 4px solid var(--danger);
+    }
+
+    .alert-modern.success {
+        background: #d4edda;
+        color: #155724;
+        border-left: 4px solid var(--success);
+    }
+
+    @media (max-width: 576px) {
+        .row-two-cols {
+            grid-template-columns: 1fr;
+            gap: 12px;
+        }
+
+        .action-buttons {
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .btn-modern {
+            width: 100%;
+            min-width: auto;
+        }
+
+        .card-modern .card-body {
+            padding: 16px;
+        }
+    }
 </style>
 
 <div class="container-fluid py-3">
@@ -444,19 +452,19 @@ body {
                     </div>
                 </div>
 
-                <?php if (null): ?>
-                <div class="alert-modern error">
-                    <i class="fas fa-exclamation-circle"></i>
-                    <?= htmlspecialchars($error) ?>
-                </div>
-                <script>
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Erreur',
-                    text: '<?= addslashes($error) ?>',
-                    confirmButtonColor: '#2e7d32'
-                });
-                </script>
+                <?php if ($error): ?>
+                    <div class="alert-modern error">
+                        <i class="fas fa-exclamation-circle"></i>
+                        <?= htmlspecialchars($error) ?>
+                    </div>
+                    <script>
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Erreur',
+                            text: '<?= addslashes($error) ?>',
+                            confirmButtonColor: '#2e7d32'
+                        });
+                    </script>
                 <?php endif; ?>
 
                 <div class="info-card">
@@ -481,8 +489,8 @@ body {
                             <select name="profil" id="profil" class="form-select" required>
                                 <option value="" disabled>Profil *</option>
                                 <?php foreach ($profils as $p): ?>
-                                <option value="<?= $p ?>" <?= $user['profil'] == $p ? 'selected' : '' ?>>
-                                    <?= $p ?></option>
+                                    <option value="<?= $p ?>" <?= $user['profil'] == $p ? 'selected' : '' ?>>
+                                        <?= $p ?></option>
                                 <?php endforeach; ?>
                             </select>
                         </div>
@@ -558,256 +566,250 @@ body {
 </div>
 
 <script>
-// Réutilisation des mêmes fonctions que dans ajouter
-function togglePasswordVisibility(fieldId, element) {
-    const input = document.getElementById(fieldId);
-    const icon = element.querySelector('i');
-    if (input.type === 'password') {
-        input.type = 'text';
-        icon.classList.remove('fa-eye');
-        icon.classList.add('fa-eye-slash');
-    } else {
-        input.type = 'password';
-        icon.classList.remove('fa-eye-slash');
-        icon.classList.add('fa-eye');
-    }
-}
-
-function evaluatePasswordStrength(password) {
-    let strength = 0;
-    if (password.length >= 6) strength += 1;
-    if (password.length >= 8) strength += 1;
-    if (/[a-z]/.test(password) && /[A-Z]/.test(password)) strength += 1;
-    if (/[0-9]/.test(password)) strength += 1;
-    if (/[^a-zA-Z0-9]/.test(password)) strength += 1;
-    return strength;
-}
-
-function updatePasswordStrength() {
-    const password = document.getElementById('password').value;
-    const strength = evaluatePasswordStrength(password);
-    const barFill = document.getElementById('strengthBarFill');
-    const strengthText = document.getElementById('strengthText');
-    const iconSpan = document.getElementById('passwordStrengthIcon');
-    let fillPercent = 0;
-    let text = '';
-    let color = '#e0e0e0';
-
-    if (password.length === 0) {
-        fillPercent = 0;
-        text = '';
-        color = '#e0e0e0';
-        iconSpan.innerHTML = '';
-    } else if (strength <= 2) {
-        fillPercent = 20;
-        text = 'Faible';
-        color = '#dc3545';
-        iconSpan.innerHTML = '<i class="fas fa-exclamation-triangle" style="color:#dc3545;"></i>';
-    } else if (strength <= 3) {
-        fillPercent = 50;
-        text = 'Moyen';
-        color = '#ffc107';
-        iconSpan.innerHTML = '<i class="fas fa-exclamation-circle" style="color:#ffc107;"></i>';
-    } else if (strength <= 4) {
-        fillPercent = 75;
-        text = 'Bon';
-        color = '#17a2b8';
-        iconSpan.innerHTML = '<i class="fas fa-check-circle" style="color:#17a2b8;"></i>';
-    } else {
-        fillPercent = 100;
-        text = 'Fort';
-        color = '#28a745';
-        iconSpan.innerHTML = '<i class="fas fa-check-circle" style="color:#28a745;"></i>';
+    // Fonctions identiques à ajouter.php
+    function togglePasswordVisibility(fieldId, element) {
+        const input = document.getElementById(fieldId);
+        const icon = element.querySelector('i');
+        if (input.type === 'password') {
+            input.type = 'text';
+            icon.classList.remove('fa-eye');
+            icon.classList.add('fa-eye-slash');
+        } else {
+            input.type = 'password';
+            icon.classList.remove('fa-eye-slash');
+            icon.classList.add('fa-eye');
+        }
     }
 
-    barFill.style.width = fillPercent + '%';
-    barFill.style.backgroundColor = color;
-    strengthText.textContent = text;
-    strengthText.style.color = color;
-}
-
-function updateConfirmation() {
-    const password = document.getElementById('password').value;
-    const confirm = document.getElementById('confirm_password').value;
-    const confirmIcon = document.getElementById('confirmIcon');
-    const confirmError = document.getElementById('confirmError');
-
-    if (confirm.length === 0) {
-        confirmIcon.innerHTML = '';
-        confirmError.textContent = '';
-        return;
+    function evaluatePasswordStrength(password) {
+        let strength = 0;
+        if (password.length >= 6) strength += 1;
+        if (password.length >= 8) strength += 1;
+        if (/[a-z]/.test(password) && /[A-Z]/.test(password)) strength += 1;
+        if (/[0-9]/.test(password)) strength += 1;
+        if (/[^a-zA-Z0-9]/.test(password)) strength += 1;
+        return strength;
     }
 
-    if (password === confirm) {
-        confirmIcon.innerHTML = '<i class="fas fa-check-circle" style="color:#28a745;"></i>';
-        confirmError.textContent = '';
-    } else {
-        confirmIcon.innerHTML = '<i class="fas fa-times-circle" style="color:#dc3545;"></i>';
-        confirmError.textContent = 'Les mots de passe ne correspondent pas.';
-    }
-}
+    function updatePasswordStrength() {
+        const password = document.getElementById('password').value;
+        const strength = evaluatePasswordStrength(password);
+        const barFill = document.getElementById('strengthBarFill');
+        const strengthText = document.getElementById('strengthText');
+        const iconSpan = document.getElementById('passwordStrengthIcon');
+        let fillPercent = 0;
+        let text = '';
+        let color = '#e0e0e0';
 
-function validateForm(event) {
-    event.preventDefault();
+        if (password.length === 0) {
+            fillPercent = 0;
+            text = '';
+            color = '#e0e0e0';
+            iconSpan.innerHTML = '';
+        } else if (strength <= 2) {
+            fillPercent = 20;
+            text = 'Faible';
+            color = '#dc3545';
+            iconSpan.innerHTML = '<i class="fas fa-exclamation-triangle" style="color:#dc3545;"></i>';
+        } else if (strength <= 3) {
+            fillPercent = 50;
+            text = 'Moyen';
+            color = '#ffc107';
+            iconSpan.innerHTML = '<i class="fas fa-exclamation-circle" style="color:#ffc107;"></i>';
+        } else if (strength <= 4) {
+            fillPercent = 75;
+            text = 'Bon';
+            color = '#17a2b8';
+            iconSpan.innerHTML = '<i class="fas fa-check-circle" style="color:#17a2b8;"></i>';
+        } else {
+            fillPercent = 100;
+            text = 'Fort';
+            color = '#28a745';
+            iconSpan.innerHTML = '<i class="fas fa-check-circle" style="color:#28a745;"></i>';
+        }
 
-    const login = document.getElementById('login').value.trim();
-    const nomComplet = document.getElementById('nom_complet').value.trim();
-    const password = document.getElementById('password').value;
-    const confirm = document.getElementById('confirm_password').value;
-    const profil = document.getElementById('profil').value;
-
-    if (!login || !nomComplet || !profil) {
-        Swal.fire({
-            icon: 'warning',
-            title: 'Champs manquants',
-            text: 'Veuillez remplir tous les champs obligatoires.',
-            confirmButtonColor: '#2e7d32'
-        });
-        return false;
-    }
-
-    const loginRegex = /^[a-zA-Z0-9._-]+$/;
-    if (!loginRegex.test(login)) {
-        Swal.fire({
-            icon: 'error',
-            title: 'Login invalide',
-            text: 'Le login ne peut contenir que des lettres, chiffres, points, tirets et underscores.',
-            confirmButtonColor: '#2e7d32'
-        });
-        return false;
-    }
-
-    if (password !== '' && password.length < 6) {
-        Swal.fire({
-            icon: 'warning',
-            title: 'Mot de passe trop court',
-            text: 'Le mot de passe doit contenir au moins 6 caractères.',
-            confirmButtonColor: '#2e7d32'
-        });
-        return false;
+        barFill.style.width = fillPercent + '%';
+        barFill.style.backgroundColor = color;
+        strengthText.textContent = text;
+        strengthText.style.color = color;
     }
 
-    if (password !== confirm) {
-        Swal.fire({
-            icon: 'error',
-            title: 'Mots de passe différents',
-            text: 'La confirmation ne correspond pas.',
-            confirmButtonColor: '#2e7d32'
-        });
-        return false;
+    function updateConfirmation() {
+        const password = document.getElementById('password').value;
+        const confirm = document.getElementById('confirm_password').value;
+        const confirmIcon = document.getElementById('confirmIcon');
+        const confirmError = document.getElementById('confirmError');
+
+        if (confirm.length === 0) {
+            confirmIcon.innerHTML = '';
+            confirmError.textContent = '';
+            return;
+        }
+
+        if (password === confirm) {
+            confirmIcon.innerHTML = '<i class="fas fa-check-circle" style="color:#28a745;"></i>';
+            confirmError.textContent = '';
+        } else {
+            confirmIcon.innerHTML = '<i class="fas fa-times-circle" style="color:#dc3545;"></i>';
+            confirmError.textContent = 'Les mots de passe ne correspondent pas.';
+        }
     }
 
-    const email = document.getElementById('email').value.trim();
-    if (email) {
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        if (!emailRegex.test(email)) {
+    function validateForm(event) {
+        event.preventDefault();
+
+        const login = document.getElementById('login').value.trim();
+        const nomComplet = document.getElementById('nom_complet').value.trim();
+        const password = document.getElementById('password').value;
+        const confirm = document.getElementById('confirm_password').value;
+        const profil = document.getElementById('profil').value;
+
+        if (!login || !nomComplet || !profil) {
             Swal.fire({
-                icon: 'error',
-                title: 'Email invalide',
-                text: 'Veuillez saisir une adresse email valide.',
+                icon: 'warning',
+                title: 'Champs manquants',
+                text: 'Veuillez remplir tous les champs obligatoires.',
                 confirmButtonColor: '#2e7d32'
             });
             return false;
         }
-    }
 
-    Swal.fire({
-        title: 'Confirmer la modification',
-        html: `<p>Mettre à jour <strong>${escapeHtml(login)}</strong> ?</p>`,
-        icon: 'question',
-        showCancelButton: true,
-        confirmButtonColor: '#2e7d32',
-        cancelButtonColor: '#6c757d',
-        confirmButtonText: 'Oui, modifier',
-        cancelButtonText: 'Annuler',
-        reverseButtons: true
-    }).then((result) => {
-        if (result.isConfirmed) {
-            const submitBtn = document.getElementById('submitBtn');
-            submitBtn.disabled = true;
-            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Traitement...';
-            document.getElementById('userForm').submit();
+        const loginRegex = /^[a-zA-Z0-9._-]+$/;
+        if (!loginRegex.test(login)) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Login invalide',
+                text: 'Le login ne peut contenir que des lettres, chiffres, points, tirets et underscores.',
+                confirmButtonColor: '#2e7d32'
+            });
+            return false;
         }
-    });
 
-    return false;
-}
-
-function escapeHtml(text) {
-    if (!text) return text;
-    const map = {
-        '&': '&amp;',
-        '<': '&lt;',
-        '>': '&gt;',
-        '"': '&quot;',
-        "'": '&#039;'
-    };
-    return text.replace(/[&<>"']/g, m => map[m]);
-}
-
-function resetForm() {
-    Swal.fire({
-        title: 'Réinitialiser',
-        text: 'Voulez-vous vraiment effacer les modifications ?',
-        icon: 'warning',
-        showCancelButton: true,
-        confirmButtonColor: '#ffc107',
-        cancelButtonColor: '#6c757d',
-        confirmButtonText: 'Oui, réinitialiser',
-        cancelButtonText: 'Annuler'
-    }).then((result) => {
-        if (result.isConfirmed) {
-            document.getElementById('userForm').reset();
-            // On ne peut pas re-préremplir facilement, on recharge la page
-            window.location.reload();
+        if (password !== '' && password.length < 6) {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Mot de passe trop court',
+                text: 'Le mot de passe doit contenir au moins 6 caractères.',
+                confirmButtonColor: '#2e7d32'
+            });
+            return false;
         }
-    });
-}
 
-// Détection modifications non sauvegardées
-let formModified = false;
-document.querySelectorAll('#userForm input, #userForm select').forEach(el => {
-    el.addEventListener('change', () => formModified = true);
-    el.addEventListener('keyup', () => formModified = true);
-});
+        if (password !== confirm) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Mots de passe différents',
+                text: 'La confirmation ne correspond pas.',
+                confirmButtonColor: '#2e7d32'
+            });
+            return false;
+        }
 
-document.getElementById('cancelBtn').addEventListener('click', function(e) {
-    if (formModified) {
-        e.preventDefault();
+        const email = document.getElementById('email').value.trim();
+        if (email) {
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(email)) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Email invalide',
+                    text: 'Veuillez saisir une adresse email valide.',
+                    confirmButtonColor: '#2e7d32'
+                });
+                return false;
+            }
+        }
+
         Swal.fire({
-            title: 'Modifications non sauvegardées',
-            text: 'Voulez-vous vraiment quitter ?',
-            icon: 'warning',
+            title: 'Confirmer la modification',
+            html: `<p>Mettre à jour <strong>${escapeHtml(login)}</strong> ?</p>`,
+            icon: 'question',
             showCancelButton: true,
-            confirmButtonColor: '#dc3545',
+            confirmButtonColor: '#2e7d32',
             cancelButtonColor: '#6c757d',
-            confirmButtonText: 'Oui, quitter',
-            cancelButtonText: 'Rester'
+            confirmButtonText: 'Oui, modifier',
+            cancelButtonText: 'Annuler',
+            reverseButtons: true
         }).then((result) => {
             if (result.isConfirmed) {
-                window.location.href = this.href;
+                const submitBtn = document.getElementById('submitBtn');
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Traitement...';
+                document.getElementById('userForm').submit();
+            }
+        });
+
+        return false;
+    }
+
+    function escapeHtml(text) {
+        if (!text) return text;
+        const map = {
+            '&': '&amp;',
+            '<': '&lt;',
+            '>': '&gt;',
+            '"': '&quot;',
+            "'": '&#039;'
+        };
+        return text.replace(/[&<>"']/g, m => map[m]);
+    }
+
+    function resetForm() {
+        Swal.fire({
+            title: 'Réinitialiser',
+            text: 'Voulez-vous vraiment effacer les modifications ?',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#ffc107',
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: 'Oui, réinitialiser',
+            cancelButtonText: 'Annuler'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                window.location.reload();
             }
         });
     }
-});
 
-// Auto-formatage login
-document.getElementById('login').addEventListener('input', function(e) {
-    this.value = this.value.toLowerCase().replace(/[^a-z0-9._-]/g, '');
-});
+    let formModified = false;
+    document.querySelectorAll('#userForm input, #userForm select').forEach(el => {
+        el.addEventListener('change', () => formModified = true);
+        el.addEventListener('keyup', () => formModified = true);
+    });
 
-// Écouteurs mot de passe
-document.getElementById('password').addEventListener('input', function() {
+    document.getElementById('cancelBtn').addEventListener('click', function(e) {
+        if (formModified) {
+            e.preventDefault();
+            Swal.fire({
+                title: 'Modifications non sauvegardées',
+                text: 'Voulez-vous vraiment quitter ?',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#dc3545',
+                cancelButtonColor: '#6c757d',
+                confirmButtonText: 'Oui, quitter',
+                cancelButtonText: 'Rester'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    window.location.href = this.href;
+                }
+            });
+        }
+    });
+
+    document.getElementById('login').addEventListener('input', function(e) {
+        this.value = this.value.toLowerCase().replace(/[^a-z0-9._-]/g, '');
+    });
+
+    document.getElementById('password').addEventListener('input', function() {
+        updatePasswordStrength();
+        updateConfirmation();
+    });
+    document.getElementById('confirm_password').addEventListener('input', updateConfirmation);
+
     updatePasswordStrength();
     updateConfirmation();
-});
-document.getElementById('confirm_password').addEventListener('input', updateConfirmation);
 
-// Initialisation
-updatePasswordStrength();
-updateConfirmation();
-
-document.getElementById('userForm').addEventListener('submit', validateForm);
+    document.getElementById('userForm').addEventListener('submit', validateForm);
 </script>
 
 <?php include '../../includes/footer.php'; ?>

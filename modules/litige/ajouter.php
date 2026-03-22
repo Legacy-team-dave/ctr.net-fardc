@@ -16,7 +16,7 @@ include '../../includes/header.php';
 
 <link rel="stylesheet" href="../../assets/fontawesome/css/all.min.css">
 <style>
-/* ===== STYLES COMPACTS ===== */
+/* ===== STYLES AGRANDIS ===== */
 * {
     margin: 0;
     padding: 0;
@@ -26,38 +26,47 @@ include '../../includes/header.php';
 body {
     font-family: 'Barlow', sans-serif;
     background: #f0f2f5;
-    padding: 8px;
+    padding: 12px;
+    /* augmenté */
+    font-size: 16px;
+    /* base plus grande */
 }
 
 .container {
     max-width: 1200px;
     margin: 0 auto;
     background: white;
-    border-radius: 8px;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
-    padding: 12px;
+    border-radius: 12px;
+    /* augmenté */
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    /* plus prononcé */
+    padding: 20px;
+    /* augmenté */
 }
 
 h2 {
     color: #2e7d32;
-    font-size: 1.2rem;
-    margin-bottom: 10px;
-    padding-bottom: 4px;
+    font-size: 1.6rem;
+    /* augmenté */
+    margin-bottom: 16px;
+    padding-bottom: 8px;
     border-bottom: 2px solid #ffc107;
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: 10px;
 }
 
 .section-title {
     color: #2e7d32;
-    font-size: 1rem;
-    margin: 15px 0 8px 0;
-    padding-bottom: 3px;
+    font-size: 1.2rem;
+    /* augmenté */
+    margin: 20px 0 12px 0;
+    /* augmenté */
+    padding-bottom: 6px;
     border-bottom: 1px solid #ddd;
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: 8px;
 }
 
 .section-title:first-of-type {
@@ -66,15 +75,17 @@ h2 {
 
 .section-title i {
     color: #2e7d32;
-    font-size: 0.95rem;
-    width: 18px;
+    font-size: 1.1rem;
+    width: 24px;
 }
 
 .detail-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-    gap: 8px;
-    margin-bottom: 15px;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    /* plus large */
+    gap: 16px;
+    /* augmenté */
+    margin-bottom: 20px;
 }
 
 .form-grid {
@@ -83,8 +94,10 @@ h2 {
 
 .detail-item {
     background: #f8f9fa;
-    border-radius: 5px;
-    padding: 6px 8px;
+    border-radius: 8px;
+    /* augmenté */
+    padding: 12px 12px;
+    /* augmenté */
     border-left: none;
 }
 
@@ -94,20 +107,21 @@ h2 {
 
 .detail-label {
     font-weight: 600;
-    font-size: 0.65rem;
+    font-size: 0.85rem;
+    /* augmenté */
     text-transform: uppercase;
-    letter-spacing: 0.3px;
+    letter-spacing: 0.5px;
     color: #6c757d;
-    margin-bottom: 2px;
+    margin-bottom: 6px;
     display: flex;
     align-items: center;
-    gap: 3px;
+    gap: 6px;
 }
 
 .detail-label i {
     color: #2e7d32;
-    font-size: 0.75rem;
-    width: 14px;
+    font-size: 0.9rem;
+    width: 18px;
 }
 
 .detail-label .required {
@@ -118,10 +132,13 @@ h2 {
 .detail-item textarea,
 .detail-item select {
     width: 100%;
-    padding: 4px 6px;
+    padding: 8px 10px;
+    /* augmenté */
     border: 1px solid #ddd;
-    border-radius: 4px;
-    font-size: 0.8rem;
+    border-radius: 6px;
+    /* augmenté */
+    font-size: 0.95rem;
+    /* augmenté */
     transition: all 0.2s;
     background: white;
 }
@@ -131,46 +148,56 @@ h2 {
 .detail-item select:focus {
     border-color: #2e7d32;
     outline: none;
-    box-shadow: 0 0 0 2px rgba(46, 125, 50, 0.1);
+    box-shadow: 0 0 0 3px rgba(46, 125, 50, 0.2);
+    /* plus large */
 }
 
 .detail-item textarea {
     resize: vertical;
-    min-height: 50px;
+    min-height: 80px;
+    /* augmenté */
 }
 
 .auto-date-indicator {
-    font-size: 0.7rem;
+    font-size: 0.85rem;
+    /* augmenté */
     color: #2e7d32;
-    margin-top: 2px;
+    margin-top: 6px;
+    margin-bottom: 12px;
     display: flex;
     align-items: center;
-    gap: 3px;
+    gap: 6px;
 }
 
 .button-bar {
     display: flex;
-    gap: 6px;
+    gap: 12px;
+    /* augmenté */
     justify-content: center;
-    margin-top: 15px;
-    padding-top: 8px;
+    margin-top: 24px;
+    /* augmenté */
+    padding-top: 16px;
     border-top: 1px solid #eee;
     flex-wrap: wrap;
 }
 
 .btn {
-    padding: 4px 12px;
-    border-radius: 18px;
+    padding: 8px 20px;
+    /* augmenté */
+    border-radius: 30px;
+    /* plus arrondi */
     font-weight: 600;
-    font-size: 0.75rem;
+    font-size: 0.9rem;
+    /* augmenté */
     border: none;
     cursor: pointer;
     display: inline-flex;
     align-items: center;
-    gap: 4px;
+    gap: 8px;
     text-decoration: none;
     transition: all 0.2s;
-    min-width: 80px;
+    min-width: 110px;
+    /* plus large */
     justify-content: center;
 }
 
@@ -182,7 +209,7 @@ h2 {
 .btn-save:hover:not(:disabled) {
     background: #1b5e20;
     transform: translateY(-2px);
-    box-shadow: 0 3px 6px rgba(46, 125, 50, 0.3);
+    box-shadow: 0 4px 8px rgba(46, 125, 50, 0.3);
 }
 
 .btn-save:disabled {
@@ -198,7 +225,7 @@ h2 {
 .btn-success:hover {
     background: #218838;
     transform: translateY(-2px);
-    box-shadow: 0 3px 6px rgba(40, 167, 69, 0.3);
+    box-shadow: 0 4px 8px rgba(40, 167, 69, 0.3);
 }
 
 .btn-cancel {
@@ -209,7 +236,7 @@ h2 {
 .btn-cancel:hover {
     background: #545b62;
     transform: translateY(-2px);
-    box-shadow: 0 3px 6px rgba(108, 117, 125, 0.3);
+    box-shadow: 0 4px 8px rgba(108, 117, 125, 0.3);
 }
 
 .loading-overlay {
@@ -218,7 +245,7 @@ h2 {
     left: 0;
     width: 100%;
     height: 100%;
-    background: rgba(255, 255, 255, 0.8);
+    background: rgba(255, 255, 255, 0.85);
     display: flex;
     justify-content: center;
     align-items: center;
@@ -234,10 +261,11 @@ h2 {
 }
 
 .loading-spinner {
-    width: 40px;
-    height: 40px;
-    border: 4px solid #f3f3f3;
-    border-top: 4px solid #2e7d32;
+    width: 50px;
+    /* augmenté */
+    height: 50px;
+    border: 5px solid #f3f3f3;
+    border-top: 5px solid #2e7d32;
     border-radius: 50%;
     animation: spin 1s linear infinite;
 }
@@ -253,12 +281,12 @@ h2 {
 }
 
 .quick-actions {
-    margin-top: 12px;
-    padding: 10px;
+    margin-top: 20px;
+    padding: 16px;
     background: #f8f9fa;
-    border-radius: 6px;
+    border-radius: 10px;
     display: none;
-    border-left: 4px solid #2e7d32;
+    border-left: 6px solid #2e7d32;
 }
 
 .quick-actions.show {
@@ -268,20 +296,20 @@ h2 {
 
 .quick-actions h4 {
     color: #2e7d32;
-    margin-bottom: 8px;
-    font-size: 0.9rem;
+    margin-bottom: 12px;
+    font-size: 1.1rem;
 }
 
 .quick-actions-buttons {
     display: flex;
-    gap: 8px;
+    gap: 12px;
     flex-wrap: wrap;
 }
 
 .quick-btn {
-    padding: 4px 10px;
-    border-radius: 16px;
-    font-size: 0.75rem;
+    padding: 8px 16px;
+    border-radius: 30px;
+    font-size: 0.85rem;
     border: 1px solid #2e7d32;
     background: white;
     color: #2e7d32;
@@ -289,7 +317,7 @@ h2 {
     transition: all 0.2s;
     display: inline-flex;
     align-items: center;
-    gap: 4px;
+    gap: 8px;
 }
 
 .quick-btn:hover {
@@ -309,7 +337,7 @@ h2 {
     }
 }
 
-/* ===== STYLES POUR LES TOASTS ===== */
+/* ===== STYLES POUR LES TOASTS AGRANDIS ===== */
 :root {
     --success: #28a745;
     --danger: #dc3545;
@@ -326,25 +354,29 @@ h2 {
 .toast-message {
     background: linear-gradient(135deg, var(--success) 0%, #218838 100%);
     color: white;
-    padding: 15px 25px;
-    border-radius: 10px;
-    box-shadow: 0 5px 20px rgba(40, 167, 69, 0.3);
+    padding: 16px 28px;
+    /* augmenté */
+    border-radius: 12px;
+    box-shadow: 0 6px 20px rgba(40, 167, 69, 0.4);
     display: flex;
     align-items: center;
-    gap: 10px;
-    margin-bottom: 10px;
+    gap: 12px;
+    margin-bottom: 12px;
     animation: slideIn 0.3s ease-out, fadeOut 0.5s ease-out 2.5s forwards;
     font-weight: 500;
-    min-width: 300px;
+    font-size: 0.95rem;
+    /* augmenté */
+    min-width: 320px;
 }
 
 .toast-message i {
-    font-size: 1.2rem;
+    font-size: 1.3rem;
+    /* augmenté */
 }
 
 .toast-message.error {
     background: linear-gradient(135deg, var(--danger) 0%, #c82333 100%);
-    box-shadow: 0 5px 20px rgba(220, 53, 69, 0.3);
+    box-shadow: 0 6px 20px rgba(220, 53, 69, 0.4);
 }
 
 .toast-message.warning {
@@ -378,12 +410,22 @@ h2 {
 
 @media (max-width: 768px) {
     .toast-message {
-        min-width: 250px;
-        padding: 12px 20px;
+        min-width: 280px;
+        padding: 14px 20px;
     }
 
     .detail-grid {
         grid-template-columns: 1fr;
+        gap: 12px;
+    }
+
+    .container {
+        padding: 16px;
+    }
+
+    .btn {
+        padding: 6px 16px;
+        min-width: 90px;
     }
 }
 </style>
@@ -419,7 +461,7 @@ h2 {
             ];
 
             foreach ($fields as $name => $f):
-                $icon = 'fas fa-' . match($name) {
+                $icon = 'fas fa-' . match ($name) {
                     'matricule' => 'id-card',
                     'noms' => 'user',
                     'grade' => 'star',
@@ -459,7 +501,7 @@ h2 {
 
             <div class="detail-item full-width">
                 <div class="detail-label"><i class="fas fa-comment"></i> Observations</div>
-                <textarea name="observations" id="observations" rows="2" placeholder="Détails..."></textarea>
+                <textarea name="observations" id="observations" rows="3" placeholder="Détails..."></textarea>
             </div>
         </div>
 
@@ -471,7 +513,6 @@ h2 {
             <button type="submit" class="btn btn-save" id="btnSubmit">
                 <i class="fas fa-save"></i> Enregistrer
             </button>
-            <!-- MODIFICATION : Redirection dans le même onglet -->
             <button type="button" class="btn btn-success" onclick="window.location.href='liste.php'">
                 <i class="fas fa-list"></i> Liste
             </button>
@@ -558,7 +599,6 @@ function addAnother() {
     showToast('Prêt pour un nouveau litige', 'success');
 }
 
-// MODIFICATION : Redirection dans le même onglet avec passage éventuel de paramètres
 function viewList() {
     if (lastInsertedId) {
         window.location.href = 'liste.php?toast=' + encodeURIComponent('Nouveau litige ajouté') + '&new_id=' +
@@ -605,7 +645,6 @@ document.getElementById('form').addEventListener('submit', async function(e) {
     const today = new Date().toISOString().split('T')[0];
     formData.append('date_controle', today);
 
-    // Pour le type Militaire, on force l'envoi de valeurs vides (le PHP mettra les defaults)
     if (typeControle === 'Militaire') {
         formData.set('nom_beneficiaire', '');
         formData.set('lien_parente', '');

@@ -50,6 +50,10 @@ foreach ($logs as $log) {
     }
 }
 asort($users);
+// MODIFICATION : Ajouter une option "Inconnu" pour les logs sans id_utilisateur
+$users[''] = 'Inconnu';
+// On peut trier à nouveau si désiré, mais ce n'est pas obligatoire
+// asort($users);
 
 // Liste des champs pour l'export
 $export_fields = [
@@ -82,6 +86,7 @@ $export_fields = [
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
     <!-- Styles personnalisés -->
     <style>
+    /* ... (conserve les styles inchangés) ... */
     body {
         font-family: 'Barlow', sans-serif;
         background-color: #f5f5f5;
@@ -1208,6 +1213,7 @@ $export_fields = [
             $tagsContainer.toggle(tags.length > 0);
         }
 
+        // MODIFICATION : Filtre utilisateur réécrit avec .attr('data-user')
         $.fn.dataTable.ext.search.push(function(settings, data, dataIndex) {
             if (settings.nTable.id !== 'table-logs') return true;
 
@@ -1215,10 +1221,10 @@ $export_fields = [
             const rowNode = row.node();
             const $row = $(rowNode);
 
-            const action = $row.data('action') || '';
-            const tableName = $row.data('table') || '';
-            const user = $row.data('user') || '';
-            const dateIso = $row.data('date') || '';
+            const action = $row.attr('data-action') || '';
+            const tableName = $row.attr('data-table') || '';
+            const user = $row.attr('data-user') || '';
+            const dateIso = $row.attr('data-date') || '';
 
             const actionFilter = $('#action-filter').val();
             const tableFilter = $('#table-filter').val();
@@ -1286,7 +1292,7 @@ $export_fields = [
             });
         });
 
-        // Fonctions d'export
+        // Fonctions d'export (inchangées)
         function getFilteredRows() {
             let rowsToExport = [];
             const checkboxes = $('.row-checkbox:checked');

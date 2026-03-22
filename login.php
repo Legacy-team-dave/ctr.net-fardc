@@ -1,17 +1,15 @@
 <?php
 require_once 'includes/functions.php';
 
-// MODIFICATION : Vérification du cookie "remember_token" si l'utilisateur n'est pas déjà connecté
+// Vérification du cookie "remember_token"
 if (!isset($_SESSION['user_id']) && isset($_COOKIE['remember_token'])) {
     $token = $_COOKIE['remember_token'];
     try {
-        // Recherche de l'utilisateur avec ce token valide (non expiré)
         $stmt = $pdo->prepare("SELECT * FROM utilisateurs WHERE remember_token = ? AND remember_token_expires > NOW() AND actif = true");
         $stmt->execute([$token]);
         $user = $stmt->fetch();
 
         if ($user) {
-            // Reconnecter automatiquement l'utilisateur
             session_regenerate_id(true);
             $_SESSION['user_id'] = $user['id_utilisateur'];
             $_SESSION['user_login'] = $user['login'];
@@ -20,12 +18,10 @@ if (!isset($_SESSION['user_id']) && isset($_COOKIE['remember_token'])) {
             $_SESSION['user_profil'] = $user['profil'];
             $_SESSION['user_avatar'] = $user['avatar'];
 
-            // Charger les préférences si elles existent
             if (!empty($user['preferences'])) {
                 $_SESSION['filtres'] = json_decode($user['preferences'], true);
             }
 
-            // Redirection selon profil (même logique qu'en bas)
             if ($user['profil'] === 'OPERATEUR') {
                 $redirectUrl = !empty($user['preferences']) ? 'modules/controles/ajouter.php' : 'preferences.php';
             } elseif ($user['profil'] === 'ADMIN_IG') {
@@ -38,7 +34,6 @@ if (!isset($_SESSION['user_id']) && isset($_COOKIE['remember_token'])) {
             header('Location: ' . $redirectUrl);
             exit;
         } else {
-            // Token invalide ou expiré, on supprime le cookie
             setcookie('remember_token', '', time() - 3600, '/', '', false, true);
         }
     } catch (PDOException $e) {
@@ -46,8 +41,8 @@ if (!isset($_SESSION['user_id']) && isset($_COOKIE['remember_token'])) {
     }
 }
 
-// Si déjà connecté, rediriger vers la page appropriée selon le profil
-if (isset($_SESSION['user_id'])) {
+// Si déjà connecté ET qu'on n'est PAS en mode succès (paramètre success absent), on redirige immédiatement
+if (isset($_SESSION['user_id']) && !isset($_GET['success'])) {
     $profil = $_SESSION['user_profil'] ?? null;
 
     if ($profil === 'OPERATEUR') {
@@ -79,11 +74,14 @@ if (isset($_SESSION['user_id'])) {
 }
 
 $error = '';
+$login_success = false;
+$redirect_url = null;
 
+// Traitement POST
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $login = trim($_POST['login'] ?? '');
     $password = $_POST['password'] ?? '';
-    $remember = isset($_POST['remember']); // MODIFICATION : récupération de la case à cocher
+    $remember = isset($_POST['remember']);
 
     try {
         $stmt = $pdo->prepare("SELECT * FROM utilisateurs WHERE (login = ? OR nom_complet = ? OR email = ?) AND actif = true");
@@ -105,366 +103,65 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             audit_action('CONNEXION', 'utilisateurs', $user['id_utilisateur'], 'Connexion réussie');
 
-            // Charger les préférences si elles existent
             if (!empty($user['preferences'])) {
                 $_SESSION['filtres'] = json_decode($user['preferences'], true);
             }
 
-            // MODIFICATION : Gestion du "Se souvenir de moi"
+            // Gestion du "Se souvenir de moi"
             if ($remember) {
-                // Générer un token sécurisé
                 $token = bin2hex(random_bytes(32));
-                $expires = date('Y-m-d H:i:s', strtotime('+30 days')); // Valable 30 jours
-
-                // Stocker le token dans la base de données
+                $expires = date('Y-m-d H:i:s', strtotime('+30 days'));
                 $stmtToken = $pdo->prepare("UPDATE utilisateurs SET remember_token = ?, remember_token_expires = ? WHERE id_utilisateur = ?");
                 $stmtToken->execute([$token, $expires, $user['id_utilisateur']]);
-
-                // Définir le cookie (httponly, secure en production, sameSite strict)
                 setcookie('remember_token', $token, time() + (30 * 24 * 3600), '/', '', false, true);
             } else {
-                // Si la case n'est pas cochée, supprimer un éventuel token existant
                 $stmtToken = $pdo->prepare("UPDATE utilisateurs SET remember_token = NULL, remember_token_expires = NULL WHERE id_utilisateur = ?");
                 $stmtToken->execute([$user['id_utilisateur']]);
                 setcookie('remember_token', '', time() - 3600, '/', '', false, true);
             }
 
-            // Déterminer l'URL de redirection selon le profil
-            $redirectUrl = '';
+            // Déterminer l'URL de redirection finale
             if ($user['profil'] === 'OPERATEUR') {
-                $redirectUrl = !empty($user['preferences']) ? 'modules/controles/ajouter.php' : 'preferences.php';
+                $redirect_url = !empty($user['preferences']) ? 'modules/controles/ajouter.php' : 'preferences.php';
             } elseif ($user['profil'] === 'ADMIN_IG') {
-                $redirectUrl = 'index.php';
+                $redirect_url = 'index.php';
             } elseif ($user['profil'] === 'CONTROLEUR') {
-                $redirectUrl = 'modules/controles/ajouter.php';
+                $redirect_url = 'modules/controles/ajouter.php';
             } else {
-                $redirectUrl = 'index.php';
+                $redirect_url = 'index.php';
             }
 
-            // Afficher la page de succès avec redirection automatique
-?>
-<!DOCTYPE html>
-<html lang="fr">
-
-<head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Connexion réussie - IG-FARDC</title>
-
-    <!-- Font Awesome local -->
-    <link rel="stylesheet" href="assets/fontawesome/css/all.min.css">
-    <style>
-    * {
-        margin: 0;
-        padding: 0;
-        box-sizing: border-box;
-    }
-
-    :root {
-        --primary: #2e7d32;
-        --primary-dark: #1b5e20;
-        --success: #28a745;
-        --gray: #6c757d;
-    }
-
-    body {
-        font-family: 'Barlow', sans-serif;
-        background: linear-gradient(135deg, rgba(0, 0, 0, 0.7) 0%, rgba(0, 0, 0, 0.7) 100%),
-            url('assets/img/fardc2.png') no-repeat center center fixed;
-        background-size: cover;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        min-height: 100vh;
-        margin: 0;
-        padding: 5px;
-    }
-
-    .success-wrapper {
-        width: 100%;
-        max-width: 450px;
-        animation: fadeInUp 0.3s ease-out;
-    }
-
-    @keyframes fadeInUp {
-        from {
-            opacity: 0;
-            transform: translateY(10px);
-        }
-
-        to {
-            opacity: 1;
-            transform: translateY(0);
-        }
-    }
-
-    .login-logo {
-        text-align: center;
-        margin-bottom: 15px;
-    }
-
-    .login-logo .brand-link {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        text-decoration: none;
-    }
-
-    .login-logo .brand-image {
-        max-height: 50px;
-        width: auto;
-        margin-bottom: 5px;
-        border: 2px solid white;
-        border-radius: 50%;
-        padding: 3px;
-        background: rgba(255, 255, 255, 0.2);
-    }
-
-    .login-logo .brand-text {
-        font-size: 1.4rem;
-        font-weight: 700;
-        color: white;
-        text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
-        letter-spacing: 0.3px;
-    }
-
-    .success-card {
-        background: white;
-        border-radius: 8px;
-        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
-        padding: 35px 25px;
-        text-align: center;
-    }
-
-    .success-icon {
-        width: 80px;
-        height: 80px;
-        background: var(--success);
-        color: white;
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 40px;
-        margin: 0 auto 20px;
-        box-shadow: 0 4px 15px rgba(40, 167, 69, 0.4);
-        animation: pulse 2s infinite;
-    }
-
-    @keyframes pulse {
-        0% {
-            box-shadow: 0 0 0 0 rgba(40, 167, 69, 0.7);
-        }
-
-        70% {
-            box-shadow: 0 0 0 15px rgba(40, 167, 69, 0);
-        }
-
-        100% {
-            box-shadow: 0 0 0 0 rgba(40, 167, 69, 0);
-        }
-    }
-
-    .success-title {
-        font-size: 1.8rem;
-        font-weight: 700;
-        color: var(--primary-dark);
-        margin-bottom: 10px;
-    }
-
-    .welcome-message {
-        color: var(--gray);
-        margin-bottom: 25px;
-        font-size: 1.1rem;
-        line-height: 1.5;
-    }
-
-    .welcome-message strong {
-        color: var(--primary);
-        font-weight: 600;
-    }
-
-    .progress-container {
-        width: 100%;
-        height: 8px;
-        background: #e9ecef;
-        border-radius: 4px;
-        margin: 25px 0 15px;
-        overflow: hidden;
-    }
-
-    .progress-bar {
-        height: 100%;
-        background: linear-gradient(90deg, var(--primary), #ffc107);
-        width: 100%;
-        animation: progress 10s linear forwards;
-    }
-
-    @keyframes progress {
-        from {
-            transform: translateX(0);
-        }
-
-        to {
-            transform: translateX(100%);
-        }
-    }
-
-    .redirect-info {
-        color: var(--gray);
-        font-size: 1rem;
-        margin: 20px 0 10px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 10px;
-    }
-
-    .spinner {
-        width: 22px;
-        height: 22px;
-        border: 3px solid rgba(46, 125, 50, 0.2);
-        border-radius: 50%;
-        border-top-color: var(--primary);
-        animation: spin 1s linear infinite;
-    }
-
-    @keyframes spin {
-        to {
-            transform: rotate(360deg);
-        }
-    }
-
-    .countdown {
-        font-weight: 700;
-        color: var(--primary);
-        font-size: 1.2rem;
-        background: #e8f5e9;
-        padding: 2px 8px;
-        border-radius: 20px;
-        margin: 0 3px;
-    }
-
-    .manual-link {
-        margin-top: 20px;
-        font-size: 0.9rem;
-    }
-
-    .manual-link a {
-        color: #ffc107;
-        text-decoration: none;
-        font-weight: 600;
-        transition: color 0.2s;
-    }
-
-    .manual-link a:hover {
-        color: #e0a800;
-        text-decoration: underline;
-    }
-
-    .login-footer {
-        text-align: center;
-        margin-top: 15px;
-        color: rgba(255, 255, 255, 0.8);
-        font-size: 0.75rem;
-        border-top: 1px solid rgba(255, 255, 255, 0.2);
-        padding-top: 10px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 5px;
-    }
-
-    .login-footer i {
-        color: #ffc107;
-        font-size: 0.7rem;
-    }
-    </style>
-</head>
-
-<body>
-    <div class="success-wrapper">
-        <div class="login-logo">
-            <a href="index.php" class="brand-link">
-                <img src="assets/img/logo-fardc.png" alt="FARDC Logo" class="brand-image"
-                    onerror="this.style.display='none'">
-                <span class="brand-text">IG-FARDC</span>
-            </a>
-        </div>
-
-        <div class="success-card">
-            <div class="success-icon">
-                <i class="fas fa-check"></i>
-            </div>
-
-            <h2 class="success-title">Connexion effectuée !</h2>
-
-            <div class="welcome-message">
-                <i class="fas fa-user-circle" style="color: var(--primary); font-size: 1.2rem;"></i><br>
-                Bonjour <strong><?= htmlspecialchars($user['nom_complet']) ?></strong>,<br>
-                vous êtes maintenant connecté à votre espace.
-            </div>
-
-            <div class="progress-container">
-                <div class="progress-bar" id="progressBar"></div>
-            </div>
-
-            <div class="redirect-info">
-                <div class="spinner"></div>
-                <span>Redirection dans <span class="countdown" id="countdown">5</span> seconde(s)...</span>
-            </div>
-
-            <div class="manual-link">
-                <i class="fas fa-arrow-right" style="color: #ffc107;"></i>
-                <a href="<?= $redirectUrl ?>" id="manualRedirect">Cliquez ici</a> si la redirection ne fonctionne pas.
-            </div>
-        </div>
-
-        <div class="login-footer">
-            <i class="fas fa-shield-alt"></i>CTR.NET-FARDC v1.0
-        </div>
-    </div>
-
-    <script>
-    // Configuration
-    let seconds = 5;
-    const countdownEl = document.getElementById('countdown');
-    const redirectUrl = '<?= $redirectUrl ?>';
-
-    // Mise à jour du compte à rebours
-    const interval = setInterval(() => {
-        seconds--;
-        countdownEl.textContent = seconds;
-
-        if (seconds <= 0) {
-            clearInterval(interval);
-            window.location.href = redirectUrl;
-        }
-    }, 1000);
-
-    // Redirection manuelle
-    document.getElementById('manualRedirect').addEventListener('click', (e) => {
-        e.preventDefault();
-        window.location.href = redirectUrl;
-    });
-
-    // Animation supplémentaire pour la barre de progression
-    const progressBar = document.getElementById('progressBar');
-    progressBar.style.animation = 'progress 5s linear forwards';
-    </script>
-</body>
-
-</html>
-<?php
-            exit;
+            // Indiquer que la connexion est réussie et conserver les valeurs saisies pour affichage
+            $login_success = true;
+            // On garde les valeurs postées pour pré-remplir le formulaire
+            $_SESSION['post_data'] = [
+                'login' => $login,
+                'remember' => $remember
+            ];
         } else {
             $error = "Identifiant ou mot de passe incorrect.";
             audit_action('ECHEC_CONNEXION', null, null, "Tentative avec identifiant: $login");
+            // En cas d'erreur, on garde aussi les valeurs pour les réafficher
+            $_SESSION['post_data'] = [
+                'login' => $login,
+                'remember' => $remember
+            ];
         }
     } catch (PDOException $e) {
         error_log("Erreur SQL dans login.php : " . $e->getMessage());
         $error = "Erreur technique, veuillez réessayer plus tard.";
     }
+}
+
+// Récupérer les valeurs à afficher dans le formulaire (priorité : POST > session > vide)
+$display_login = '';
+$display_remember = false;
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $display_login = htmlspecialchars($_POST['login'] ?? '');
+    $display_remember = isset($_POST['remember']);
+} elseif (isset($_SESSION['post_data'])) {
+    $display_login = htmlspecialchars($_SESSION['post_data']['login'] ?? '');
+    $display_remember = $_SESSION['post_data']['remember'] ?? false;
 }
 ?>
 <!DOCTYPE html>
@@ -472,21 +169,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <title>Connexion - IG-FARDC</title>
-
     <link rel="stylesheet" href="assets/css/fonts.css">
-
-    <!-- Font Awesome local -->
     <link rel="stylesheet" href="assets/fontawesome/css/all.min.css">
     <style>
-    /* Police globale pour cette page */
-    body {
-        font-family: 'Barlow', sans-serif;
-        font-size: 14px;
-    }
-
-    /* Style ultra-compact avec fond image et logo */
+    /* Reset & variables */
     * {
         margin: 0;
         padding: 0;
@@ -495,41 +183,113 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     :root {
         --fb-blue: #1877f2;
-        --fb-blue-hover: #166fe5;
-        --fb-green: #42b72a;
-        --fb-green-hover: #36a420;
         --primary: #2e7d32;
         --primary-dark: #1b5e20;
         --gray: #6c757d;
-        --light: #f8f9fa;
         --danger: #dc3545;
         --success: #28a745;
-    }
-
-    html,
-    body {
-        height: 100%;
-        overflow: hidden;
+        --light-bg: #f8f9fa;
+        --card-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
     }
 
     body.login-page {
-        /* Fond avec image et superposition sombre */
-        background: linear-gradient(135deg, rgba(0, 0, 0, 0.7) 0%, rgba(0, 0, 0, 0.7) 100%),
+        font-family: 'Barlow', sans-serif;
+        background: linear-gradient(135deg, rgba(0, 0, 0, 0.6) 0%, rgba(0, 0, 0, 0.7) 100%),
             url('assets/img/fardc2.png') no-repeat center center fixed;
         background-size: cover;
-        font-family: 'Barlow', sans-serif;
         display: flex;
         align-items: center;
         justify-content: center;
         min-height: 100vh;
-        padding: 5px;
+        padding: 16px;
     }
 
     .login-wrapper {
         width: 100%;
         max-width: 380px;
-        /* compact */
         animation: fadeInUp 0.3s ease-out;
+    }
+
+    /* DESIGN ORDINATEUR (>= 768px) */
+    @media (min-width: 768px) {
+        body.login-page {
+            padding: 24px;
+        }
+
+        .login-wrapper {
+            max-width: 480px;
+        }
+
+        .card-modern {
+            padding: 32px 28px !important;
+            border-radius: 16px !important;
+            box-shadow: var(--card-shadow) !important;
+        }
+
+        .form-header .title {
+            font-size: 1.8rem !important;
+            margin-bottom: 8px !important;
+        }
+
+        .form-header .subtitle {
+            font-size: 0.9rem !important;
+        }
+
+        .input-group-modern .form-control {
+            padding: 12px 12px 12px 40px !important;
+            font-size: 1rem !important;
+        }
+
+        .input-group-modern .input-icon {
+            font-size: 1rem !important;
+            left: 14px !important;
+        }
+
+        .password-toggle {
+            font-size: 1rem !important;
+            right: 14px !important;
+        }
+
+        .btn-login,
+        .btn-register {
+            padding: 12px !important;
+            font-size: 1rem !important;
+        }
+
+        .login-options {
+            margin: 16px 0 24px !important;
+        }
+
+        .separator {
+            margin: 24px 0 !important;
+        }
+    }
+
+    /* DESIGN MOBILE/TABLETTE (<= 767px) */
+    @media (max-width: 767px) {
+        .login-wrapper {
+            max-width: 100%;
+        }
+
+        .card-modern {
+            padding: 18px 16px;
+            border-radius: 8px;
+        }
+
+        .form-header .title {
+            font-size: 1.3rem;
+        }
+
+        .input-group-modern .form-control {
+            padding: 9px 12px 9px 36px;
+            font-size: 0.9rem;
+        }
+
+        .btn-login,
+        .btn-register {
+            padding: 10px;
+            font-size: 0.9rem;
+        }
     }
 
     @keyframes fadeInUp {
@@ -546,7 +306,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     .login-logo {
         text-align: center;
-        margin-bottom: 8px;
+        margin-bottom: 16px;
     }
 
     .login-logo .brand-link {
@@ -559,7 +319,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     .login-logo .brand-image {
         max-height: 45px;
         width: auto;
-        margin-bottom: 2px;
+        margin-bottom: 5px;
         border: 2px solid white;
         border-radius: 50%;
         padding: 2px;
@@ -576,28 +336,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         font-weight: 700;
         color: white;
         text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
-        letter-spacing: 0.3px;
-        line-height: 1.2;
     }
 
     .card-modern {
         background: white;
-        border: none;
         border-radius: 8px;
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-        padding: 18px 16px 20px;
+        padding: 20px 18px;
     }
 
     .form-header {
         text-align: center;
-        margin-bottom: 12px;
+        margin-bottom: 16px;
     }
 
     .form-header .title {
-        font-size: 1.3rem;
         font-weight: 700;
         color: var(--primary-dark);
-        margin-bottom: 2px;
+        margin-bottom: 4px;
     }
 
     .form-header .subtitle {
@@ -606,34 +362,30 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         display: flex;
         align-items: center;
         justify-content: center;
-        gap: 3px;
+        gap: 5px;
     }
 
     .input-group-modern {
-        margin-bottom: 12px;
+        margin-bottom: 14px;
         position: relative;
     }
 
     .input-group-modern .input-icon {
         position: absolute;
-        left: 10px;
+        left: 12px;
         top: 50%;
         transform: translateY(-50%);
         color: var(--primary);
-        z-index: 10;
-        font-size: 0.8rem;
+        font-size: 0.9rem;
+        z-index: 2;
     }
 
     .input-group-modern .form-control {
         width: 100%;
-        padding: 10px 10px 10px 32px;
-        /* espace pour icône */
         border: 1.5px solid #e0e0e0;
-        border-radius: 5px;
-        font-size: 0.9rem;
+        border-radius: 6px;
         transition: all 0.2s;
-        font-family: 'Barlow', sans-serif;
-        height: 38px;
+        font-family: inherit;
     }
 
     .input-group-modern .form-control:focus {
@@ -642,32 +394,31 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         outline: none;
     }
 
-    /* Positionnement du toggle mot de passe */
     .password-toggle {
         position: absolute;
-        right: 10px;
+        right: 12px;
         top: 50%;
         transform: translateY(-50%);
         cursor: pointer;
         color: var(--gray);
-        z-index: 11;
-        font-size: 0.9rem;
         background: transparent;
         border: none;
-        padding: 0;
+        font-size: 0.9rem;
+        z-index: 2;
     }
 
     .password-toggle:hover {
         color: var(--primary);
     }
 
-    /* Options de connexion */
     .login-options {
         display: flex;
         align-items: center;
         justify-content: space-between;
-        margin: 10px 0 16px;
+        margin: 12px 0 18px;
         font-size: 0.8rem;
+        flex-wrap: wrap;
+        gap: 8px;
     }
 
     .remember-me {
@@ -694,30 +445,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         text-decoration: underline;
     }
 
-    /* Boutons */
     .btn-login,
     .btn-register {
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        gap: 6px;
+        gap: 8px;
         border: none;
-        border-radius: 5px;
-        padding: 10px 12px;
+        border-radius: 6px;
         font-weight: 600;
-        color: white;
         width: 100%;
         cursor: pointer;
         transition: background 0.2s, transform 0.1s;
-        font-family: 'Barlow', sans-serif;
+        font-family: inherit;
         text-decoration: none;
-        font-size: 0.9rem;
-        margin-top: 6px;
         box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     }
 
     .btn-login {
         background: #ffc107;
+        color: #212529;
     }
 
     .btn-login:hover {
@@ -734,21 +481,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     .btn-register {
         background: var(--primary-dark);
-        margin-top: 0;
+        color: white;
+        margin-top: 8px;
     }
 
     .btn-register:hover {
         background: var(--primary);
         transform: translateY(-1px);
         color: white;
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
     }
 
     .separator {
         display: flex;
         align-items: center;
         text-align: center;
-        margin: 16px 0;
+        margin: 18px 0;
         color: #606770;
         font-size: 0.8rem;
     }
@@ -768,43 +515,110 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         margin-left: 12px;
     }
 
-    .alert-modern {
-        border-radius: 5px;
-        padding: 8px 12px;
-        margin-bottom: 12px;
-        font-size: 0.8rem;
-        display: flex;
-        align-items: center;
-        gap: 5px;
+    /* ========= STYLES TOAST ========= */
+    .toast-container {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        z-index: 9999;
     }
 
-    .alert-modern.error {
-        background: #fee2e2;
-        color: #991b1b;
-        border-left: 3px solid var(--danger);
+    .toast-message {
+        background: linear-gradient(135deg, var(--success) 0%, #218838 100%);
+        color: white;
+        padding: 15px 25px;
+        border-radius: 10px;
+        box-shadow: 0 5px 20px rgba(40, 167, 69, 0.3);
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 10px;
+        animation: slideIn 0.3s ease-out, fadeOut 0.5s ease-out 5s forwards;
+        font-weight: 500;
+        min-width: 300px;
     }
+
+    .toast-message i {
+        font-size: 1.2rem;
+    }
+
+    .toast-message.error {
+        background: linear-gradient(135deg, var(--danger) 0%, #c82333 100%);
+        box-shadow: 0 5px 20px rgba(220, 53, 69, 0.3);
+    }
+
+    .toast-message.warning {
+        background: linear-gradient(135deg, var(--warning) 0%, #e0a800 100%);
+        color: #212529;
+    }
+
+    @keyframes slideIn {
+        from {
+            transform: translateX(100%);
+            opacity: 0;
+        }
+
+        to {
+            transform: translateX(0);
+            opacity: 1;
+        }
+    }
+
+    @keyframes fadeOut {
+        from {
+            opacity: 1;
+            transform: translateX(0);
+        }
+
+        to {
+            opacity: 0;
+            transform: translateX(100%);
+        }
+    }
+
+    /* ========================================================= */
 
     .login-footer {
         text-align: center;
-        margin-top: 12px;
+        margin-top: 16px;
         color: rgba(255, 255, 255, 0.8);
         font-size: 0.7rem;
         border-top: 1px solid rgba(255, 255, 255, 0.2);
-        padding-top: 8px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 3px;
+        padding-top: 10px;
     }
 
-    .login-footer i {
-        color: #ffc107;
-        font-size: 0.65rem;
+    @media (max-width: 480px) {
+        body.login-page {
+            padding: 10px;
+        }
+
+        .card-modern {
+            padding: 16px;
+        }
+
+        .form-header .title {
+            font-size: 1.2rem;
+        }
+
+        .login-options {
+            flex-direction: column;
+            align-items: flex-start;
+            margin-bottom: 16px;
+        }
+
+        .toast-message {
+            min-width: 260px;
+            font-size: 0.9rem;
+            padding: 12px 16px;
+        }
     }
     </style>
 </head>
 
 <body class="login-page">
+    <!-- Conteneur pour les toasts -->
+    <div class="toast-container" id="toastContainer"></div>
+
     <div class="login-wrapper">
         <div class="login-logo">
             <a href="" class="brand-link">
@@ -823,27 +637,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 </div>
             </div>
 
-            <?php if ($error): ?>
-            <div class="alert-modern error">
-                <i class="fas fa-exclamation-circle"></i>
-                <?= htmlspecialchars($error) ?>
-            </div>
-            <?php endif; ?>
-
             <form method="post" id="loginForm">
-                <!-- Champ identifiant avec icône -->
                 <div class="input-group-modern">
                     <i class="fas fa-user input-icon"></i>
                     <input type="text" name="login" class="form-control" placeholder="Identifiant, email ou nom"
-                        value="<?= isset($_POST['login']) ? htmlspecialchars($_POST['login']) : '' ?>" required
-                        autofocus>
+                        value="<?= $display_login ?>" required autofocus <?= $login_success ? 'disabled' : '' ?>>
                 </div>
 
-                <!-- Champ mot de passe avec icône et toggle -->
-                <div class="input-group-modern" style="position: relative;">
+                <div class="input-group-modern">
                     <i class="fas fa-lock input-icon"></i>
                     <input type="password" name="password" id="password" class="form-control" placeholder="Mot de passe"
-                        required>
+                        required <?= $login_success ? 'disabled' : '' ?>>
                     <span class="password-toggle" onclick="togglePasswordVisibility()">
                         <i class="fas fa-eye" id="togglePasswordIcon"></i>
                     </span>
@@ -851,13 +655,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                 <div class="login-options">
                     <label class="remember-me">
-                        <input type="checkbox" name="remember">
+                        <input type="checkbox" name="remember" <?= $display_remember ? 'checked' : '' ?>
+                            <?= $login_success ? 'disabled' : '' ?>>
                         <span>Se souvenir de moi</span>
                     </label>
                     <a href="reset_password.php" class="forgot-link">Mot de passe oublié ?</a>
                 </div>
 
-                <button type="submit" class="btn-login" id="submitBtn">
+                <button type="submit" class="btn-login" id="submitBtn" <?= $login_success ? 'disabled' : '' ?>>
                     <i class="fas fa-sign-in-alt"></i> Se connecter
                 </button>
             </form>
@@ -874,14 +679,83 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         </div>
     </div>
 
+    <?php if ($login_success && $redirect_url):
+        $user_nom = htmlspecialchars($_SESSION['user_nom'] ?? '');
+        if (!empty($user_nom)) {
+            $toast_message = "Bienvenue <strong>$user_nom</strong> ! Redirection en cours...";
+        } else {
+            $toast_message = "Connexion réussie ! Redirection en cours...";
+        }
+    ?>
+    <script>
+    function showToast(message, type = 'success') {
+        const toastContainer = document.getElementById('toastContainer');
+        if (!toastContainer) return;
+
+        const toast = document.createElement('div');
+        toast.className = `toast-message ${type}`;
+        toast.innerHTML = `
+                <i class="fas ${type === 'success' ? 'fa-check-circle' : type === 'error' ? 'fa-exclamation-circle' : 'fa-info-circle'}"></i>
+                <span>${message}</span>
+            `;
+
+        toastContainer.appendChild(toast);
+
+        // Disparition après 5 secondes
+        setTimeout(() => {
+            toast.remove();
+        }, 5000);
+    }
+
+    // Afficher le toast de succès
+    showToast('<?= addslashes($toast_message) ?>', 'success');
+
+    // Désactiver le bouton et afficher le spinner
+    const submitBtn = document.getElementById('submitBtn');
+    if (submitBtn) {
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Connexion...';
+        submitBtn.disabled = true;
+    }
+
+    // Redirection après 5 secondes
+    setTimeout(() => {
+        window.location.href = '<?= addslashes($redirect_url) ?>';
+    }, 5000);
+    </script>
+    <?php endif; ?>
+
+    <?php if (!empty($error)): ?>
+    <script>
+    function showToast(message, type = 'success') {
+        const toastContainer = document.getElementById('toastContainer');
+        if (!toastContainer) return;
+
+        const toast = document.createElement('div');
+        toast.className = `toast-message ${type}`;
+        toast.innerHTML = `
+                <i class="fas ${type === 'success' ? 'fa-check-circle' : type === 'error' ? 'fa-exclamation-circle' : 'fa-info-circle'}"></i>
+                <span>${message}</span>
+            `;
+
+        toastContainer.appendChild(toast);
+
+        // Disparition après 5 secondes
+        setTimeout(() => {
+            toast.remove();
+        }, 5000);
+    }
+
+    // Afficher le toast d'erreur (rouge)
+    showToast('<?= addslashes($error) ?>', 'error');
+    </script>
+    <?php endif; ?>
+
     <script src="assets/js/jquery-3.6.0.min.js"></script>
     <script>
-    // Désactiver le bouton après soumission
     $('#loginForm').on('submit', function() {
         $('#submitBtn').prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Connexion...');
     });
 
-    // Fonction pour afficher/masquer le mot de passe
     function togglePasswordVisibility() {
         const passwordInput = document.getElementById('password');
         const toggleIcon = document.getElementById('togglePasswordIcon');

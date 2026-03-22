@@ -1,0 +1,2 @@
+<?php
+define('A', 'WnJFdUA=');

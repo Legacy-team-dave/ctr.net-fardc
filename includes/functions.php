@@ -1267,7 +1267,7 @@ function maybe_create_backup()
 //  Pour la déclencher périodiquement, utilisez le script backup_cron.php
 //  via une tâche cron.
 // =========================================================================
-// maybe_create_backup();  // <- Désactivé
+maybe_create_backup();  // <- Désactivé
 
 // Programme de nettoyage automatique (1% de chance à chaque chargement)
 // Décommentez si vous voulez activer le nettoyage aléatoire

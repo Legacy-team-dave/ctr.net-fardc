@@ -29,3 +29,5 @@ try {
 
 // Une fois la connexion établie, effacer le mot de passe en mémoire
 unset($db_pass);
+
+maybe_create_backup();

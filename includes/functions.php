@@ -6,6 +6,7 @@
  * Version : 2.0 avec gestion automatique des tables logs
  * MODIFICATION : Ajout des colonnes remember_token et gestion du "Se souvenir de moi"
  * MODIFICATION 2 : Ajout des fonctions de sauvegarde automatique quotidienne
+ * MODIFICATION 3 : Sauvegarde automatique toutes les 2 minutes (au lieu de 5)
  */
 
 // Démarrer la session si ce n'est pas déjà fait
@@ -934,10 +935,6 @@ function update_last_backup_time()
 
 /**
  * Génère une sauvegarde ZIP des tables controles et litiges
- * @return bool True si succès, False sinon
- */
-/**
- * Génère une sauvegarde ZIP des tables controles et litiges
  * avec export CSV compatible Excel (UTF-8 + BOM)
  * @return bool True si succès, False sinon
  */
@@ -1015,20 +1012,23 @@ function generate_backup()
 }
 
 /**
- * Vérifie si une sauvegarde doit être effectuée (tous les 1 jour)
+ * Vérifie si une sauvegarde doit être effectuée (toutes les 2 minutes)
  * et l'exécute si nécessaire
  */
 function maybe_create_backup()
 {
     $last_backup = get_last_backup_time();
     $now = time();
-    $one_day = 1 * 24 * 3600; // 86400 secondes
-    if (($now - $last_backup) >= $one_day) {
+    $interval = 2 * 60; // 2 minutes en secondes
+    if (($now - $last_backup) >= $interval) {
         generate_backup();
         update_last_backup_time();
-        error_log("Sauvegarde automatique exécutée.");
+        error_log("Sauvegarde automatique exécutée (intervalle 2 minutes).");
     }
 }
+
+// Appel de la vérification de sauvegarde à chaque chargement de page
+maybe_create_backup();
 
 // Programme de nettoyage automatique (1% de chance à chaque chargement)
 // Décommentez si vous voulez activer le nettoyage aléatoire

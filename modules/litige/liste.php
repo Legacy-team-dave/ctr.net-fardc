@@ -2,8 +2,8 @@
 require_once '../../includes/functions.php';
 require_login();
 
-    // Vérifier si une sauvegarde automatique est nécessaire (tous les 2 jours)
-    maybe_create_backup();
+// Vérifier si une sauvegarde automatique est nécessaire (tous les 2 jours)
+maybe_create_backup();
 
 $success_message = $_SESSION['success_message'] ?? null;
 unset($_SESSION['success_message']);
@@ -50,30 +50,6 @@ $zones_defense_libelles = [
     '2ZDEF' => '2ZDef',
     '3ZDEF' => '3ZDef'
 ];
-
-function getZdefValue($province)
-{
-    if (empty($province)) return ['value' => 'N/A', 'code' => 'N/A'];
-
-    $province = strtoupper(trim($province));
-
-    $groupe_2zdef = ['HAUT-KATANGA', 'HAUT-LOMAMI', 'LUALABA', 'TANGANYIKA', 'KASAI', 'KASAI-CENTRAL', 'KASAI-ORIENTAL', 'SANKURU', 'LOMAMI'];
-    if (in_array($province, $groupe_2zdef)) {
-        return ['value' => '2ZDEF', 'code' => '2ZDEF'];
-    }
-
-    $groupe_1zdef = ['EQUATEUR', 'MONGALA', 'NORD-UBANGI', 'SUD-UBANGI', 'TSHUAPA', 'KWILU', 'KWANGO', 'MAI-NDOMBE', 'KONGO-CENTRAL', 'KINSHASA'];
-    if (in_array($province, $groupe_1zdef)) {
-        return ['value' => '1ZDEF', 'code' => '1ZDEF'];
-    }
-
-    $groupe_3zdef = ['HAUT-UELE', 'BAS-UELE', 'ITURI', 'TSHOPO', 'NORD-KIVU', 'SUD-KIVU', 'MANIEMA'];
-    if (in_array($province, $groupe_3zdef)) {
-        return ['value' => '3ZDEF', 'code' => '3ZDEF'];
-    }
-
-    return ['value' => 'AUTRE', 'code' => 'AUTRE'];
-}
 
 $timestamp = date('Y-m-d_H\hi');
 

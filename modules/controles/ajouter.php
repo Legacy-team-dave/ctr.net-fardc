@@ -107,8 +107,8 @@ if ($action === 'valider' && $matricule && $mention) {
         $militaire_info = $stmt_militaire->fetch();
 
         $lien_parente = match ($lien) {
-            'Conjoint' => 'Veuf',
-            'Conjointe' => 'Veuve',
+            'Epoux' => 'Veuf',
+            'Epouse' => 'Veuve',
             'Fils', 'Fille' => 'Orphelin',
             'Père', 'Mère', 'Frère', 'Sœur' => 'Tuteur',
             default => $lien
@@ -1070,9 +1070,9 @@ $is_controleur = isset($_SESSION['user_profil']) && $_SESSION['user_profil'] ===
                                 <div class="liens-grid">
                                     <?php
                                     $groupes = [
-                                        'Conjointe/Conjoint' => [  // Inversé : Conjointe en premier
-                                            'Conjointe' => 'Veuve',
-                                            'Conjoint' => 'Veuf'
+                                        'Epouse/Epoux' => [
+                                            'Epouse' => 'Veuve',
+                                            'Epoux' => 'Veuf'
                                         ],
                                         'Fils/Fille' => [
                                             'Fils' => 'Orphelin',
@@ -1318,8 +1318,8 @@ $is_controleur = isset($_SESSION['user_profil']) && $_SESSION['user_profil'] ===
             const lien = $form.find('input[name="lien"]:checked').val();
             const message = `Attribuer la mention "${clickedMention === 'Favorable' ? 'Favorable' : 'Défavorable'}"${
             ['Père','Mère','Frère','Sœur'].includes(lien) ? ' (→ Tuteur)' :
-            lien === 'Conjoint' ? ' (→ Veuf)' :
-            lien === 'Conjointe' ? ' (→ Veuve)' :
+            lien === 'Epoux' ? ' (→ Veuf)' :
+            lien === 'Epouse' ? ' (→ Veuve)' :
             ['Fils','Fille'].includes(lien) ? ' (→ Orphelin)' : ''
         } ?`;
 

@@ -90,7 +90,7 @@ function check_logs_table()
 }
 
 /**
- * Journalise une action seulement si l'utilisateur est ADMIN_IG, OPERATEUR ou CONTROLEUR
+ * Journalise une action seulement si l'utilisateur est ADMIN_IG ou OPERATEUR
  * Wrapper pratique autour de log_action pour centraliser la règle métier
  *
  * @param string $action
@@ -102,7 +102,7 @@ function check_logs_table()
 function audit_action($action, $table = null, $record_id = null, $details = null)
 {
     // Profils à logger systématiquement
-    $profils_a_logger = ['ADMIN_IG', 'OPERATEUR', 'CONTROLEUR'];
+    $profils_a_logger = ['ADMIN_IG', 'OPERATEUR'];
     $user_profil = isset($_SESSION['user_profil']) ? strtoupper(trim($_SESSION['user_profil'])) : '';
 
     if (in_array($user_profil, $profils_a_logger, true)) {
@@ -1112,7 +1112,6 @@ function get_non_vus_csv_content()
 }
 /**
  * Génère une archive ZIP contenant les tables controles, litiges et les non‑vus
- * Ajoute des titres dans chaque CSV (en-têtes administratifs)
  * 
  * @param bool $include_non_vus Inclure le CSV des non‑vus (par défaut true)
  * @return bool True en cas de succès, False sinon
@@ -1162,12 +1161,6 @@ function generate_backup($include_non_vus = true)
         ],
     ];
 
-    // Définir les titres pour chaque table
-    $titles = [
-        'controles' => "LISTE DES CONTROLES EFFECTUES (Sauvegarde du $timestamp)",
-        'litiges'   => "LISTE DES LITIGES ENREGISTRES (Sauvegarde du $timestamp)"
-    ];
-
     foreach ($tables as $table) {
         try {
             $check = $pdo->query("SHOW TABLES LIKE '$table'");
@@ -1178,22 +1171,10 @@ function generate_backup($include_non_vus = true)
             if (empty($rows)) continue;
 
             $stream = fopen('php://temp', 'r+');
-            fwrite($stream, "\xEF\xBB\xBF"); // BOM UTF‑8
+            fwrite($stream, "\xEF\xBB\xBF");
 
-            // Lignes d'en-tête administratives
-            $headerLines = [
-                ['MINISTERE DE LA DEFENSE NATIONALE ET ANCIENS COMBATTANTS'],
-                ['INSPECTORAT GENERAL DES FARDC'],
-                [$titles[$table]]
-            ];
-            foreach ($headerLines as $line) fputcsv($stream, $line);
-            fputcsv($stream, []); // ligne vide
-
-            // En-têtes des colonnes
             $ordered_columns = $field_order[$table] ?? array_keys($rows[0]);
             fputcsv($stream, $ordered_columns);
-
-            // Données
             foreach ($rows as $row) {
                 $ordered_row = [];
                 foreach ($ordered_columns as $col) {
@@ -1261,13 +1242,8 @@ function maybe_create_backup()
     }
 }
 
-// =========================================================================
-//  ATTENTION : l'appel à maybe_create_backup() a été désactivé.
-//  La sauvegarde automatique ne dépend plus des visites sur le site.
-//  Pour la déclencher périodiquement, utilisez le script backup_cron.php
-//  via une tâche cron.
-// =========================================================================
-maybe_create_backup();  // <- Désactivé
+// Appel automatique pour déclencher la sauvegarde si nécessaire
+maybe_create_backup();
 
 // Programme de nettoyage automatique (1% de chance à chaque chargement)
 // Décommentez si vous voulez activer le nettoyage aléatoire

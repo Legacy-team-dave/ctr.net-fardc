@@ -3,7 +3,7 @@
 /**
  * Fichier : includes/functions.php
  * Description : Fonctions utilitaires pour l'application
- * Version : 3.2 – sauvegarde auto CSV/Excel/PDF, logs pour CONTROLEUR
+ * Version : 3.0 avec sauvegarde automatique toutes les 2 minutes incluant les non-vus
  */
 
 // Démarrer la session si ce n'est pas déjà fait
@@ -17,28 +17,18 @@ require_once __DIR__ . '/../config/database.php';
 mb_internal_encoding('UTF-8');
 mb_http_output('UTF-8');
 
-// ============================================
-//  INCLUSION DES BIBLIOTHÈQUES EXTERNES (si disponibles)
-// ============================================
-$use_excel = false;
-$use_pdf = false;
-
-if (file_exists(__DIR__ . '/../vendor/autoload.php')) {
-    require_once __DIR__ . '/../vendor/autoload.php';
-    if (class_exists('PhpOffice\PhpSpreadsheet\Spreadsheet')) {
-        $use_excel = true;
-    }
-    if (class_exists('Dompdf\Dompdf')) {
-        $use_pdf = true;
-    }
-}
-
 /**
  * ============================================
  * FONCTIONS DE FLASH MESSAGES
  * ============================================
  */
 
+/**
+ * Définit un message flash et redirige
+ * @param string $url URL de redirection
+ * @param string $type Type du message (success, danger, warning, info)
+ * @param string $message Texte du message
+ */
 function redirect_with_flash($url, $type = 'info', $message = '')
 {
     $_SESSION['flash_message'] = [
@@ -55,12 +45,20 @@ function redirect_with_flash($url, $type = 'info', $message = '')
  * ============================================
  */
 
+/**
+ * Vérifie et crée la table logs si elle n'existe pas
+ * Structure complète avec clé étrangère vers utilisateurs
+ * 
+ * @return bool True si la table a été créée, False sinon
+ */
 function check_logs_table()
 {
     global $pdo;
     try {
+        // Vérifier si la table logs existe
         $check = $pdo->query("SHOW TABLES LIKE 'logs'");
         if ($check->rowCount() == 0) {
+            // Créer la table logs avec la structure appropriée
             $sql = "CREATE TABLE IF NOT EXISTS `logs` (
                 `id_log` INT PRIMARY KEY AUTO_INCREMENT,
                 `id_utilisateur` INT NULL,
@@ -76,9 +74,13 @@ function check_logs_table()
                 INDEX idx_date (date_action),
                 FOREIGN KEY (id_utilisateur) REFERENCES utilisateurs(id_utilisateur) ON DELETE SET NULL
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci";
+
             $pdo->exec($sql);
             error_log("✅ Table 'logs' créée avec succès");
+
+            // Optionnel : migrer les données de logs_actions vers logs si elle existe
             migrate_logs_data();
+
             return true;
         }
     } catch (PDOException $e) {
@@ -87,28 +89,52 @@ function check_logs_table()
     return false;
 }
 
+/**
+ * Journalise une action seulement si l'utilisateur est ADMIN_IG, OPERATEUR ou CONTROLEUR
+ * Wrapper pratique autour de log_action pour centraliser la règle métier
+ *
+ * @param string $action
+ * @param string|null $table
+ * @param int|null $record_id
+ * @param string|null $details
+ * @return bool
+ */
 function audit_action($action, $table = null, $record_id = null, $details = null)
 {
-    $profils_a_logger = ['ADMIN_IG', 'OPERATEUR', 'CONTROLEUR']; // Ajout de CONTROLEUR
+    // Profils à logger systématiquement
+    $profils_a_logger = ['ADMIN_IG', 'OPERATEUR', 'CONTROLEUR'];
     $user_profil = isset($_SESSION['user_profil']) ? strtoupper(trim($_SESSION['user_profil'])) : '';
 
     if (in_array($user_profil, $profils_a_logger, true)) {
         return log_action($action, $table, $record_id, $details);
     }
+
+    // Si l'utilisateur n'a pas le profil attendu, ne pas journaliser
     return false;
 }
 
+/**
+ * Migre les données de l'ancienne table logs_actions vers la nouvelle table logs
+ * Évite les doublons en vérifiant si des données existent déjà
+ * 
+ * @return bool True si migration réussie, False sinon
+ */
 function migrate_logs_data()
 {
     global $pdo;
     try {
+        // Vérifier si l'ancienne table logs_actions existe
         $check_old = $pdo->query("SHOW TABLES LIKE 'logs_actions'");
         if ($check_old->rowCount() > 0) {
+            // Vérifier si des données existent déjà dans logs pour éviter les doublons
             $count = $pdo->query("SELECT COUNT(*) FROM logs")->fetchColumn();
+
             if ($count == 0) {
+                // Migration des données
                 $sql = "INSERT INTO logs (id_utilisateur, action, table_concernee, id_enregistrement, details, ip_address, date_action)
                         SELECT id_utilisateur, action, table_concernee, id_enregistrement, details, adresse_ip, date_action
                         FROM logs_actions";
+
                 $pdo->exec($sql);
                 $migrated = $pdo->query("SELECT COUNT(*) FROM logs")->fetchColumn();
                 error_log("✅ Migration des données de logs_actions vers logs effectuée : $migrated enregistrements migrés");
@@ -121,6 +147,12 @@ function migrate_logs_data()
     return false;
 }
 
+/**
+ * Vérifie et crée la table logs_actions si elle n'existe pas (pour compatibilité)
+ * Permet de maintenir la compatibilité avec l'ancienne structure
+ * 
+ * @return bool True si la table a été créée, False sinon
+ */
 function check_logs_actions_table()
 {
     global $pdo;
@@ -139,6 +171,7 @@ function check_logs_actions_table()
                 INDEX idx_utilisateur (id_utilisateur),
                 INDEX idx_action (action)
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci";
+
             $pdo->exec($sql);
             error_log("✅ Table 'logs_actions' créée avec succès (compatibilité)");
             return true;
@@ -149,6 +182,12 @@ function check_logs_actions_table()
     return false;
 }
 
+/**
+ * Vérifie et crée la colonne preferences si elle n'existe pas
+ * Ajoute la colonne après dernier_acces dans la table utilisateurs
+ * 
+ * @return bool True si la colonne a été créée, False sinon
+ */
 function check_preferences_column()
 {
     global $pdo;
@@ -165,17 +204,25 @@ function check_preferences_column()
     return false;
 }
 
+/**
+ * Vérifie et crée les colonnes remember_token et remember_token_expires si elles n'existent pas
+ * 
+ * @return bool True si au moins une colonne a été créée, False sinon
+ */
 function check_remember_columns()
 {
     global $pdo;
     $created = false;
     try {
+        // Vérifier la colonne remember_token
         $check = $pdo->query("SHOW COLUMNS FROM utilisateurs LIKE 'remember_token'");
         if ($check->rowCount() == 0) {
             $pdo->exec("ALTER TABLE utilisateurs ADD COLUMN remember_token VARCHAR(255) NULL AFTER preferences");
             error_log("✅ Colonne 'remember_token' créée avec succès");
             $created = true;
         }
+
+        // Vérifier la colonne remember_token_expires
         $check = $pdo->query("SHOW COLUMNS FROM utilisateurs LIKE 'remember_token_expires'");
         if ($check->rowCount() == 0) {
             $pdo->exec("ALTER TABLE utilisateurs ADD COLUMN remember_token_expires DATETIME NULL AFTER remember_token");
@@ -188,6 +235,7 @@ function check_remember_columns()
     return $created;
 }
 
+// Exécuter les vérifications au chargement du fichier
 check_logs_table();
 check_preferences_column();
 check_remember_columns();
@@ -198,6 +246,16 @@ check_remember_columns();
  * ============================================
  */
 
+/**
+ * Journalise une action dans la table logs ou logs_actions
+ * Tente d'abord d'utiliser la table logs, puis logs_actions en fallback
+ *
+ * @param string $action  Nom de l'action (ex: 'CONNEXION', 'AJOUT', 'MODIFICATION', 'SUPPRESSION')
+ * @param string|null $table Table concernée (ex: 'utilisateurs', 'materiel', 'interventions')
+ * @param int|null $record_id Identifiant de l'enregistrement concerné
+ * @param string|null $details Détails supplémentaires au format texte ou JSON
+ * @return bool True si journalisation réussie, False sinon
+ */
 function log_action($action, $table = null, $record_id = null, $details = null)
 {
     global $pdo;
@@ -206,35 +264,61 @@ function log_action($action, $table = null, $record_id = null, $details = null)
     $ip_address = $_SERVER['REMOTE_ADDR'] ?? null;
     $user_agent = $_SERVER['HTTP_USER_AGENT'] ?? null;
 
+    // Tronquer l'user agent s'il est trop long pour éviter les erreurs
     if ($user_agent && strlen($user_agent) > 65535) {
         $user_agent = substr($user_agent, 0, 65535);
     }
 
     try {
+        // Essayer d'abord avec la table 'logs' (nouvelle structure)
         $stmt = $pdo->prepare("INSERT INTO logs 
             (id_utilisateur, action, table_concernee, id_enregistrement, details, ip_address, user_agent) 
             VALUES (?, ?, ?, ?, ?, ?, ?)");
         $result = $stmt->execute([$user_id, $action, $table, $record_id, $details, $ip_address, $user_agent]);
-        if ($result) return true;
+
+        if ($result) {
+            return true;
+        }
     } catch (PDOException $e) {
+        // Si la table 'logs' n'existe pas, essayer avec 'logs_actions'
         try {
+            // Vérifier si la table logs_actions existe, sinon la créer
             check_logs_actions_table();
+
             $stmt = $pdo->prepare("INSERT INTO logs_actions 
                 (id_utilisateur, action, table_concernee, id_enregistrement, details, adresse_ip) 
                 VALUES (?, ?, ?, ?, ?, ?)");
             $result = $stmt->execute([$user_id, $action, $table, $record_id, $details, $ip_address]);
-            if ($result) return true;
+
+            if ($result) {
+                return true;
+            }
         } catch (PDOException $e2) {
+            // Si les deux échouent, logger dans error_log
             error_log("❌ Erreur log_action (logs et logs_actions): " . $e2->getMessage());
             error_log("   Action: $action, Table: $table, ID: $record_id, User: $user_id");
         }
     }
+
     return false;
 }
 
+/**
+ * Récupère les logs avec filtres optionnels
+ * Permet de filtrer par utilisateur, action, période et limite
+ *
+ * @param array $filtres Filtres disponibles :
+ *                      - id_utilisateur : int
+ *                      - action : string
+ *                      - date_debut : string (format Y-m-d H:i:s)
+ *                      - date_fin : string (format Y-m-d H:i:s)
+ *                      - limite : int
+ * @return array Liste des logs avec informations utilisateur
+ */
 function get_logs($filtres = [])
 {
     global $pdo;
+
     $sql = "SELECT l.*, u.nom_complet, u.login, u.avatar 
             FROM logs l 
             LEFT JOIN utilisateurs u ON l.id_utilisateur = u.id_utilisateur 
@@ -245,27 +329,34 @@ function get_logs($filtres = [])
         $sql .= " AND l.id_utilisateur = ?";
         $params[] = $filtres['id_utilisateur'];
     }
+
     if (!empty($filtres['action'])) {
         $sql .= " AND l.action = ?";
         $params[] = $filtres['action'];
     }
+
     if (!empty($filtres['date_debut'])) {
         $sql .= " AND l.date_action >= ?";
         $params[] = $filtres['date_debut'];
     }
+
     if (!empty($filtres['date_fin'])) {
         $sql .= " AND l.date_action <= ?";
         $params[] = $filtres['date_fin'];
     }
+
     if (!empty($filtres['table_concernee'])) {
         $sql .= " AND l.table_concernee = ?";
         $params[] = $filtres['table_concernee'];
     }
+
     $sql .= " ORDER BY l.date_action DESC";
+
     if (!empty($filtres['limite'])) {
         $sql .= " LIMIT ?";
         $params[] = (int)$filtres['limite'];
     }
+
     try {
         $stmt = $pdo->prepare($sql);
         $stmt->execute($params);
@@ -276,6 +367,13 @@ function get_logs($filtres = [])
     }
 }
 
+/**
+ * Nettoie les anciens logs (plus de 3 mois par défaut)
+ * À exécuter périodiquement via cron ou manuellement
+ *
+ * @param int $jours Nombre de jours à conserver (défaut: 90)
+ * @return int Nombre de logs supprimés
+ */
 function nettoyer_anciens_logs($jours = 90)
 {
     global $pdo;
@@ -284,10 +382,14 @@ function nettoyer_anciens_logs($jours = 90)
         $stmt = $pdo->prepare("DELETE FROM logs WHERE date_action < ?");
         $stmt->execute([$date_limite]);
         $count = $stmt->rowCount();
+
         if ($count > 0) {
             error_log("🧹 $count logs plus vieux que $jours jours ont été supprimés");
+
+            // Optimiser la table après nettoyage
             $pdo->exec("OPTIMIZE TABLE logs");
         }
+
         return $count;
     } catch (PDOException $e) {
         error_log("❌ Erreur nettoyage logs: " . $e->getMessage());
@@ -301,31 +403,59 @@ function nettoyer_anciens_logs($jours = 90)
  * ============================================
  */
 
+/**
+ * Vérifie si l'utilisateur a un rôle spécifique
+ *
+ * @param string $role Rôle à vérifier (ex: 'ADMIN_IG', 'UTILISATEUR', 'CHEF', etc.)
+ * @return bool True si l'utilisateur a le rôle, False sinon
+ */
 function has_role($role)
 {
     return isset($_SESSION['user_profil']) && $_SESSION['user_profil'] === $role;
 }
 
+/**
+ * Vérifie si l'utilisateur est admin (profil = 'ADMIN_IG')
+ *
+ * @return bool True si l'utilisateur est admin, False sinon
+ */
 function is_admin()
 {
     return has_role('ADMIN_IG');
 }
 
+/**
+ * Vérifie que l'utilisateur connecté a un profil autorisé
+ * Redirige vers index.php avec un message flash si non autorisé
+ *
+ * @param array|string $profils_autorises
+ * @return void
+ */
 function check_profil($profils_autorises)
 {
     if (!is_array($profils_autorises)) {
         $profils_autorises = [$profils_autorises];
     }
+
+    // Nettoyer et uniformiser la casse
     $profils_autorises = array_map('strtoupper', $profils_autorises);
+
     if (!isset($_SESSION['user_profil'])) {
         redirect_with_flash('index.php', 'danger', 'Session invalide. Veuillez vous reconnecter.');
     }
+
     $user_profil = trim(strtoupper($_SESSION['user_profil']));
+
     if (!in_array($user_profil, $profils_autorises)) {
         redirect_with_flash('index.php', 'danger', 'Accès refusé. Veuillez contacter l\'administrateur si vous pensez avoir les droits nécessaires.');
     }
 }
 
+/**
+ * Redirige vers la page de connexion si l'utilisateur n'est pas authentifié
+ *
+ * @return void
+ */
 function require_login()
 {
     if (!isset($_SESSION['user_id'])) {
@@ -334,6 +464,12 @@ function require_login()
     }
 }
 
+/**
+ * Récupère un utilisateur par son ID
+ *
+ * @param int $user_id ID de l'utilisateur (id_utilisateur)
+ * @return array|false Tableau des informations utilisateur ou False si erreur
+ */
 function get_user_by_id($user_id)
 {
     global $pdo;
@@ -350,6 +486,12 @@ function get_user_by_id($user_id)
     }
 }
 
+/**
+ * Vérifie si un utilisateur est actif
+ *
+ * @param int $user_id ID de l'utilisateur
+ * @return bool True si actif, False sinon
+ */
 function is_user_active($user_id)
 {
     global $pdo;
@@ -365,16 +507,26 @@ function is_user_active($user_id)
 
 function check_session_timeout()
 {
-    $inactive_time = 3600;
+    $inactive_time = 3600; // 1 heure
+
     if (isset($_SESSION['last_activity']) && (time() - $_SESSION['last_activity'] > $inactive_time)) {
+        // Session expirée
         session_unset();
         session_destroy();
         header('Location: login.php?timeout=1');
         exit;
     }
+
+    // Mettre à jour le dernier accès
     $_SESSION['last_activity'] = time();
 }
 
+/**
+ * Récupère les préférences de l'utilisateur
+ *
+ * @param int $user_id ID de l'utilisateur (id_utilisateur)
+ * @return array|null Tableau des préférences ou null si aucune/erreur
+ */
 function get_user_preferences($user_id)
 {
     global $pdo;
@@ -389,6 +541,13 @@ function get_user_preferences($user_id)
     }
 }
 
+/**
+ * Met à jour les préférences d'un utilisateur
+ *
+ * @param int $user_id ID de l'utilisateur
+ * @param array $preferences Tableau des préférences à sauvegarder
+ * @return bool True si succès, False sinon
+ */
 function update_user_preferences($user_id, $preferences)
 {
     global $pdo;
@@ -408,16 +567,35 @@ function update_user_preferences($user_id, $preferences)
  * ============================================
  */
 
+/**
+ * Sécurise une chaîne pour l'affichage HTML
+ * Alias pour htmlspecialchars avec UTF-8
+ *
+ * @param string $string Chaîne à échapper
+ * @return string Chaîne échappée
+ */
 function e($string)
 {
     return htmlspecialchars($string, ENT_QUOTES, 'UTF-8');
 }
 
+/**
+ * Échappe les données pour un affichage HTML sécurisé
+ * Alias pour e() - Conservation pour compatibilité
+ *
+ * @param string $str Chaîne à échapper
+ * @return string Chaîne échappée
+ */
 function h($str)
 {
     return e($str);
 }
 
+/**
+ * Génère un token CSRF pour protéger les formulaires
+ *
+ * @return string Token CSRF
+ */
 function generate_csrf_token()
 {
     if (empty($_SESSION['csrf_token'])) {
@@ -426,6 +604,12 @@ function generate_csrf_token()
     return $_SESSION['csrf_token'];
 }
 
+/**
+ * Vérifie le token CSRF
+ *
+ * @param string $token Token à vérifier
+ * @return bool True si valide, False sinon
+ */
 function verify_csrf_token($token)
 {
     if (empty($_SESSION['csrf_token']) || empty($token)) {
@@ -440,6 +624,13 @@ function verify_csrf_token($token)
  * ============================================
  */
 
+/**
+ * Formate une date
+ *
+ * @param string $date Date à formater
+ * @param string $format Format de sortie (par défaut: 'd/m/Y H:i:s')
+ * @return string Date formatée ou chaîne vide si erreur
+ */
 function format_date($date, $format = 'd/m/Y H:i:s')
 {
     if (empty($date)) return '';
@@ -452,21 +643,40 @@ function format_date($date, $format = 'd/m/Y H:i:s')
     }
 }
 
+/**
+ * Formate une taille de fichier en affichage lisible
+ *
+ * @param int $bytes Taille en bytes
+ * @param int $precision Nombre de décimales
+ * @return string Taille formatée (ex: 1.5 MB)
+ */
 function format_filesize($bytes, $precision = 2)
 {
     $units = ['B', 'KB', 'MB', 'GB', 'TB'];
+
     $bytes = max($bytes, 0);
     $pow = floor(($bytes ? log($bytes) : 0) / log(1024));
     $pow = min($pow, count($units) - 1);
+
     $bytes /= pow(1024, $pow);
+
     return round($bytes, $precision) . ' ' . $units[$pow];
 }
 
+/**
+ * Tronque un texte à une longueur maximale
+ *
+ * @param string $text Texte à tronquer
+ * @param int $length Longueur maximale
+ * @param string $append Texte à ajouter à la fin si tronqué
+ * @return string Texte tronqué
+ */
 function truncate_text($text, $length = 100, $append = '...')
 {
     if (mb_strlen($text, 'UTF-8') <= $length) {
         return $text;
     }
+
     return mb_substr($text, 0, $length, 'UTF-8') . $append;
 }
 
@@ -476,12 +686,21 @@ function truncate_text($text, $length = 100, $append = '...')
  * ============================================
  */
 
+/**
+ * Récupère l'URL complète de l'avatar
+ * Vérifie l'existence physique du fichier
+ *
+ * @param string|null $avatarFile Nom du fichier avatar (colonne 'avatar')
+ * @return string URL complète de l'avatar
+ */
 function getAvatarUrl($avatarFile)
 {
     $baseUrl = '/ctr.net-fardc (v1.0)/assets/uploads/avatars/';
     $default = $baseUrl . 'default-avatar.jpg';
+
     if (!empty($avatarFile)) {
         $absolutePath = dirname(__DIR__, 2) . '/assets/uploads/avatars/' . $avatarFile;
+
         if (file_exists($absolutePath)) {
             return $baseUrl . $avatarFile;
         }
@@ -489,32 +708,52 @@ function getAvatarUrl($avatarFile)
     return $default;
 }
 
+/**
+ * Télécharge et traite un avatar
+ *
+ * @param array $file $_FILES['avatar']
+ * @param int $user_id ID de l'utilisateur
+ * @return string|false Nom du fichier ou false si erreur
+ */
 function upload_avatar($file, $user_id)
 {
     $target_dir = dirname(__DIR__, 2) . '/assets/uploads/avatars/';
+
+    // Vérifier que le répertoire existe
     if (!is_dir($target_dir)) {
         mkdir($target_dir, 0755, true);
     }
+
+    // Extensions autorisées
     $allowed_types = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
-    $max_size = 2 * 1024 * 1024;
+    $max_size = 2 * 1024 * 1024; // 2MB
+
+    // Vérifications
     if ($file['error'] !== UPLOAD_ERR_OK) {
         error_log("Erreur upload avatar: " . $file['error']);
         return false;
     }
+
     if (!in_array($file['type'], $allowed_types)) {
         error_log("Type de fichier non autorisé: " . $file['type']);
         return false;
     }
+
     if ($file['size'] > $max_size) {
         error_log("Fichier trop volumineux: " . $file['size']);
         return false;
     }
+
+    // Générer un nom unique
     $extension = pathinfo($file['name'], PATHINFO_EXTENSION);
     $filename = 'avatar_' . $user_id . '_' . time() . '.' . $extension;
     $target_file = $target_dir . $filename;
+
+    // Redimensionner l'image si nécessaire (optionnel)
     if (move_uploaded_file($file['tmp_name'], $target_file)) {
         return $filename;
     }
+
     return false;
 }
 
@@ -524,12 +763,20 @@ function upload_avatar($file, $user_id)
  * ============================================
  */
 
+/**
+ * Affiche et efface le message flash avec auto-fermeture
+ * À appeler dans les vues (ex: index.php, dashboard.php)
+ *
+ * @return void
+ */
 function display_flash()
 {
     if (isset($_SESSION['flash'])) {
         $type = $_SESSION['flash']['type'];
         $message = h($_SESSION['flash']['message']);
+
         $flash_id = 'flash_' . uniqid();
+
         echo "<div id='$flash_id' class='alert alert-$type alert-dismissible fade show' role='alert' style='position: fixed; top: 20px; right: 20px; z-index: 9999; max-width: 350px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);'>
                 <div class='d-flex align-items-center'>
                     <i class='fas " . get_flash_icon($type) . " me-2'></i>
@@ -537,6 +784,7 @@ function display_flash()
                 </div>
                 <button type='button' class='btn-close' onclick='document.getElementById(\"$flash_id\").remove()' aria-label='Close'></button>
               </div>";
+
         echo "<script>
                 setTimeout(function() {
                     var flash = document.getElementById('$flash_id');
@@ -547,10 +795,17 @@ function display_flash()
                     }
                 }, 5000);
               </script>";
+
         unset($_SESSION['flash']);
     }
 }
 
+/**
+ * Retourne l'icône Font Awesome correspondant au type de flash
+ *
+ * @param string $type Type de flash
+ * @return string Classe de l'icône
+ */
 function get_flash_icon($type)
 {
     switch ($type) {
@@ -573,23 +828,43 @@ function get_flash_icon($type)
  * ============================================
  */
 
+/**
+ * Génère un mot de passe aléatoire sécurisé
+ *
+ * @param int $length Longueur du mot de passe
+ * @return string Mot de passe généré
+ */
 function generate_random_password($length = 12)
 {
     $chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_-=+';
     $password = '';
     $max = strlen($chars) - 1;
+
     for ($i = 0; $i < $length; $i++) {
         $password .= $chars[random_int(0, $max)];
     }
+
     return $password;
 }
 
+/**
+ * Vérifie si une requête est de type AJAX
+ *
+ * @return bool True si requête AJAX, False sinon
+ */
 function is_ajax_request()
 {
     return !empty($_SERVER['HTTP_X_REQUESTED_WITH']) &&
         strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) == 'xmlhttprequest';
 }
 
+/**
+ * Retourne une réponse JSON et termine le script
+ *
+ * @param mixed $data Données à encoder en JSON
+ * @param int $status_code Code HTTP (défaut: 200)
+ * @return void
+ */
 function json_response($data, $status_code = 200)
 {
     http_response_code($status_code);
@@ -604,6 +879,7 @@ function json_response($data, $status_code = 200)
  * ============================================
  */
 
+// Tableaux globaux pour les tris et catégories
 $gradeOrder = [
     'GENA',
     'GAM',
@@ -651,21 +927,26 @@ $gradeOrder = [
 ];
 
 $categorieOrder = [
-    'INTEGRES',
-    'RETRAITES',
-    'DCD_AV_BIO',
-    'DCD_AP_BIO',
-    'ACTIF'
+    'INTEGRES',      // Intégré
+    'RETRAITES',     // Retraité
+    'DCD_AV_BIO',    // Décédé Avant Bio
+    'DCD_AP_BIO',    // Décédé Après Bio
+    'ACTIF'          // Actif
 ];
 
 $traductions_categories = [
-    'ACTIF' => 'Actif',
-    'DCD_AP_BIO' => 'Décédé Après Bio',
-    'INTEGRES' => 'Intégré',
-    'RETRAITES' => 'Retraité',
-    'DCD_AV_BIO' => 'Décédé Avant Bio'
+    'ACTIF'        => 'Actif',
+    'DCD_AP_BIO'   => 'Décédé Après Bio',
+    'INTEGRES'     => 'Intégré',
+    'RETRAITES'    => 'Retraité',
+    'DCD_AV_BIO'   => 'Décédé Avant Bio'
 ];
 
+/**
+ * Détermine la zone de défense à partir de la province
+ * @param string $province
+ * @return array ['value' => '1ZDEF'|'2ZDEF'|'3ZDEF'|'AUTRE'|'N/A', 'code' => ...]
+ */
 function getZdefValue($province)
 {
     if (empty($province)) return ['value' => 'N/A', 'code' => 'N/A'];
@@ -678,105 +959,16 @@ function getZdefValue($province)
     if (in_array($province, $groupe_3zdef)) return ['value' => '3ZDEF', 'code' => '3ZDEF'];
     return ['value' => 'AUTRE', 'code' => 'AUTRE'];
 }
-
 /**
- * Construit un CSV avec des lignes de titre et des données
+ * Génère le contenu CSV des militaires non contrôlés (non‑vus)
+ * Utilise les mêmes tris que le tableau de bord
+ * @return string Contenu CSV avec BOM UTF‑8
  */
-function build_csv_with_titles($headerLines, $headers, $rows)
-{
-    $stream = fopen('php://temp', 'r+');
-    fwrite($stream, "\xEF\xBB\xBF");
-    foreach ($headerLines as $line) {
-        fputcsv($stream, $line);
-    }
-    fputcsv($stream, []);
-    fputcsv($stream, $headers);
-    foreach ($rows as $row) {
-        fputcsv($stream, $row);
-    }
-    rewind($stream);
-    $content = stream_get_contents($stream);
-    fclose($stream);
-    return $content;
-}
-
-/**
- * Génère un fichier Excel (XLSX) à partir des données
- */
-/**
- * Génère un fichier Excel (XLSX) à partir des données
- * Utilise PhpSpreadsheet – version robuste avec setCellValue()
- */
-function generate_excel_from_data($headerLines, $headers, $rows, $sheetTitle)
-{
-    global $use_excel;
-    if (!$use_excel) return null;
-
-    try {
-        $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
-        $sheet = $spreadsheet->getActiveSheet();
-        $sheet->setTitle(mb_substr($sheetTitle, 0, 31));
-
-        $rowIndex = 1;
-
-        // Lignes de titre (en gras)
-        foreach ($headerLines as $line) {
-            $colIndex = 1;
-            foreach ($line as $cellValue) {
-                $cellCoord = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($colIndex) . $rowIndex;
-                $sheet->setCellValue($cellCoord, $cellValue);
-                $sheet->getStyle($cellCoord)->getFont()->setBold(true);
-                $colIndex++;
-            }
-            $rowIndex++;
-        }
-
-        $rowIndex++; // ligne vide
-
-        // En‑têtes des colonnes
-        $colIndex = 1;
-        foreach ($headers as $header) {
-            $cellCoord = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($colIndex) . $rowIndex;
-            $sheet->setCellValue($cellCoord, $header);
-            $sheet->getStyle($cellCoord)->getFont()->setBold(true);
-            $colIndex++;
-        }
-        $rowIndex++;
-
-        // Données
-        foreach ($rows as $row) {
-            $colIndex = 1;
-            foreach ($row as $cellValue) {
-                $cellCoord = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($colIndex) . $rowIndex;
-                $sheet->setCellValue($cellCoord, $cellValue);
-                $colIndex++;
-            }
-            $rowIndex++;
-        }
-
-        // Ajustement automatique des colonnes
-        foreach (range('A', $sheet->getHighestColumn()) as $col) {
-            $sheet->getColumnDimension($col)->setAutoSize(true);
-        }
-
-        $writer = new \PhpOffice\PhpSpreadsheet\Writer\Xlsx($spreadsheet);
-        ob_start();
-        $writer->save('php://output');
-        return ob_get_clean();
-    } catch (Exception $e) {
-        error_log("Erreur génération Excel : " . $e->getMessage());
-        return null;
-    }
-}
-
-/**
- * Récupère les données des non-vus formatées pour l'export
- */
-function get_non_vus_data_for_export()
+function get_non_vus_csv_content()
 {
     global $pdo;
 
-    // Valeurs par défaut robustes, même si les globales ne sont pas définies
+    // Définitions internes de secours (au cas où les globales seraient absentes)
     $gradeOrder = $GLOBALS['gradeOrder'] ?? [
         'GENA',
         'GAM',
@@ -822,13 +1014,15 @@ function get_non_vus_data_for_export()
         'ASK',
         'COMD'
     ];
+
     $categorieOrder = $GLOBALS['categorieOrder'] ?? [
-        'INTEGRES',
-        'RETRAITES',
-        'DCD_AV_BIO',
-        'DCD_AP_BIO',
-        'ACTIF'
+        'INTEGRES',      // Intégré
+        'RETRAITES',     // Retraité
+        'DCD_AV_BIO',    // Décédé Avant Bio
+        'DCD_AP_BIO',    // Décédé Après Bio
+        'ACTIF'          // Actif
     ];
+
     $traductions_categories = $GLOBALS['traductions_categories'] ?? [
         'ACTIF'        => 'Actif',
         'DCD_AP_BIO'   => 'Décédé Après Bio',
@@ -849,9 +1043,11 @@ function get_non_vus_data_for_export()
             FROM militaires m
             LEFT JOIN controles c ON m.matricule = c.matricule
             WHERE c.id IS NULL";
+
     $stmt = $pdo->query($sql);
     $non_vus_raw = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
+    // Tri personnalisé (grade, catégorie, nom)
     usort($non_vus_raw, function ($a, $b) use ($gradeOrder, $categorieOrder) {
         $gradeA = array_search($a['grade'], $gradeOrder);
         $gradeB = array_search($b['grade'], $gradeOrder);
@@ -868,9 +1064,25 @@ function get_non_vus_data_for_export()
         return strcmp($a['noms'] ?? '', $b['noms'] ?? '');
     });
 
+    // Ajout de la ZDEF
+    foreach ($non_vus_raw as &$row) {
+        $zdef = getZdefValue($row['province']);
+        $row['zdef'] = $zdef['value'];
+    }
+
+    $timestamp = date('Y-m-d_H-i-s');
+    $title = "LISTE DES MILITAIRES NON-VUS AU CONTROLE (Sauvegarde du $timestamp)";
+
+    $headerLines = [
+        ['MINISTERE DE LA DEFENSE NATIONALE ET ANCIENS COMBATTANTS'],
+        ['INSPECTORAT GENERAL DES FARDC'],
+        [$title]
+    ];
+
+    $headers = ['SERIE', 'MATRICULE', 'NOMS', 'GRADE', 'UNITE', 'BENEFICIAIRE', 'GARNISON', 'PROVINCE', 'CATEGORIE', 'ZDEF'];
+
     $rows = [];
     foreach ($non_vus_raw as $index => $m) {
-        $zdef = getZdefValue($m['province']);
         $rows[] = [
             $index + 1,
             $m['matricule'],
@@ -881,121 +1093,119 @@ function get_non_vus_data_for_export()
             $m['garnison'],
             $m['province'],
             $traductions_categories[$m['categorie']] ?? $m['categorie'],
-            $zdef['value']
+            $m['zdef']
         ];
     }
-    return ['rows' => $rows, 'raw' => $non_vus_raw];
-}
-/**
- * Génère le contenu CSV des militaires non contrôlés (non‑vus) – conservé pour compatibilité
- */
-function get_non_vus_csv_content()
-{
-    $data = get_non_vus_data_for_export();
-    $headerLines = [
-        ['MINISTERE DE LA DEFENSE NATIONALE ET ANCIENS COMBATTANTS'],
-        ['INSPECTORAT GENERAL DES FARDC'],
-        ['LISTE DES MILITAIRES NON-VUS AU CONTRÔLE (Sauvegarde du ' . date('Y-m-d_H-i-s') . ')']
-    ];
-    $headers = ['SERIE', 'MATRICULE', 'NOMS', 'GRADE', 'UNITE', 'BENEFICIAIRE', 'GARNISON', 'PROVINCE', 'CATEGORIE', 'ZDEF'];
-    return build_csv_with_titles($headerLines, $headers, $data['rows']);
-}
 
+    $stream = fopen('php://temp', 'r+');
+    fwrite($stream, "\xEF\xBB\xBF"); // BOM UTF‑8
+
+    foreach ($headerLines as $line) fputcsv($stream, $line);
+    fputcsv($stream, []);
+    fputcsv($stream, $headers);
+    foreach ($rows as $row) fputcsv($stream, $row);
+
+    rewind($stream);
+    $csv_content = stream_get_contents($stream);
+    fclose($stream);
+    return $csv_content;
+}
 /**
  * Génère une archive ZIP contenant les tables controles, litiges et les non‑vus
- * en formats CSV, XLSX (si PhpSpreadsheet dispo) et PDF (si Dompdf dispo)
+ * Ajoute des titres dans chaque CSV (en-têtes administratifs)
+ * 
+ * @param bool $include_non_vus Inclure le CSV des non‑vus (par défaut true)
+ * @return bool True en cas de succès, False sinon
  */
 function generate_backup($include_non_vus = true)
 {
-    global $pdo, $use_excel, $use_pdf;
+    global $pdo;
     $backup_dir = dirname(__DIR__, 2) . '/backups/';
     if (!is_dir($backup_dir)) mkdir($backup_dir, 0755, true);
 
     $timestamp = date('Y-m-d_H-i-s');
     $zip_file = $backup_dir . 'backup_' . $timestamp . '.zip';
+
     $zip = new ZipArchive();
     if ($zip->open($zip_file, ZipArchive::CREATE) !== true) {
         error_log("Impossible de créer l'archive de sauvegarde.");
         return false;
     }
 
-    $tables = [
+    $tables = ['controles', 'litiges'];
+    $field_order = [
         'controles' => [
-            'title' => 'LISTE DES CONTRÔLES EFFECTUÉS',
-            'fields' => [
-                'id',
-                'matricule',
-                'type_controle',
-                'nom_beneficiaire',
-                'new_beneficiaire',
-                'lien_parente',
-                'date_controle',
-                'mention',
-                'observations',
-                'cree_le'
-            ]
+            'id',
+            'matricule',
+            'type_controle',
+            'nom_beneficiaire',
+            'new_beneficiaire',
+            'lien_parente',
+            'date_controle',
+            'mention',
+            'observations',
+            'cree_le'
         ],
         'litiges' => [
-            'title' => 'LISTE DES LITIGES ENREGISTRÉS',
-            'fields' => [
-                'id',
-                'matricule',
-                'noms',
-                'grade',
-                'type_controle',
-                'nom_beneficiaire',
-                'lien_parente',
-                'garnison',
-                'province',
-                'date_controle',
-                'observations',
-                'cree_le'
-            ]
-        ]
+            'id',
+            'matricule',
+            'noms',
+            'grade',
+            'type_controle',
+            'nom_beneficiaire',
+            'lien_parente',
+            'garnison',
+            'province',
+            'date_controle',
+            'observations',
+            'cree_le'
+        ],
     ];
 
-    foreach ($tables as $table => $config) {
+    // Définir les titres pour chaque table
+    $titles = [
+        'controles' => "LISTE DES CONTROLES EFFECTUES (Sauvegarde du $timestamp)",
+        'litiges'   => "LISTE DES LITIGES ENREGISTRES (Sauvegarde du $timestamp)"
+    ];
+
+    foreach ($tables as $table) {
         try {
             $check = $pdo->query("SHOW TABLES LIKE '$table'");
             if ($check->rowCount() == 0) continue;
+
             $stmt = $pdo->query("SELECT * FROM $table");
             $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
             if (empty($rows)) continue;
 
+            $stream = fopen('php://temp', 'r+');
+            fwrite($stream, "\xEF\xBB\xBF"); // BOM UTF‑8
+
+            // Lignes d'en-tête administratives
             $headerLines = [
                 ['MINISTERE DE LA DEFENSE NATIONALE ET ANCIENS COMBATTANTS'],
                 ['INSPECTORAT GENERAL DES FARDC'],
-                [$config['title'] . ' (Sauvegarde du ' . $timestamp . ')']
+                [$titles[$table]]
             ];
-            $headers = $config['fields'];
-            $dataRows = [];
+            foreach ($headerLines as $line) fputcsv($stream, $line);
+            fputcsv($stream, []); // ligne vide
+
+            // En-têtes des colonnes
+            $ordered_columns = $field_order[$table] ?? array_keys($rows[0]);
+            fputcsv($stream, $ordered_columns);
+
+            // Données
             foreach ($rows as $row) {
-                $orderedRow = [];
-                foreach ($headers as $col) {
-                    $orderedRow[] = $row[$col] ?? '';
+                $ordered_row = [];
+                foreach ($ordered_columns as $col) {
+                    $ordered_row[] = $row[$col] ?? '';
                 }
-                $dataRows[] = $orderedRow;
+                fputcsv($stream, $ordered_row);
             }
 
-            // CSV
-            $csv_content = build_csv_with_titles($headerLines, $headers, $dataRows);
+            rewind($stream);
+            $csv_content = stream_get_contents($stream);
+            fclose($stream);
             $zip->addFromString($table . '_' . $timestamp . '.csv', $csv_content);
-
-            // Excel
-            if ($use_excel) {
-                $excel_content = generate_excel_from_data($headerLines, $headers, $dataRows, $table);
-                if ($excel_content !== null) {
-                    $zip->addFromString($table . '_' . $timestamp . '.xlsx', $excel_content);
-                }
-            }
-
-            // PDF
-            if ($use_pdf) {
-                $pdf_content = generate_pdf_from_data($headerLines, $headers, $dataRows, $config['title']);
-                if ($pdf_content !== null) {
-                    $zip->addFromString($table . '_' . $timestamp . '.pdf', $pdf_content);
-                }
-            }
         } catch (PDOException $e) {
             error_log("Erreur export $table : " . $e->getMessage());
         }
@@ -1003,106 +1213,22 @@ function generate_backup($include_non_vus = true)
 
     if ($include_non_vus) {
         try {
-            $non_vus_data = get_non_vus_data_for_export();
-            if (!empty($non_vus_data['rows'])) {
-                $headerLines = [
-                    ['MINISTERE DE LA DEFENSE NATIONALE ET ANCIENS COMBATTANTS'],
-                    ['INSPECTORAT GENERAL DES FARDC'],
-                    ['LISTE DES MILITAIRES NON-VUS AU CONTRÔLE (Sauvegarde du ' . $timestamp . ')']
-                ];
-                $headers = ['SERIE', 'MATRICULE', 'NOMS', 'GRADE', 'UNITE', 'BENEFICIAIRE', 'GARNISON', 'PROVINCE', 'CATEGORIE', 'ZDEF'];
-                $dataRows = $non_vus_data['rows'];
-
-                // CSV
-                $csv_content = build_csv_with_titles($headerLines, $headers, $dataRows);
-                $zip->addFromString('non_vus_' . $timestamp . '.csv', $csv_content);
-
-                // Excel
-                if ($use_excel) {
-                    $excel_content = generate_excel_from_data($headerLines, $headers, $dataRows, 'non_vus');
-                    if ($excel_content !== null) {
-                        $zip->addFromString('non_vus_' . $timestamp . '.xlsx', $excel_content);
-                    }
-                }
-                /**
-                 * Génère un fichier PDF à partir des données
-                 * Utilise Dompdf – version robuste
-                 */
-                function generate_pdf_from_data($headerLines, $headers, $rows, $title)
-                {
-                    global $use_pdf;
-                    if (!$use_pdf) return null;
-
-                    try {
-                        $html = '<!DOCTYPE html>
-        <html>
-        <head>
-            <meta charset="UTF-8">
-            <title>' . htmlspecialchars($title) . '</title>
-            <style>
-                body { font-family: DejaVu Sans, sans-serif; font-size: 10pt; margin: 20px; }
-                .header { text-align: center; margin-bottom: 20px; }
-                .header p { margin: 2px 0; }
-                table { border-collapse: collapse; width: 100%; margin-top: 10px; }
-                th, td { border: 1px solid #000; padding: 5px; text-align: left; vertical-align: top; }
-                th { background-color: #f2f2f2; font-weight: bold; }
-                .footer { margin-top: 20px; font-size: 8pt; text-align: center; }
-            </style>
-        </head>
-        <body>';
-
-                        foreach ($headerLines as $line) {
-                            $html .= '<div class="header">';
-                            foreach ($line as $text) {
-                                $html .= '<p><strong>' . htmlspecialchars($text) . '</strong></p>';
-                            }
-                            $html .= '</div>';
-                        }
-
-                        $html .= '<table><thead><tr>';
-                        foreach ($headers as $header) {
-                            $html .= '<th>' . htmlspecialchars($header) . '</th>';
-                        }
-                        $html .= '</tr></thead><tbody>';
-
-                        foreach ($rows as $row) {
-                            $html .= '<tr>';
-                            foreach ($row as $cell) {
-                                $html .= '<td>' . htmlspecialchars($cell) . '</td>';
-                            }
-                            $html .= '</tr>';
-                        }
-
-                        $html .= '</tbody></table>';
-                        $html .= '<div class="footer">Généré le ' . date('d/m/Y H:i:s') . '</div>';
-                        $html .= '</body></html>';
-
-                        // Initialisation de Dompdf avec des options
-                        $options = new \Dompdf\Options();
-                        $options->set('defaultFont', 'DejaVu Sans');
-                        $options->set('isRemoteEnabled', false);
-                        $dompdf = new \Dompdf\Dompdf($options);
-                        $dompdf->loadHtml($html);
-                        $dompdf->setPaper('A4', 'portrait');
-                        $dompdf->render();
-                        return $dompdf->output();
-                    } catch (Exception $e) {
-                        error_log("Erreur génération PDF : " . $e->getMessage());
-                        return null;
-                    }
-                }
+            $non_vus_csv = get_non_vus_csv_content();
+            if (!empty($non_vus_csv)) {
+                $zip->addFromString('non_vus_' . $timestamp . '.csv', $non_vus_csv);
             }
-        } catch (PDOException $e) {
+        } catch (Exception $e) {
             error_log("Erreur export non-vus : " . $e->getMessage());
         }
     }
 
     $zip->close();
-    return $zip_file;
+    return true;
 }
 
 /**
- * Récupère l'horodatage de la dernière sauvegarde (non utilisé par le cron, conservé pour compatibilité)
+ * Récupère l'horodatage de la dernière sauvegarde
+ * @return int Timestamp Unix
  */
 function get_last_backup_time()
 {
@@ -1112,7 +1238,7 @@ function get_last_backup_time()
 }
 
 /**
- * Met à jour l'horodatage de la dernière sauvegarde (non utilisé par le cron, conservé pour compatibilité)
+ * Met à jour l'horodatage de la dernière sauvegarde
  */
 function update_last_backup_time()
 {
@@ -1121,14 +1247,14 @@ function update_last_backup_time()
 }
 
 /**
- * Vérifie si une sauvegarde doit être effectuée (toutes les 2 minutes) et l'exécute.
- * Cette fonction n'est plus appelée automatiquement ; elle est conservée pour une éventuelle utilisation manuelle.
+ * Vérifie si une sauvegarde doit être effectuée (toutes les 2 minutes)
+ * et l'exécute si nécessaire.
  */
 function maybe_create_backup()
 {
     $last_backup = get_last_backup_time();
     $now = time();
-    if (($now - $last_backup) >= 120) {
+    if (($now - $last_backup) >= 120) { // 2 minutes
         generate_backup(true);
         update_last_backup_time();
         error_log("Sauvegarde automatique exécutée (intervalle 2 minutes).");
@@ -1141,9 +1267,10 @@ function maybe_create_backup()
 //  Pour la déclencher périodiquement, utilisez le script backup_cron.php
 //  via une tâche cron.
 // =========================================================================
-// maybe_create_backup();
+// maybe_create_backup();  // <- Désactivé
 
 // Programme de nettoyage automatique (1% de chance à chaque chargement)
+// Décommentez si vous voulez activer le nettoyage aléatoire
 // if (rand(1, 100) == 1 && is_admin()) { 
 //     nettoyer_anciens_logs(90); 
 // }

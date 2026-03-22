@@ -1057,7 +1057,7 @@ function get_non_vus_csv_content()
 function generate_backup($include_non_vus = true)
 {
     global $pdo;
-    $backup_dir = dirname(__DIR__, 2) . '/backups/';
+    $backup_dir = dirname(__DIR__, 1) . '/backups/';
     if (!is_dir($backup_dir)) mkdir($backup_dir, 0755, true);
 
     $timestamp = date('Y-m-d_H-i-s');
@@ -1151,7 +1151,7 @@ function generate_backup($include_non_vus = true)
  */
 function get_last_backup_time()
 {
-    $file = dirname(__DIR__, 2) . '/backups/last_backup.txt';
+    $file = dirname(__DIR__, 1) . '/backups/last_backup.txt';
     if (file_exists($file)) return (int) file_get_contents($file);
     return 0;
 }
@@ -1161,7 +1161,7 @@ function get_last_backup_time()
  */
 function update_last_backup_time()
 {
-    $file = dirname(__DIR__, 2) . '/backups/last_backup.txt';
+    $file = dirname(__DIR__, 1) . '/backups/last_backup.txt';
     file_put_contents($file, time());
 }
 

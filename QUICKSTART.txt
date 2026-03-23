@@ -34,12 +34,15 @@ Rôle:      ADMIN_IG (accès complet)
 ```
 Login:     operateur
 Mot de passe: operateur123
-Rôle:      OPERATEUR (opérations standard)
+Rôle:      OPERATEUR (gestion militaires & contrôles)
 ```
 
-### Remarque sur les profils
-
-Le profil **CONTROLEUR** n'est plus utilisé dans cette version. Les tâches de saisie de contrôles sont prises en charge par le profil **OPERATEUR**.
+### Contrôleur
+```
+Login:     controleur
+Mot de passe: controleur123
+Rôle:      CONTROLEUR (saisie de contrôles uniquement)
+```
 
 ---
 
@@ -80,8 +83,7 @@ Le profil **CONTROLEUR** n'est plus utilisé dans cette version. Les tâches de 
 
 ### Gestion Utilisateurs (Admin)
 - Créer/modifier/supprimer comptes
-- Assigner rôles (ADMIN_IG, OPERATEUR, CONTROLEUR)
-- Gérer les préférences
+- Assigner rôles (ADMIN_IG, OPERATEUR, CONTROLEUR)- Gérer les préférences
 
 ### Gestion Militaires
 - Recherche et filtrage

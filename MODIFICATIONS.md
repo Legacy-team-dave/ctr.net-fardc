@@ -7,7 +7,7 @@
 - ✅ Créé `AdminController` pour logique administrateur
 - ✅ Créé `UserController` pour logique utilisateur standard
 - ✅ Mis à jour `auth.php` avec fonctions raccourcis
-- ✅ Rôles supportés : ADMIN_IG, OPERATEUR
+- ✅ Rôles supportés : ADMIN_IG, OPERATEUR, CONTROLEUR
 
 ### 2. **Restructuration & Optimisation du Code**
 - ✅ Suppression des redondances dans `functions.php`

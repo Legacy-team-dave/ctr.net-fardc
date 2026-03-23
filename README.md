@@ -32,11 +32,10 @@ URL: http://localhost:8080/ctr.net-fardc
 | Profil | Login | Mot de Passe | Accès |
 |--------|-------|--------------|-------|
 | **Administrateur** | admin | admin123 | Gestion complète |
-| **Opérateur** | operateur | operateur123 | Opérations standard |
+| **Opérateur** | operateur | operateur123 | Gestion militaires & contrôles |
+| **Contrôleur** | controleur | controleur123 | Saisie de contrôles (mobile) |
 
 > ⚠️ **IMPORTANT**: Changez immédiatement ces mots de passe en production !
-
-> Note : le profil **CONTROLEUR** a été retiré de cette version. Les opérations de saisie de contrôles sont effectuées par le profil **OPERATEUR**.
 
 ---
 
@@ -84,9 +83,9 @@ ctr.net-fardc/
 ✅ Historique d'actions personnel  
 
 ### Pour Contrôleurs (CONTROLEUR)
-✅ Enregistrement de contrôles de terrain  
-✅ Gestion des GPS/Localisations  
-✅ Rapports de contrôle  
+✅ Enregistrement de contrôles de terrain (interface mobile optimisée)  
+✅ Localisation GPS du militaire contrôlé  
+✅ Saisie des mentions et observations  
 ✅ Mise à jour de profil  
 
 ---
@@ -102,7 +101,8 @@ require_login();
 require_admin();
 
 // Vérifier des rôles spécifiques
-require_role(['OPERATEUR', 'CONTROLEUR']);
+// Autoriser OPERATEUR et CONTROLEUR
+check_profil(['OPERATEUR', 'CONTROLEUR']);
 
 // Vérifier un rôle (fonction legacy support)
 check_profil('ADMIN_IG');

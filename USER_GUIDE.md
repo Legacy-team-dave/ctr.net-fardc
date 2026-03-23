@@ -28,14 +28,13 @@ Bienvenue dans l'application de gestion des effectifs militaires de la FARDC. Ce
 
 ### Types de Profils
 
-L'application dispose de **2 profils d'utilisateurs** dans cette version :
+L'application dispose de **3 profils d'utilisateurs** :
 
 | Profil | Accès | Fonctionnalités |
-|--------|-------|-----------------|
+|--------|-------|------------------|
 | **ADMIN_IG** | Complet | Gestion des utilisateurs, militaires, contrôles, rapports |
-| **OPERATEUR** | Limité | Gestion des militaires et contrôles |
-
-> Remarque : le profil **CONTROLEUR** a été retiré — ses fonctions de saisie de contrôles sont prises en charge par **OPERATEUR**.
+| **OPERATEUR** | Standard | Gestion des militaires et contrôles, dashboard, rapports |
+| **CONTROLEUR** | Restreint | Saisie de contrôles uniquement (interface mobile) |
 
 ---
 
@@ -96,10 +95,11 @@ Le menu latéral gauche **change selon votre profil** :
 - 📈 **Rapports** - Statistiques et analyses
 
 #### Pour OPERATEUR :
+- 📊 **Tableau de bord** - Dashboard personnalisé
 - ✅ **Contrôles** - Lister et effectuer des contrôles
 
 #### Pour CONTROLEUR :
-- ✅ **Contrôles** - Effectuer des contrôles (accès direct)
+- ✅ **Contrôles** - Effectuer des contrôles (accès direct au formulaire)
 
 ### Barre de Profil (En Haut à Droite)
 

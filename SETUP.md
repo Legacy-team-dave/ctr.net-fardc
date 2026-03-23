@@ -46,7 +46,7 @@ http://localhost:8080/ctr.net-fardc
 ## 🔑 Identifiants par Défaut
 
 ### Administrateur
-- **Login** : admin / admin_user
+- **Login** : admin
 - **Mot de passe** : admin123
 - **Profil** : ADMIN_IG
 
@@ -55,9 +55,12 @@ http://localhost:8080/ctr.net-fardc
 - **Mot de passe** : operateur123
 - **Profil** : OPERATEUR
 
-> ⚠️ Changez les mots de passe immédiatement en production !
+### Contrôleur
+- **Login** : controleur
+- **Mot de passe** : controleur123
+- **Profil** : CONTROLEUR
 
-> Remarque : le profil **CONTROLEUR** n'est plus utilisé dans cette version. Les fonctions de saisie de contrôles sont assurées par le profil **OPERATEUR**.
+> ⚠️ Changez les mots de passe immédiatement en production !
 
 ---
 
@@ -72,10 +75,14 @@ http://localhost:8080/ctr.net-fardc
 - Les pages admin se trouvent dans `modules/administration/`
 
 #### Utilisateurs Standard (OPERATEUR)
-- Gestion des militaires
-- Gestion des contrôles
+- Gestion des militaires et des contrôles
 - Dashboard selon le profil
 - Pas accès à la gestion des utilisateurs
+
+#### Contrôleurs (CONTROLEUR)
+- Saisie de contrôles uniquement (interface mobile top-nav)
+- Redirigé directement vers le formulaire de contrôle après connexion
+- Pas accès au tableau de bord, militaires ou rapports
 
 ### Architecture MVC
 ```

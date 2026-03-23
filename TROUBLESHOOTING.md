@@ -181,18 +181,18 @@ Admin peut vérifier dans "Gestion des utilisateurs"
 **Erreur: "Vous n'avez pas les droits accéder à cette application"**
 
 ```
-Indication: Votre compte existe mais "CONTROLEUR" (trop limité)
+Indication: Votre compte CONTROLEUR est redirigé vers le formulaire de contrôle
 
-Raison: Les CcontrolEURs ne voient QUE le formulaire de contrôle
+Raison: Les CONTROLEURS accèdent UNIQUEMENT à modules/controles/ajouter.php
+        C'est le comportement normal et voulu.
 
-Solution pour CONTROLEUR:
-- C'est normal, c'est le comportement voulu
+Si vous voyez cette page :
+- C'est normal, accédez directement via : controles/ajouter.php
 - Vous pouvez UNIQUEMENT effectuer des contrôles
-- Rien d'autre est autorisé
 
-Solution si vous aviez plus:
-- Votre profil a été changé récemment
-- Contactez admin pour demander changement...
+Si vous aviez plus d'accès avant :
+- Votre profil a peut-être été changé récemment
+- Contactez admin pour demander un changement de profil
 ```
 
 ### Problème: "Session expirée"

@@ -2,14 +2,16 @@
 
 ## 📋 Validation Globale du Projet
 
-### ✅ Séparation Admin vs Users
+### ✅ Séparation des Profils
 - [x] RoleMiddleware créé et fonctionnel
 - [x] AdminController avec logique admin
 - [x] UserController avec logique user
 - [x] Accès conditionnel dans les pages
 - [x] Redirections appropriées par rôle
 - [x] Pages admin protégées (ADMIN_IG uniquement)
-- [x] Pages users accessibles (OPERATEUR)
+- [x] Pages militaires/rapports (ADMIN_IG & OPERATEUR)
+- [x] Module contrôles (ADMIN_IG, OPERATEUR & CONTROLEUR)
+- [x] Interface CONTROLEUR : top-nav mobile, formulaire seul
 
 ### ✅ Code Optimisé
 - [x] functions.php allégé (65% de réduction)
@@ -42,6 +44,10 @@
 - [x] SETUP.md (installation)
 - [x] QUICKSTART.txt (30 secondes)
 - [x] ARCHITECTURE.md (structure)
+- [x] USER_GUIDE.md (guide général)
+- [x] ADMIN_GUIDE.md (guide ADMIN_IG)
+- [x] OPERATEUR_GUIDE.md (guide OPERATEUR)
+- [x] CONTROLEUR_GUIDE.md (guide CONTROLEUR)
 - [x] MIGRATION.md (aide migration)
 - [x] EXEMPLES.md (code samples)
 - [x] MODIFICATIONS.md (changements)

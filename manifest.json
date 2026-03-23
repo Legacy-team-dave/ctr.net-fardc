@@ -21,17 +21,26 @@
         "features": {
             "admin": [
                 "Gestion complète des utilisateurs",
-                "Attribution des rôles",
+                "Attribution des rôles (ADMIN_IG, OPERATEUR, CONTROLEUR)",
                 "Dashboard statistique",
                 "Logs d'audit",
-                "Gestion des militaires"
+                "Gestion des militaires",
+                "Supervision des contrôles",
+                "Rapports et statistiques"
             ],
-            "users": [
+            "operateur": [
                 "Gestion des militaires",
                 "Enregistrement de contrôles",
                 "Dashboard personnalisé",
                 "Mise à jour de profil",
                 "Historique d'actions"
+            ],
+            "controleur": [
+                "Saisie de contrôles terrain",
+                "Interface mobile optimisée (top-nav)",
+                "Localisation GPS du militaire",
+                "Saisie des mentions et observations",
+                "Mise à jour de profil"
             ],
             "security": [
                 "Middleware de contrôle d'accès",
@@ -64,11 +73,16 @@
                 "SETUP.md",
                 "QUICKSTART.txt",
                 "ARCHITECTURE.md",
+                "USER_GUIDE.md",
+                "ADMIN_GUIDE.md",
+                "OPERATEUR_GUIDE.md",
+                "CONTROLEUR_GUIDE.md",
                 "MIGRATION.md",
                 "EXEMPLES.md",
                 "MODIFICATIONS.md",
                 "BUILD_EXE.md",
-                "VERSION.md"
+                "VERSION.md",
+                "VALIDATION.md"
             ],
             "scripts": [
                 "START.bat",

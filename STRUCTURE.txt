@@ -9,14 +9,18 @@ ctr.net-fardc/
 │   ├── launch.ps1                   PowerShell avancé
 │   └── INSTALL.bat                  Installation automatique
 │
-├── 📚 DOCUMENTATION (10 fichiers)
-│   ├── README.md                    ⭐ Guide complet 50+ sections
-│   ├── QUICKSTART.txt               30-second setup
+├── 📚 DOCUMENTATION (13 fichiers)
+│   ├── README.md                    ⭐ Guide complet
+│   ├── QUICKSTART.txt               Démarrage 30 secondes
 │   ├── SETUP.md                     Installation détaillée + dépannage
 │   ├── ARCHITECTURE.md              Architecture MVC et structure
+│   ├── USER_GUIDE.md                Guide utilisateur général (tous profils)
+│   ├── ADMIN_GUIDE.md               Guide administrateur (ADMIN_IG)
+│   ├── OPERATEUR_GUIDE.md           Guide opérateur (OPERATEUR)
+│   ├── CONTROLEUR_GUIDE.md          Guide contrôleur (CONTROLEUR)
 │   ├── MIGRATION.md                 Guide migration code legacy
 │   ├── EXEMPLES.md                  Exemples pratiques code
-│   ├── MODIFICATIONS.md             Résumé des changements v1.0
+│   ├── MODIFICATIONS.md             Résumé des changements
 │   ├── BUILD_EXE.md                 Compilation en .exe
 │   ├── VERSION.md                   Historique versions
 │   └── VALIDATION.md                Checklist de validation
@@ -69,12 +73,12 @@ ctr.net-fardc/
 │   │
 │   ├── 📁 administration/ - ADMIN UNIQUEMENT (ADMIN_IG)
 │   │   ├── utilisateurs.php         Liste des users (seulement Admin)
-│   │   ├── ajouter_utilisateur.php  Créer user (seulement Admin)
+│   │   ├── ajouter_utilisateur.php  Créer user : ADMIN_IG, OPERATEUR, CONTROLEUR
 │   │   ├── modifier_utilisateur.php Modifier user (seulement Admin)
 │   │   ├── supprimer_utilisateur.php Supprimer user (seulement Admin)
 │   │   └── importer.php             Import en masse
 │   │
-│   ├── 📁 militaires/ - UTILISATEURS STANDARD
+│   ├── 📁 militaires/ - ADMIN_IG & OPERATEUR
 │   │   ├── liste.php                Liste militaires
 │   │   ├── actifs.php               Militaires actifs
 │   │   ├── inactifs.php             Militaires inactifs
@@ -82,9 +86,9 @@ ctr.net-fardc/
 │   │   ├── modifier.php             Modifier militaire
 │   │   └── voir.php                 Détails militaire
 │   │
-│   ├── 📁 controles/ - UTILISATEURS STANDARD
-│   │   ├── ajouter.php              Créer contrôle
-│   │   ├── liste.php                Historique contrôles
+│   ├── 📁 controles/ - ADMIN_IG, OPERATEUR & CONTROLEUR
+│   │   ├── ajouter.php              Saisie contrôle (interface mobile pour CONTROLEUR)
+│   │   ├── liste.php                Historique contrôles (ADMIN_IG & OPERATEUR)
 │   │   └── voir.php                 Détails contrôle
 │   │
 │   └── 📁 rapports/ - RAPPORTS
@@ -136,18 +140,19 @@ ctr.net-fardc/
 
 ## 🎯 Points Clés de la Structure
 
-### Séparation Admin vs Users
+### Séparation des Profils
 ```
 ADMIN ONLY (ADMIN_IG):
-  └── modules/administration/*       ✅ Protégé par RoleMiddleware::requireAdmin()
+  └── modules/administration/*       ✅ Protégé par check_profil(['ADMIN_IG'])
 
-USERS STANDARD (OPERATEUR):
-  ├── modules/militaires/*           ✅ Accès utilisateurs
-  ├── modules/controles/*            ✅ Accès utilisateurs
-  └── modules/rapports/*             ✅ Accès utilisateurs
+OPERATEUR:
+  ├── modules/militaires/*           ✅ Accès opérateur (ADMIN_IG aussi)
+  ├── modules/controles/*            ✅ Accès opérateur (ADMIN_IG aussi)
+  └── modules/rapports/*             ✅ Accès opérateur (ADMIN_IG aussi)
+
+CONTROLEUR (interface mobile top-nav):
+  └── modules/controles/ajouter.php ✅ Saisie du contrôle uniquement
 ```
-
-Note: Le profil **CONTROLEUR** a été retiré ; ses fonctionnalités sont désormais assurées par **OPERATEUR**.
 
 ### Architecture MVC
 ```

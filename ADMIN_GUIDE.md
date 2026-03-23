@@ -143,8 +143,8 @@ La page liste **tous les utilisateurs**actifs et inactifs :
 
 **Profil/Rôle** :
 - **ADMIN_IG** : Accès complet (gestion des utilisateurs)
-- **OPERATEUR** : Gestion militaires et contrôles
-- **CONTROLEUR** : Effectuer contrôles uniquement
+- **OPERATEUR** : Gestion militaires, contrôles, rapports
+- **CONTROLEUR** : Saisie de contrôles uniquement (interface mobile)
 
 **Statut Actif** :
 - ☑ Actif : L'utilisateur peut se connecter
@@ -754,7 +754,11 @@ En cas d'enquête :
 
 ## Profils
 
-Les profils disponibles dans cette version sont : **ADMIN_IG** et **OPERATEUR**.
+Les profils disponibles sont : **ADMIN_IG**, **OPERATEUR** et **CONTROLEUR**.
 
-Remarque : le profil **CONTROLEUR** n'est plus utilisé dans cette version. Ses fonctionnalités de saisie simple de contrôles sont désormais assurées par le profil **OPERATEUR**.
+| Profil | Description | Accès |
+|--------|-------------|-------|
+| **ADMIN_IG** | Administrateur | Gestion complète (utilisateurs, militaires, contrôles, rapports) |
+| **OPERATEUR** | Opérateur | Gestion des militaires et contrôles, dashboard, rapports |
+| **CONTROLEUR** | Contrôleur terrain | Saisie de contrôles uniquement (interface mobile, top-nav) |
 

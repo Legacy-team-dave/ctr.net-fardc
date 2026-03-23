@@ -32,11 +32,10 @@
 ⚠️ Activez JavaScript (requis pour le fonctionnement)
 
 ### Q3: Qui peut accéder à l'application?
-**R:** Seules les personnes avec un **compte actif** créé par l'administrateur. Dans cette version il y a 2 profils :
+**R:** Seules les personnes avec un **compte actif** créé par l'administrateur. Il y a 3 profils :
 - **ADMIN_IG** : Accès complet
 - **OPERATEUR** : Gestion des militaires et contrôles
-
-> Remarque : le profil **CONTROLEUR** a été retiré ; ses fonctions sont prises en charge par **OPERATEUR**.
+- **CONTROLEUR** : Saisie de contrôles uniquement (interface mobile)
 
 ### Q4: Comment savoir quel profil j'ai?
 **R:** Après connexion, regardez en **haut à droite**. Votre nom et profil sont affichés. Ou allez à **"Mon Profil"**.
@@ -46,8 +45,7 @@
 - **Tous** : [USER_GUIDE.md](USER_GUIDE.md)
 - **ADMIN_IG** : [ADMIN_GUIDE.md](ADMIN_GUIDE.md)
 - **OPERATEUR** : [OPERATEUR_GUIDE.md](OPERATEUR_GUIDE.md)
-
-Le document [CONTROLEUR_GUIDE.md](CONTROLEUR_GUIDE.md) est conservé à titre informatif mais le profil **CONTROLEUR** n'est plus utilisé.
+- **CONTROLEUR** : [CONTROLEUR_GUIDE.md](CONTROLEUR_GUIDE.md)
 
 ---
 

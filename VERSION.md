@@ -87,7 +87,12 @@
 - [x] Historique personnel
 
 #### CONTROLEUR (Contrôleur)
-- Le profil **CONTROLEUR** a été retiré dans cette version. Ses fonctionnalités (saisie de contrôles, GPS, rapports simplifiés) sont désormais assurées par le profil **OPERATEUR**.
+- [x] Saisie de contrôles terrain (interface mobile top-nav)
+- [x] Formulaire de contrôle optimisé (grands boutons, lecture facile)
+- [x] Localisation GPS du militaire
+- [x] Saisie des mentions et observations
+- [x] Mise à jour de profil
+- [x] Actions journalisées dans le log d'audit
 
 ### 🎨 Design & UX
 - Font Barlow appliquée globalement

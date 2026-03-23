@@ -1,119 +1,22 @@
-# 🚀 QUICK START - CTR.NET-FARDC
+QUICK START - CTR.NET-FARDC
 
-## ⚡ Lancement en 10 Secondes
+1) Lancer Laragon
+2) Ouvrir le projet dans C:\laragon\www\ctr.net-fardc
+3) Ouvrir : http://localhost/ctr.net-fardc/login.php
 
-### Windows
+Scripts de lancement disponibles:
+- START.bat
+- INSTALL.bat
+- launch.bat
+- launch.ps1
+- lanceur.ps1
 
-```
-1. Double-cliquez sur: START.bat
-        ou
-   Double-cliquez sur: INSTALL.bat
-        ou
-   Cliquez droit sur: launch.ps1 > "Exécuter avec PowerShell"
+Profils réels:
+- ADMIN_IG
+- OPERATEUR
+- CONTROLEUR
 
-2. L'application démarre dans votre navigateur ✓
-```
-
-### URL de Connexion
-```
-http://localhost:8080/ctr.net-fardc
-```
-
----
-
-## 👤 Comptes de Connexion
-
-### Administrateur
-```
-Login:     admin
-Mot de passe: admin123
-Rôle:      ADMIN_IG (accès complet)
-```
-
-### Opérateur
-```
-Login:     operateur
-Mot de passe: operateur123
-Rôle:      OPERATEUR (gestion militaires & contrôles)
-```
-
-### Contrôleur
-```
-Login:     controleur
-Mot de passe: controleur123
-Rôle:      CONTROLEUR (saisie de contrôles uniquement)
-```
-
----
-
-## ❓ Si ça ne fonctionne pas
-
-### "Laragon introuvable"
-✓ Installer: https://laragon.org/download  
-✓ Installation standard dans `C:\laragon\`
-
-### "Rien ne s'ouvre"
-✓ Ouvrir manuellement: http://127.0.0.1:8080/ctr.net-fardc  
-✓ Vérifier que Laragon tourne (valider dans taskbar)
-
-### "Page blanche"
-✓ Cliquer "Start All" dans Laragon  
-✓ Attendre 2-3 secondes
-
----
-
-## 📚 Documentation
-
-| Document | Description |
-|----------|-------------|
-| **README.md** | Guide complet |
-| **SETUP.md** | Installation détaillée |
-| **ARCHITECTURE.md** | Architecture technique |
-| **EXEMPLES.md** | Exemples de code |
-| **MODIFICATIONS.md** | Changements v1.0 |
-
----
-
-## 🎨 Interface
-
-### Dashboard
-- Vue d'ensemble des statistiques
-- Accès rapide aux modules
-- Notifications et messages
-
-### Gestion Utilisateurs (Admin)
-- Créer/modifier/supprimer comptes
-- Assigner rôles (ADMIN_IG, OPERATEUR, CONTROLEUR)- Gérer les préférences
-
-### Gestion Militaires
-- Recherche et filtrage
-- Enregistrement de nouvelles données
-- Historique et audits
-
-### Contrôles
-- Enregistrement GPS
-- Classification des contrôles
-- Rapports
-
----
-
-## 🔒 Sécurité
-
-- ✅ Authentification sécurisée
-- ✅ Rôles & Permissions
-- ✅ Audit trail complet
-- ✅ Hachage password bcrypt  
-- ✅ Session protégée
-
----
-
-## 💬 Support
-
-En cas de problème, consultez:
-1. Le fichier **SETUP.md** (dépannage)
-2. La section **README.md** (FAQ)
-3. Les logs: `C:\laragon\logs\`
-
----
-
-**Merci d'utiliser CTR.NET-FARDC! 🎉**
+Mentions réelles (module contrôles):
+- Présent
+- Favorable
+- Défavorable

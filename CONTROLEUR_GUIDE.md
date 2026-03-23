@@ -25,7 +25,7 @@ Vos droits :
 
 - ✅ **Effectuer et enregistrer** des contrôles de militaires
 - ✅ **Rechercher** un militaire par matricule ou nom
-- ✅ **Saisir** les mentions (Présent, Absent, etc.) et observations
+- ✅ **Saisir** les mentions réelles (Présent / Favorable / Défavorable) et observations
 - ✅ **Localiser** géographiquement le militaire contrôlé
 - ✅ **Mettre à jour** votre profil personnel
 - ❌ **Consulter** la liste des militaires (réservé à OPERATEUR et ADMIN_IG)
@@ -176,16 +176,16 @@ Si le militaire ne s'affiche pas dans les résultats :
 
 ### Choisir la Mention
 
-Après sélection du militaire, choisissez la **mention** (état de présence) :
+Après sélection du militaire, la mention dépend du contexte de contrôle :
 
 ```
-┌──────────────────────────────────────────────────┐
-│  MENTIONS                                        │
-│                                                  │
-│  [✅ PRÉSENT]    [❌ ABSENT]    [⚠️ DISPENSE]    │
-│                                                  │
-│  [🔄 DÉSERTE]   [💀 DÉCÉDÉ]   [🏥 MALADE]      │
-└──────────────────────────────────────────────────┘
+┌────────────────────────────────────────────────────────────┐
+│ Cas 1 : militaire vivant                                  │
+│   [✅ PRÉSENT]                                             │
+│                                                            │
+│ Cas 2 : contrôle bénéficiaire (militaire décédé)          │
+│   [👍 FAVORABLE]   [👎 DÉFAVORABLE]                        │
+└────────────────────────────────────────────────────────────┘
 ```
 
 > **Interface agrandie** : les boutons sont plus grands sur l'interface CONTROLEUR pour faciliter la saisie tactile.
@@ -194,12 +194,14 @@ Après sélection du militaire, choisissez la **mention** (état de présence) :
 
 | Mention | Signification |
 |---------|---------------|
-| **PRÉSENT** | Le militaire est présent au contrôle |
-| **ABSENT** | Le militaire est absent sans justification |
-| **DISPENSÉ** | Le militaire est dispensé (permission, mission, etc.) |
-| **DÉSERTE** | Le militaire a déserté |
-| **DÉCÉDÉ** | Le militaire est décédé |
-| **MALADE** | Le militaire est en arrêt maladie officiel |
+| **PRÉSENT** | Contrôle du militaire lui-même (statut vivant) |
+| **FAVORABLE** | Contrôle bénéficiaire conforme |
+| **DÉFAVORABLE** | Contrôle bénéficiaire non conforme |
+
+Le formulaire inclut aussi le choix de **statut** selon la catégorie du militaire :
+
+- `Vivant`
+- `Décédé`
 
 ### Saisir les Observations (Facultatif)
 
@@ -216,22 +218,20 @@ Le champ **"Observations"** vous permet d'ajouter des précisions :
 ```
 
 **Quand remplir les observations :**
-- ABSENT → préciser la raison si connue
-- DISPENSÉ → indiquer la durée et le motif
-- MALADE → indiquer si certificat médical fourni
-- DÉSERTE → date et circonstances du constat
+- PRÉSENT → signaler tout élément utile du contrôle
+- FAVORABLE / DÉFAVORABLE → indiquer les justificatifs et anomalies constatées
 
 ### Bénéficiaires (si applicable)
 
-Si le militaire a des **bénéficiaires** (personnes à charge), vous pouvez confirmer leur présence :
+En mode bénéficiaire (statut décédé), vous pouvez renseigner ou compléter le bénéficiaire :
 
 ```
 ┌──────────────────────────────────────────────────────────┐
 │  Bénéficiaires                                           │
 │                                                          │
-│  Épouse     : [☑ Présente]                              │
-│  Enfant 1   : [☑ Présent]                               │
-│  Enfant 2   : [☐ Absent]                                │
+│  Bénéficiaire existant : [Nom trouvé automatiquement]    │
+│  Nouveau bénéficiaire : [Nom complet]                    │
+│  Lien : Épouse / Époux / Fils / Fille / Père / Mère ... │
 └──────────────────────────────────────────────────────────┘
 ```
 
@@ -250,7 +250,9 @@ Si la **géolocalisation** est disponible sur votre appareil :
 Une fois toutes les informations remplies :
 
 1. Vérifiez les données affichées
-2. Cliquez sur **"✅ Valider le contrôle"** (ou **"✅ Présent"** / **"❌ Absent"** selon les boutons disponibles)
+2. Cliquez sur le bouton correspondant :
+   - **"✅ Présent"** (militaire vivant)
+   - **"👍 Favorable"** ou **"👎 Défavorable"** (mode bénéficiaire)
 3. Un message de confirmation s'affiche :
 
 ```

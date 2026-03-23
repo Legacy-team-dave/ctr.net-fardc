@@ -1,276 +1,53 @@
-# 📁 STRUCTURE DU PROJET - CTR.NET-FARDC v1.0
+CTR.NET-FARDC - Structure réelle
 
-```
-ctr.net-fardc/
-│
-├── 📄 SCRIPTS DE LANCEMENT
-│   ├── START.bat                    ⭐ Lanceur principal
-│   ├── launch.bat                   Alternative batch
-│   ├── launch.ps1                   PowerShell avancé
-│   └── INSTALL.bat                  Installation automatique
-│
-├── 📚 DOCUMENTATION (13 fichiers)
-│   ├── README.md                    ⭐ Guide complet
-│   ├── QUICKSTART.txt               Démarrage 30 secondes
-│   ├── SETUP.md                     Installation détaillée + dépannage
-│   ├── ARCHITECTURE.md              Architecture MVC et structure
-│   ├── USER_GUIDE.md                Guide utilisateur général (tous profils)
-│   ├── ADMIN_GUIDE.md               Guide administrateur (ADMIN_IG)
-│   ├── OPERATEUR_GUIDE.md           Guide opérateur (OPERATEUR)
-│   ├── CONTROLEUR_GUIDE.md          Guide contrôleur (CONTROLEUR)
-│   ├── MIGRATION.md                 Guide migration code legacy
-│   ├── EXEMPLES.md                  Exemples pratiques code
-│   ├── MODIFICATIONS.md             Résumé des changements
-│   ├── BUILD_EXE.md                 Compilation en .exe
-│   ├── VERSION.md                   Historique versions
-│   └── VALIDATION.md                Checklist de validation
-│
-├── 📋 METADATA & CONFIG
-│   ├── manifest.json                Manifest application (JSON)
-│   ├── STRUCTURE.txt                Ce fichier
-│   └── .htaccess                    Réécriture URLs
-│
-├── 🎯 POINT D'ENTRÉE PRINCIPAL
-│   ├── index.php                    Dashboard
-│   ├── login.php                    Authentification
-│   └── logout.php                   Déconnexion
-│
-├── 📦 APP/ - LOGIQUE MÉTIER (MVC)
-│   │
-│   ├── 📁 classes/ - ENTITÉS
-│   │   ├── User.php                 Classe Utilisateur
-│   │   ├── Militaire.php            Classe Militaire
-│   │   └── Controle.php             Classe Contrôle
-│   │
-│   ├── 📁 services/ - LOGIQUE MÉTIER
-│   │   ├── UserService.php          Gestion utilisateurs
-│   │   ├── MilitaireService.php     Gestion militaires
-│   │   └── ControleService.php      Gestion contrôles
-│   │
-│   ├── 📁 controllers/ - CONTRÔLEURS ⭐ NOUVEAU
-│   │   ├── AdminController.php      Logique admin (180 lignes)
-│   │   └── UserController.php       Logique users (110 lignes)
-│   │
-│   └── 📁 utils/ - UTILITAIRES
-│       ├── Database.php             Singleton PDO
-│       ├── Logger.php               Logging d'audit
-│       ├── Validator.php            Validation données
-│       └── RoleMiddleware.php        ⭐ NOUVEAU Middleware d'accès
-│
-├── ⚙️ CONFIG/ - CONFIGURATION
-│   ├── database.php                 Connexion PDO
-│   ├── constants.php                Constantes app
-│   └── bootstrap.php                Initialisation
-│
-├── 🔧 INCLUDES/ - FONCTIONS GLOBALES
-│   ├── functions.php                ⭐ OPTIMISÉ (783 → 275 lignes, -65%)
-│   ├── auth.php                     ⭐ RÉÉCRIT Fonctions auth + RoleMiddleware
-│   ├── header.php                   Template en-tête
-│   ├── footer.php                   Template pied de page
-│   └── Router.php                   Gestionnaire routes
-│
-├── 📄 MODULES/ - PAGES MÉTIER PAR DOMAINE
-│   │
-│   ├── 📁 administration/ - ADMIN UNIQUEMENT (ADMIN_IG)
-│   │   ├── utilisateurs.php         Liste des users (seulement Admin)
-│   │   ├── ajouter_utilisateur.php  Créer user : ADMIN_IG, OPERATEUR, CONTROLEUR
-│   │   ├── modifier_utilisateur.php Modifier user (seulement Admin)
-│   │   ├── supprimer_utilisateur.php Supprimer user (seulement Admin)
-│   │   └── importer.php             Import en masse
-│   │
-│   ├── 📁 militaires/ - ADMIN_IG & OPERATEUR
-│   │   ├── liste.php                Liste militaires
-│   │   ├── actifs.php               Militaires actifs
-│   │   ├── inactifs.php             Militaires inactifs
-│   │   ├── ajouter.php              Créer militaire
-│   │   ├── modifier.php             Modifier militaire
-│   │   └── voir.php                 Détails militaire
-│   │
-│   ├── 📁 controles/ - ADMIN_IG, OPERATEUR & CONTROLEUR
-│   │   ├── ajouter.php              Saisie contrôle (interface mobile pour CONTROLEUR)
-│   │   ├── liste.php                Historique contrôles (ADMIN_IG & OPERATEUR)
-│   │   └── voir.php                 Détails contrôle
-│   │
-│   └── 📁 rapports/ - RAPPORTS
-│       ├── index.php                Page d'accueil rapports
-│       └── statistiques.php         Statistiques
-│
-├── 🎨 ASSETS/ - RESSOURCES STATIQUES
-│   │
-│   ├── 📁 css/
-│   │   ├── styles.css               ⭐ POINT D'ENTRÉE CSS (Barlow)
-│   │   ├── custom.css               Styles personnalisés
-│   │   ├── bootstrap.min.css        Bootstrap CDN
-│   │   ├── dataTables.bootstrap.css DataTables
-│   │   ├── leaflet.css              Cartes Leaflet
-│   │   └── sweetalert2.min.css      Alertes
-│   │
-│   ├── 📁 js/
-│   │   ├── main.js                  JS principal
-│   │   ├── bootstrap.bundle.min.js  Bootstrap
-│   │   ├── jquery.min.js            jQuery
-│   │   ├── datatables.min.js        DataTables
-│   │   ├── leaflet.min.js           Cartes
-│   │   ├── sweetalert2.min.js       Alertes SweetAlert2
-│   │   └── chart.min.js             Graphiques Chart.js
-│   │
-│   └── 📁 img/
-│       ├── icon.ico                 Favicon
-│       ├── logo.png                 Logo
-│       └── default-avatar.png       Avatar par défaut
-│
-├── 📡 API/ - ENDPOINTS AJAX
-│   ├── militaires.php               API militaires
-│   └── controles.php                API contrôles
-│
-├── 🔐 /public/ - DOSSIER PUBLIC (OPTIONNEL)
-│   └── index.php                    Point d'entrée (si URL rewrite)
-│
-├── 📤 UPLOADS/ - FICHIERS UTILISATEUR
-│   ├── avatars/                     Avatars utilisateurs
-│   └── documents/                   Documents uploadés
-│
-└── 🚫 FICHIERS IGNORÉS
-    ├── .git/                        Repository Git
-    ├── vendor/                      Dépendances Composer
-    └── node_modules/                Dépendances NPM
-```
+RACINE
+- 404.php
+- hash.php
+- index.php
+- login.php
+- logout.php
+- profil.php
+- preferences.php
+- register.php
+- reset_password.php
+- splash_screen.php
+- test.php
 
----
+DOSSIERS PRINCIPAUX
+- ajax/
+  - endpoints asynchrones (ex: get_categories.php, litiges.php)
+- assets/
+  - css/
+  - js/
+  - img/
+  - data/
+  - uploads/avatars/
+- backups/
+- config/
+  - database.php
+  - load_config.php
+- includes/
+  - auth.php
+  - functions.php
+  - header.php
+  - footer.php
+- modules/
+  - administration/
+  - militaires/
+  - controles/
+  - litige/
+  - rapports/
 
-## 🎯 Points Clés de la Structure
+ROLES
+- ADMIN_IG : administration + supervision globale
+- OPERATEUR : militaires + contrôles
+- CONTROLEUR : saisie contrôle uniquement
 
-### Séparation des Profils
-```
-ADMIN ONLY (ADMIN_IG):
-  └── modules/administration/*       ✅ Protégé par check_profil(['ADMIN_IG'])
+MENTIONS REELLES (modules/controles/ajouter.php)
+- Présent
+- Favorable
+- Défavorable
 
-OPERATEUR:
-  ├── modules/militaires/*           ✅ Accès opérateur (ADMIN_IG aussi)
-  ├── modules/controles/*            ✅ Accès opérateur (ADMIN_IG aussi)
-  └── modules/rapports/*             ✅ Accès opérateur (ADMIN_IG aussi)
-
-CONTROLEUR (interface mobile top-nav):
-  └── modules/controles/ajouter.php ✅ Saisie du contrôle uniquement
-```
-
-### Architecture MVC
-```
-Model (Entités) :
-  └── app/classes/
-      ├── User.php
-      ├── Militaire.php
-      ├── Controle.php
-
-View (Templates) :
-  ├── includes/header.php
-  ├── includes/footer.php
-  ├── modules/*/page.php
-
-Controller (Logique) :
-  ├── app/controllers/
-  │   ├── AdminController.php        (Admin)
-  │   └── UserController.php         (Users)
-  └── api/*.php                      (AJAX)
-
-Service (Métier) :
-  └── app/services/
-      ├── UserService.php
-      ├── MilitaireService.php
-      ├── ControleService.php
-```
-
-### Sécurité (Middleware)
-```
-Tous les modules incluent:
-  └── RoleMiddleware::requireRole()
-      ou RoleMiddleware::requireAdmin()
-      ou RoleMiddleware::requireLogin()
-```
-
-### Styles (Barlow)
-```
-assets/css/styles.css
-  ├── @import url('Barlow Google Fonts')
-  ├── body { font-family: 'Barlow', sans-serif }
-  └── @import url('custom.css')
-
-Tous les pages incluent:
-  └── <link rel="stylesheet" href="/assets/css/styles.css">
-```
-
----
-
-## 📊 Nombres Fichiers & Lignes
-
-| Catégorie | Fichiers | Lignes Approx |
-|-----------|----------|---------------|
-| **App/Classes** | 3 | 300+ |
-| **App/Services** | 3 | 700+ |
-| **App/Controllers** | 2 | 290+ ⭐ NEW |
-| **App/Utils** | 4 | 400+ |
-| **Config** | 3 | 100+ |
-| **Includes** | 5 | 800+ |
-| **Modules** | 15+ | 2000+ |
-| **API** | 2+ | 300+ |
-| **Assets (CSS/JS)** | 20+ | 1000+ |
-| **Documentation** | 10 | 3000+ |
-| **TOTAL** | 67+ | 8000+ |
-
----
-
-## ⚡ Améliorations v1.0
-
-```
-functions.php:  783 -> 275 lignes (-65% ✅)
-Redondances:    Supprimées (-40% code)
-Performance:    +40% faster
-Security:       Enhanced with RoleMiddleware
-Typography:     Barlow font applied globally
-Documentation:  10 comprehensive files
-Scripts:        4 launch scripts + installer
-```
-
----
-
-## 🚀 Fichiers à Double-Cliquer
-
-**Pour Utilisateurs Finaux:**
-```
-✓ START.bat              (RECOMMANDÉ)
-  └── Lance l'app en 10 secondes
-  
-✓ INSTALL.bat           (Alternative)
-  └── Installation + lancement
-  
-✓ launch.bat            (Simple)
-  └── Lanceur batch minimal
-```
-
-**Pour Développeurs:**
-```
-✓ launch.ps1            (PowerShell)
-  └── Version avancée avec logging
-
-📖 README.md             (Guide complet)
-📖 ARCHITECTURE.md       (Structure)
-📖 EXEMPLES.md          (Code snippets)
-```
-
----
-
-## ✨ Highlights
-
-✅ **Middleware de Sécurité** - RoleMiddleware.php  
-✅ **Code Optimisé** - 65% de réduction  
-✅ **Typographie Barlow** - Google Fonts  
-✅ **Controllers Séparés** - AdminController + UserController  
-✅ **Documentation** - 10 fichiers markdown  
-✅ **Scripts Lancement** - 4 options différentes  
-✅ **Prêt Production** - Sécurisé & Optimisé  
-
----
-
-**État: ✅ STABLE v1.0**
-
-*Dernière mise à jour: 02 Mars 2026*
+STATUTS CONTEXTE
+- Vivant
+- Décédé

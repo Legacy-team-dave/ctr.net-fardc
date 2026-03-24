@@ -821,7 +821,7 @@ $export_fields = [
         align-items: center;
         gap: 10px;
         margin-bottom: 10px;
-        animation: slideIn 0.3s ease-out, fadeOut 0.5s ease-out 2.5s forwards;
+        animation: slideIn 0.3s ease-out, fadeOut 0.5s ease-out 3s forwards;
         font-weight: 500;
         min-width: 320px;
         font-size: 0.95rem;
@@ -2169,7 +2169,7 @@ $export_fields = [
             container.appendChild(toast);
             setTimeout(() => {
                 toast.remove();
-            }, 3000);
+            }, 3500);
         }
 
         setInterval(function() {

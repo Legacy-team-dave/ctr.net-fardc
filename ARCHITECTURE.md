@@ -13,6 +13,7 @@ ctr.net-fardc/
 ├── logout.php
 ├── profil.php
 ├── preferences.php
+├── equipes.php
 ├── includes/
 ├── modules/
 ├── ajax/
@@ -97,6 +98,7 @@ Tables principales exploitées par l'application :
 - `militaires`
 - `controles`
 - `logs`
+- `equipes`
 
 ## 🔐 Chiffrement (v1.1.0+)
 

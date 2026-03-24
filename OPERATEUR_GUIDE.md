@@ -9,8 +9,16 @@
 ## Accès
 
 - Connexion : `login.php`
+- Préférences : `preferences.php` (configuration initiale)
+- Équipe : `equipes.php` (enregistrement membres d'équipe)
 - Dashboard : `index.php`
 - Contrôles : `modules/controles/ajouter.php`
+
+## Flux de configuration (premier accès)
+
+1. `login.php` → `preferences.php` (sélection garnisons/catégories)
+2. `preferences.php` → `equipes.php` (enregistrement membres d'équipe)
+3. `equipes.php` → `index.php` (dashboard)
 
 ## Mentions réellement saisies
 

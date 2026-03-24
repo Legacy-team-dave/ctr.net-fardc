@@ -8,6 +8,7 @@ RACINE
 - logout.php
 - profil.php
 - preferences.php
+- equipes.php
 - register.php
 - reset_password.php
 - splash_screen.php

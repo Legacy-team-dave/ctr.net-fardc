@@ -31,7 +31,7 @@ Le flux utilise aussi les statuts :
 
 ## Structure réelle
 
-- `index.php`, `login.php`, `logout.php`, `profil.php`, `preferences.php`
+- `index.php`, `login.php`, `logout.php`, `profil.php`, `preferences.php`, `equipes.php`
 - `includes/` : auth, fonctions globales, header/footer
 - `modules/` : `administration`, `militaires`, `controles`, `litige`, `rapports`
 - `ajax/` : endpoints AJAX
@@ -119,6 +119,7 @@ Tables principales utilisées :
 - `militaires`
 - `controles`
 - `logs`
+- `equipes`
 
 ## Documentation liée
 

@@ -1,5 +1,24 @@
 # Modifications récentes
 
+## Gestion des équipes de contrôle (Mars 2026 - v1.3.0)
+
+### Nouveau fichier
+
+- **`equipes.php`** : Page d'enregistrement des membres de l'équipe de contrôle
+  - Formulaire : noms, grade, rôle
+  - Liste des membres avec suppression
+  - Design cohérent avec `preferences.php` (page autonome)
+
+### Nouvelle table
+
+- **`equipes`** (id, noms, grade, role) — table standalone sans relations
+- Création automatique au premier accès (`CREATE TABLE IF NOT EXISTS`)
+
+### Flux mis à jour
+
+- `preferences.php` redirige maintenant vers `equipes.php` (au lieu de `index.php`)
+- Flux complet : `login → preferences → equipes → index`
+
 ## API Mobile et Notifications Temps Réel (Mars 2026 - v1.2.0)
 
 Intégration complète de l'application mobile CTR.NET avec le système web.

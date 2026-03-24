@@ -33,6 +33,7 @@ Exemple : `check_profil(['ADMIN_IG'])`.
 - Vérifier les droits lors de la création/modification d'utilisateurs
 - Contrôler la cohérence des données militaires
 - Vérifier les journaux (`logs`) en cas d'incident
+- La table `equipes` est gérée par l'opérateur (standalone, aucune relation)
 
 ## 🔐 Gestion du Chiffrement (v1.1.0+)
 

@@ -1,5 +1,14 @@
 # Versioning - CTR.NET-FARDC
 
+## 1.3.0 (2026-03-24)
+
+### 👥 Gestion des équipes de contrôle
+
+- Nouveau fichier `equipes.php` — page d'enregistrement des membres d'équipe
+- Nouvelle table `equipes` (id, noms, grade, role) — table standalone sans relations
+- Flux mis à jour : `preferences.php` → `equipes.php` → `index.php`
+- Design cohérent avec `preferences.php` (page autonome, thème vert FARDC)
+
 ## 1.2.0 (2026-03-24)
 
 ### 📱 API REST pour Application Mobile

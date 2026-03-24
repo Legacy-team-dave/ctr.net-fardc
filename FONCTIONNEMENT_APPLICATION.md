@@ -54,7 +54,7 @@ Profils effectivement utilisés :
 ### Redirections post-login
 
 - `ADMIN_IG` -> `index.php`
-- `OPERATEUR` -> `preferences.php` si pas de préférences, sinon `modules/controles/ajouter.php`
+- `OPERATEUR` -> `preferences.php` si pas de préférences → `equipes.php` (enregistrement équipe) → `index.php`, sinon `modules/controles/ajouter.php`
 - `CONTROLEUR` -> `modules/controles/ajouter.php`
 
 ## 3.2 Se souvenir de moi
@@ -113,6 +113,16 @@ Permet de définir les filtres personnels :
 ## 5.3 Impact métier
 
 Les préférences servent au filtrage des données du dashboard.
+
+## 5.4 Équipe de contrôle (`equipes.php`)
+
+Après la validation des préférences, l'opérateur est redirigé vers `equipes.php` pour enregistrer les membres de son équipe de contrôle.
+
+- Table standalone `equipes` (id, noms, grade, role) — aucune relation avec les autres tables
+- Formulaire d'ajout : noms, grade, rôle
+- Liste des membres enregistrés avec suppression possible
+- Bouton « Continuer » pour accéder au dashboard (`index.php`)
+- Page autonome (design identique à `preferences.php`, sans header/footer)
 
 ## 6. Module Contrôles
 
@@ -253,9 +263,10 @@ Comportement réel :
 1. Connexion
 2. Vérification rôle
 3. Redirection selon profil
-4. Saisie/consultation (contrôles, litiges, dashboard)
-5. Journalisation des actions
-6. Sauvegardes automatiques en arrière-plan
+4. Configuration équipe (`equipes.php`) — si premier accès
+5. Saisie/consultation (contrôles, litiges, dashboard)
+6. Journalisation des actions
+7. Sauvegardes automatiques en arrière-plan
 
 ## 13. Points d'attention opérationnels
 

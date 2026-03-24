@@ -802,10 +802,78 @@ $export_fields = [
             height: auto !important;
         }
     }
+
+    /* Toast notifications (même design que ajouter.php / mobile) */
+    .toast-container {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        z-index: 9999;
+    }
+
+    .toast-message {
+        background: linear-gradient(135deg, #28a745 0%, #218838 100%);
+        color: white;
+        padding: 15px 25px;
+        border-radius: 12px;
+        box-shadow: 0 5px 20px rgba(40, 167, 69, 0.3);
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 10px;
+        animation: slideIn 0.3s ease-out, fadeOut 0.5s ease-out 2.5s forwards;
+        font-weight: 500;
+        min-width: 320px;
+        font-size: 0.95rem;
+    }
+
+    .toast-message i {
+        font-size: 1.2rem;
+    }
+
+    .toast-message.error {
+        background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+        box-shadow: 0 5px 20px rgba(220, 53, 69, 0.3);
+    }
+
+    .toast-message.warning {
+        background: linear-gradient(135deg, #ffc107 0%, #e0a800 100%);
+        color: #212529;
+        box-shadow: 0 5px 20px rgba(255, 193, 7, 0.3);
+    }
+
+    .toast-message.info {
+        background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
+        box-shadow: 0 5px 20px rgba(23, 162, 184, 0.3);
+    }
+
+    @keyframes slideIn {
+        from {
+            transform: translateX(100%);
+            opacity: 0;
+        }
+
+        to {
+            transform: translateX(0);
+            opacity: 1;
+        }
+    }
+
+    @keyframes fadeOut {
+        from {
+            opacity: 1;
+            transform: translateX(0);
+        }
+
+        to {
+            opacity: 0;
+            transform: translateX(100%);
+        }
+    }
 </style>
 
 <!-- Toast container pour notifications mobile -->
-<div id="mobile-toast-container" style="position:fixed;top:20px;right:20px;z-index:9999;max-width:400px;"></div>
+<div class="toast-container" id="mobile-toast-container"></div>
 
 <div class="container-fluid py-3">
     <?php if ($success_message): ?>
@@ -2077,28 +2145,31 @@ $export_fields = [
         let lastControleId = <?php echo intval($pdo->query("SELECT COALESCE(MAX(id),0) FROM controles")->fetchColumn()); ?>;
 
         function showMobileToast(noms, mention, matricule) {
-            const id = 'toast-' + Date.now();
-            let badgeClass = 'bg-success';
-            if (mention === 'Favorable') badgeClass = 'bg-warning text-dark';
-            else if (mention === 'Défavorable') badgeClass = 'bg-danger';
+            const container = document.getElementById('mobile-toast-container');
+            if (!container) return;
 
-            const html = `
-        <div id="${id}" class="toast show align-items-center border-0 shadow mb-2" role="alert" style="min-width:320px;">
-            <div class="d-flex">
-                <div class="toast-body">
-                    <i class="fas fa-mobile-alt text-success me-2"></i>
-                    <strong>Contrôle mobile</strong><br>
-                    <span class="badge ${badgeClass} me-1">${mention}</span>
-                    <strong>${noms || matricule}</strong>
-                    <small class="text-muted d-block">${matricule}</small>
-                </div>
-                <button type="button" class="btn-close me-2 m-auto" onclick="document.getElementById('${id}').remove()"></button>
-            </div>
-        </div>`;
-            $('#mobile-toast-container').append(html);
-            setTimeout(() => $('#' + id).fadeOut(500, function() {
-                $(this).remove();
-            }), 8000);
+            let type = 'success';
+            let icon = 'fa-check-circle';
+            if (mention === 'Favorable') {
+                type = 'warning';
+                icon = 'fa-thumbs-up';
+            } else if (mention === 'Défavorable') {
+                type = 'error';
+                icon = 'fa-thumbs-down';
+            } else {
+                icon = 'fa-user-check';
+            }
+
+            const toast = document.createElement('div');
+            toast.className = `toast-message ${type}`;
+            toast.innerHTML = `
+                <i class="fas fa-mobile-alt"></i>
+                <span><i class="fas ${icon}"></i> <strong>${mention}</strong> — ${noms || matricule} <small>(${matricule})</small></span>
+            `;
+            container.appendChild(toast);
+            setTimeout(() => {
+                toast.remove();
+            }, 3000);
         }
 
         setInterval(function() {

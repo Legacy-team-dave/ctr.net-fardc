@@ -413,13 +413,13 @@ function check_profil($profils_autorises)
     $profils_autorises = array_map('strtoupper', $profils_autorises);
 
     if (!isset($_SESSION['user_profil'])) {
-        redirect_with_flash('index.php', 'danger', 'Session invalide. Veuillez vous reconnecter.');
+        redirect_with_flash('/ctr.net-fardc/login.php', 'danger', 'Session invalide. Veuillez vous reconnecter.');
     }
 
     $user_profil = trim(strtoupper($_SESSION['user_profil']));
 
     if (!in_array($user_profil, $profils_autorises)) {
-        redirect_with_flash('index.php', 'danger', 'Accès refusé. Veuillez contacter l\'administrateur si vous pensez avoir les droits nécessaires.');
+        redirect_with_flash('/ctr.net-fardc/index.php', 'danger', 'Accès non autorisé : vous n\'avez pas les droits nécessaires pour cette page.');
     }
 }
 
@@ -431,8 +431,7 @@ function check_profil($profils_autorises)
 function require_login()
 {
     if (!isset($_SESSION['user_id'])) {
-        header('Location: ../login.php');
-        exit;
+        redirect_with_flash('/ctr.net-fardc/login.php', 'danger', 'Accès non autorisé. Veuillez vous connecter pour continuer.');
     }
 }
 
@@ -1049,139 +1048,512 @@ function get_non_vus_csv_content()
     return $csv_content;
 }
 /**
- * Génère une archive ZIP contenant les tables controles, litiges et les non‑vus
- * 
- * @param bool $include_non_vus Inclure le CSV des non‑vus (par défaut true)
- * @return bool True en cas de succès, False sinon
+ * Retourne le dossier de sauvegarde en s'assurant qu'il existe.
+ *
+ * @return string
  */
-function generate_backup($include_non_vus = true)
+function get_backup_dir_path()
+{
+    $backup_dir = dirname(__DIR__, 1) . '/backups/';
+    if (!is_dir($backup_dir)) {
+        mkdir($backup_dir, 0755, true);
+    }
+    return $backup_dir;
+}
+
+function get_backup_state_file_path()
+{
+    return get_backup_dir_path() . 'backup_state.json';
+}
+
+function get_backup_interval_seconds()
+{
+    return 8 * 3600;
+}
+
+function read_backup_state()
+{
+    $state_file = get_backup_state_file_path();
+    $default_state = [
+        'last_backup_at' => 0,
+        'last_run_at' => 0,
+        'last_control_id' => 0,
+        'last_litige_id' => 0,
+        'non_vus_snapshot' => []
+    ];
+
+    if (!file_exists($state_file)) {
+        return $default_state;
+    }
+
+    $raw = file_get_contents($state_file);
+    $decoded = json_decode($raw, true);
+    if (!is_array($decoded)) {
+        return $default_state;
+    }
+
+    return array_merge($default_state, $decoded);
+}
+
+function write_backup_state($state)
+{
+    $state_file = get_backup_state_file_path();
+    file_put_contents(
+        $state_file,
+        json_encode($state, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES)
+    );
+}
+
+function fetch_incremental_rows_for_table($table, $id_field, $field_order, $last_id)
 {
     global $pdo;
-    $backup_dir = dirname(__DIR__, 1) . '/backups/';
-    if (!is_dir($backup_dir)) mkdir($backup_dir, 0755, true);
+    $stmt = $pdo->prepare("SELECT * FROM {$table} WHERE {$id_field} > ? ORDER BY {$id_field} ASC");
+    $stmt->execute([(int)$last_id]);
+    $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-    $timestamp = date('Y-m-d_H-i-s');
-    $zip_file = $backup_dir . 'backup_' . $timestamp . '.zip';
+    $normalized = [];
+    foreach ($rows as $row) {
+        $line = [];
+        foreach ($field_order as $field) {
+            $line[] = $row[$field] ?? '';
+        }
+        $normalized[] = $line;
+    }
 
+    return $normalized;
+}
+
+function get_non_vus_rows_for_backup()
+{
+    global $pdo;
+
+    $gradeOrder = $GLOBALS['gradeOrder'] ?? [];
+    $categorieOrder = $GLOBALS['categorieOrder'] ?? [];
+    $traductions_categories = $GLOBALS['traductions_categories'] ?? [];
+
+    $sql = "SELECT 
+                m.matricule,
+                m.noms,
+                m.categorie,
+                m.grade,
+                m.unite,
+                m.beneficiaire,
+                m.garnison,
+                m.province
+            FROM militaires m
+            LEFT JOIN controles c ON m.matricule = c.matricule
+            WHERE c.id IS NULL";
+
+    $stmt = $pdo->query($sql);
+    $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+    usort($rows, function ($a, $b) use ($gradeOrder, $categorieOrder) {
+        $gradeA = array_search($a['grade'], $gradeOrder);
+        $gradeB = array_search($b['grade'], $gradeOrder);
+        if ($gradeA === false) $gradeA = 999;
+        if ($gradeB === false) $gradeB = 999;
+        if ($gradeA !== $gradeB) return $gradeA - $gradeB;
+
+        $catA = array_search($a['categorie'], $categorieOrder);
+        $catB = array_search($b['categorie'], $categorieOrder);
+        if ($catA === false) $catA = 999;
+        if ($catB === false) $catB = 999;
+        if ($catA !== $catB) return $catA - $catB;
+
+        return strcmp($a['noms'] ?? '', $b['noms'] ?? '');
+    });
+
+    $normalized = [];
+    $serie = 1;
+    foreach ($rows as $row) {
+        $zdef = getZdefValue($row['province']);
+        $normalized[] = [
+            $serie,
+            $row['matricule'] ?? '',
+            $row['noms'] ?? '',
+            $row['grade'] ?? '',
+            $row['unite'] ?? '',
+            $row['beneficiaire'] ?? '',
+            $row['garnison'] ?? '',
+            $row['province'] ?? '',
+            $traductions_categories[$row['categorie']] ?? ($row['categorie'] ?? ''),
+            $zdef['value'] ?? ''
+        ];
+        $serie++;
+    }
+
+    return $normalized;
+}
+
+function get_non_vus_matricule_snapshot($rows)
+{
+    $snapshot = [];
+    foreach ($rows as $row) {
+        $matricule = (string)($row[1] ?? '');
+        if ($matricule !== '') {
+            $snapshot[] = $matricule;
+        }
+    }
+    sort($snapshot);
+    return $snapshot;
+}
+
+function filter_new_non_vus_rows($current_rows, $previous_snapshot)
+{
+    $previous_map = [];
+    foreach ((array)$previous_snapshot as $matricule) {
+        $previous_map[(string)$matricule] = true;
+    }
+
+    $new_rows = [];
+    foreach ($current_rows as $row) {
+        $matricule = (string)($row[1] ?? '');
+        if ($matricule !== '' && !isset($previous_map[$matricule])) {
+            $new_rows[] = $row;
+        }
+    }
+
+    $reindexed = [];
+    $index = 1;
+    foreach ($new_rows as $row) {
+        $row[0] = $index;
+        $reindexed[] = $row;
+        $index++;
+    }
+
+    return $reindexed;
+}
+
+function build_csv_content($headers, $rows, $delimiter = ';')
+{
+    $stream = fopen('php://temp', 'r+');
+    fwrite($stream, "\xEF\xBB\xBF");
+
+    fputcsv($stream, $headers, $delimiter);
+    foreach ($rows as $row) {
+        fputcsv($stream, $row, $delimiter);
+    }
+
+    rewind($stream);
+    $csv = stream_get_contents($stream);
+    fclose($stream);
+    return $csv;
+}
+
+function escape_xml_value($value)
+{
+    return htmlspecialchars((string)$value, ENT_XML1 | ENT_COMPAT, 'UTF-8');
+}
+
+function xlsx_column_letter($column_number)
+{
+    $letter = '';
+    while ($column_number > 0) {
+        $mod = ($column_number - 1) % 26;
+        $letter = chr(65 + $mod) . $letter;
+        $column_number = (int)(($column_number - $mod) / 26);
+    }
+    return $letter;
+}
+
+function build_xlsx_content($headers, $rows, $sheet_name = 'Donnees')
+{
+    $sheet_rows = array_merge([$headers], $rows);
+
+    $sheet_xml_rows = '';
+    $row_index = 1;
+    foreach ($sheet_rows as $row) {
+        $sheet_xml_rows .= '<row r="' . $row_index . '">';
+        $col_index = 1;
+        foreach ($row as $value) {
+            $cell_ref = xlsx_column_letter($col_index) . $row_index;
+            $value_str = (string)$value;
+            if (is_numeric($value_str) && !preg_match('/^0\d+$/', $value_str)) {
+                $sheet_xml_rows .= '<c r="' . $cell_ref . '" t="n"><v>' . escape_xml_value($value_str) . '</v></c>';
+            } else {
+                $sheet_xml_rows .= '<c r="' . $cell_ref . '" t="inlineStr"><is><t>' . escape_xml_value($value_str) . '</t></is></c>';
+            }
+            $col_index++;
+        }
+        $sheet_xml_rows .= '</row>';
+        $row_index++;
+    }
+
+    $sheet_name_safe = preg_replace('/[^A-Za-z0-9_\- ]/u', '_', $sheet_name);
+    if ($sheet_name_safe === '') {
+        $sheet_name_safe = 'Donnees';
+    }
+
+    $sheet_xml = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
+        . '<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">'
+        . '<sheetData>' . $sheet_xml_rows . '</sheetData>'
+        . '</worksheet>';
+
+    $workbook_xml = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
+        . '<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" '
+        . 'xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">'
+        . '<sheets><sheet name="' . escape_xml_value($sheet_name_safe) . '" sheetId="1" r:id="rId1"/></sheets>'
+        . '</workbook>';
+
+    $content_types_xml = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
+        . '<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">'
+        . '<Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>'
+        . '<Default Extension="xml" ContentType="application/xml"/>'
+        . '<Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/>'
+        . '<Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>'
+        . '</Types>';
+
+    $rels_xml = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
+        . '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'
+        . '<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/>'
+        . '</Relationships>';
+
+    $workbook_rels_xml = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
+        . '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'
+        . '<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/>'
+        . '</Relationships>';
+
+    $tmp = tempnam(sys_get_temp_dir(), 'xlsx_');
     $zip = new ZipArchive();
-    if ($zip->open($zip_file, ZipArchive::CREATE) !== true) {
-        error_log("Impossible de créer l'archive de sauvegarde.");
+    if ($zip->open($tmp, ZipArchive::OVERWRITE) !== true) {
+        @unlink($tmp);
         return false;
     }
 
-    $tables = ['controles', 'litiges'];
-    $field_order = [
-        'controles' => [
-            'id',
-            'matricule',
-            'type_controle',
-            'nom_beneficiaire',
-            'new_beneficiaire',
-            'lien_parente',
-            'date_controle',
-            'mention',
-            'observations',
-            'cree_le'
-        ],
-        'litiges' => [
-            'id',
-            'matricule',
-            'noms',
-            'grade',
-            'type_controle',
-            'nom_beneficiaire',
-            'lien_parente',
-            'garnison',
-            'province',
-            'date_controle',
-            'observations',
-            'cree_le'
-        ],
+    $zip->addFromString('[Content_Types].xml', $content_types_xml);
+    $zip->addFromString('_rels/.rels', $rels_xml);
+    $zip->addFromString('xl/workbook.xml', $workbook_xml);
+    $zip->addFromString('xl/_rels/workbook.xml.rels', $workbook_rels_xml);
+    $zip->addFromString('xl/worksheets/sheet1.xml', $sheet_xml);
+    $zip->close();
+
+    $xlsx_content = file_get_contents($tmp);
+    @unlink($tmp);
+    return $xlsx_content;
+}
+
+function create_incremental_backup_archive($datasets)
+{
+    $backup_dir = get_backup_dir_path();
+    $timestamp = date('Y-m-d_H-i-s');
+    $zip_file = $backup_dir . 'backup_incremental_' . $timestamp . '.zip';
+
+    $zip = new ZipArchive();
+    if ($zip->open($zip_file, ZipArchive::CREATE | ZipArchive::OVERWRITE) !== true) {
+        error_log("Impossible de créer l'archive de sauvegarde incrémentale.");
+        return false;
+    }
+
+    $manifest = [
+        'created_at' => date('c'),
+        'datasets' => []
     ];
 
-    foreach ($tables as $table) {
-        try {
-            $check = $pdo->query("SHOW TABLES LIKE '$table'");
-            if ($check->rowCount() == 0) continue;
-
-            $stmt = $pdo->query("SELECT * FROM $table");
-            $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
-            if (empty($rows)) continue;
-
-            $stream = fopen('php://temp', 'r+');
-            fwrite($stream, "\xEF\xBB\xBF");
-
-            $ordered_columns = $field_order[$table] ?? array_keys($rows[0]);
-            fputcsv($stream, $ordered_columns);
-            foreach ($rows as $row) {
-                $ordered_row = [];
-                foreach ($ordered_columns as $col) {
-                    $ordered_row[] = $row[$col] ?? '';
-                }
-                fputcsv($stream, $ordered_row);
-            }
-
-            rewind($stream);
-            $csv_content = stream_get_contents($stream);
-            fclose($stream);
-            $zip->addFromString($table . '_' . $timestamp . '.csv', $csv_content);
-        } catch (PDOException $e) {
-            error_log("Erreur export $table : " . $e->getMessage());
+    foreach ($datasets as $dataset_key => $dataset) {
+        $headers = $dataset['headers'];
+        $rows = $dataset['rows'];
+        if (empty($rows)) {
+            continue;
         }
+
+        $csv = build_csv_content($headers, $rows, ';');
+        $xlsx = build_xlsx_content($headers, $rows, $dataset['sheet_name'] ?? ucfirst($dataset_key));
+
+        $zip->addFromString($dataset_key . '_' . $timestamp . '.csv', $csv);
+        if ($xlsx !== false) {
+            $zip->addFromString($dataset_key . '_' . $timestamp . '.xlsx', $xlsx);
+        }
+
+        $manifest['datasets'][$dataset_key] = [
+            'rows' => count($rows),
+            'formats' => $xlsx !== false ? ['csv', 'xlsx'] : ['csv']
+        ];
     }
 
-    if ($include_non_vus) {
-        try {
-            $non_vus_csv = get_non_vus_csv_content();
-            if (!empty($non_vus_csv)) {
-                $zip->addFromString('non_vus_' . $timestamp . '.csv', $non_vus_csv);
-            }
-        } catch (Exception $e) {
-            error_log("Erreur export non-vus : " . $e->getMessage());
-        }
-    }
-
+    $zip->addFromString('manifest.json', json_encode($manifest, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
     $zip->close();
-    return true;
+
+    return $zip_file;
 }
 
 /**
- * Récupère l'horodatage de la dernière sauvegarde
- * @return int Timestamp Unix
+ * Purge les archives ZIP de sauvegarde:
+ * - supprime les archives identiques (même hash, conserve la plus récente)
+ * - supprime les archives de plus de $max_days jours
+ * - conserve uniquement les $max_unique_keep archives non identiques les plus récentes
+ *
+ * @param int $max_unique_keep
+ * @param int $max_days Nombre de jours avant suppression automatique (défaut: 60)
+ * @return array
  */
-function get_last_backup_time()
+function purge_backup_archives($max_unique_keep = 30, $max_days = 60)
 {
-    $file = dirname(__DIR__, 1) . '/backups/last_backup.txt';
-    if (file_exists($file)) return (int) file_get_contents($file);
-    return 0;
-}
+    $backup_dir = get_backup_dir_path();
+    $files = glob($backup_dir . '*.zip') ?: [];
 
-/**
- * Met à jour l'horodatage de la dernière sauvegarde
- */
-function update_last_backup_time()
-{
-    $file = dirname(__DIR__, 1) . '/backups/last_backup.txt';
-    file_put_contents($file, time());
-}
+    usort($files, function ($a, $b) {
+        return filemtime($b) <=> filemtime($a);
+    });
 
-/**
- * Vérifie si une sauvegarde doit être effectuée (toutes les 2 minutes)
- * et l'exécute si nécessaire.
- */
-function maybe_create_backup()
-{
-    $last_backup = get_last_backup_time();
-    $now = time();
-    if (($now - $last_backup) >= 120) { // 2 minutes
-        generate_backup(true);
-        update_last_backup_time();
-        error_log("Sauvegarde automatique exécutée (intervalle 2 minutes).");
+    $seen_hashes = [];
+    $unique_kept = [];
+    $to_delete = [];
+    $deleted_duplicates = 0;
+    $deleted_overflow = 0;
+    $deleted_expired = 0;
+    $cutoff_time = time() - ($max_days * 86400);
+
+    foreach ($files as $file) {
+        if (!is_file($file)) {
+            continue;
+        }
+
+        // Supprimer les fichiers de plus de $max_days jours
+        if (filemtime($file) < $cutoff_time) {
+            $to_delete[] = $file;
+            $deleted_expired++;
+            continue;
+        }
+
+        $hash = @hash_file('sha256', $file);
+        if ($hash === false) {
+            continue;
+        }
+
+        if (isset($seen_hashes[$hash])) {
+            $to_delete[] = $file;
+            $deleted_duplicates++;
+            continue;
+        }
+
+        $seen_hashes[$hash] = $file;
+        $unique_kept[] = $file;
+
+        if (count($unique_kept) > (int)$max_unique_keep) {
+            $to_delete[] = $file;
+            $deleted_overflow++;
+        }
     }
+
+    $deleted_files = [];
+    foreach ($to_delete as $file) {
+        if (@unlink($file)) {
+            $deleted_files[] = $file;
+        }
+    }
+
+    return [
+        'max_unique_keep' => (int)$max_unique_keep,
+        'max_days' => (int)$max_days,
+        'scanned' => count($files),
+        'unique_kept' => min(count($unique_kept), (int)$max_unique_keep),
+        'deleted_total' => count($deleted_files),
+        'deleted_duplicates' => $deleted_duplicates,
+        'deleted_overflow' => $deleted_overflow,
+        'deleted_expired' => $deleted_expired,
+        'deleted_files' => $deleted_files
+    ];
 }
 
-// Appel automatique pour déclencher la sauvegarde si nécessaire
-maybe_create_backup();
+/**
+ * Exécute la sauvegarde incrémentale (8h) :
+ * - seulement si intervalle atteint (sauf force=true)
+ * - seulement si nouveaux éléments détectés
+ * - archive uniquement les nouveaux éléments
+ */
+function maybe_create_backup($force = false)
+{
+    global $pdo;
+
+    $state = read_backup_state();
+    $now = time();
+    $interval = get_backup_interval_seconds();
+
+    if (!$force && ($now - (int)$state['last_backup_at']) < $interval) {
+        return [
+            'created' => false,
+            'reason' => 'interval_not_elapsed',
+            'next_run_in_seconds' => $interval - ($now - (int)$state['last_backup_at'])
+        ];
+    }
+
+    $control_fields = ['id', 'matricule', 'type_controle', 'nom_beneficiaire', 'new_beneficiaire', 'lien_parente', 'date_controle', 'mention', 'observations', 'cree_le'];
+    $litige_fields = ['id', 'matricule', 'noms', 'grade', 'type_controle', 'nom_beneficiaire', 'lien_parente', 'garnison', 'province', 'date_controle', 'observations', 'cree_le'];
+    $non_vus_fields = ['SERIE', 'MATRICULE', 'NOMS', 'GRADE', 'UNITE', 'BENEFICIAIRE', 'GARNISON', 'PROVINCE', 'CATEGORIE', 'ZDEF'];
+
+    $new_controles = fetch_incremental_rows_for_table('controles', 'id', $control_fields, (int)$state['last_control_id']);
+    $new_litiges = fetch_incremental_rows_for_table('litiges', 'id', $litige_fields, (int)$state['last_litige_id']);
+
+    $current_non_vus = get_non_vus_rows_for_backup();
+    $new_non_vus = filter_new_non_vus_rows($current_non_vus, $state['non_vus_snapshot']);
+    $current_non_vus_snapshot = get_non_vus_matricule_snapshot($current_non_vus);
+
+    if (empty($new_controles) && empty($new_litiges) && empty($new_non_vus)) {
+        $state['last_run_at'] = $now;
+        $state['non_vus_snapshot'] = $current_non_vus_snapshot;
+        write_backup_state($state);
+        return [
+            'created' => false,
+            'reason' => 'no_new_data'
+        ];
+    }
+
+    $datasets = [
+        'controles_incremental' => [
+            'headers' => $control_fields,
+            'rows' => $new_controles,
+            'sheet_name' => 'Controles'
+        ],
+        'litiges_incremental' => [
+            'headers' => $litige_fields,
+            'rows' => $new_litiges,
+            'sheet_name' => 'Litiges'
+        ],
+        'non_vus_incremental' => [
+            'headers' => $non_vus_fields,
+            'rows' => $new_non_vus,
+            'sheet_name' => 'NonVus'
+        ]
+    ];
+
+    $zip_file = create_incremental_backup_archive($datasets);
+    if ($zip_file === false) {
+        return [
+            'created' => false,
+            'reason' => 'zip_creation_failed'
+        ];
+    }
+
+    $max_control_id = (int)$pdo->query("SELECT COALESCE(MAX(id), 0) FROM controles")->fetchColumn();
+    $max_litige_id = (int)$pdo->query("SELECT COALESCE(MAX(id), 0) FROM litiges")->fetchColumn();
+
+    $state['last_backup_at'] = $now;
+    $state['last_run_at'] = $now;
+    $state['last_control_id'] = $max_control_id;
+    $state['last_litige_id'] = $max_litige_id;
+    $state['non_vus_snapshot'] = $current_non_vus_snapshot;
+    write_backup_state($state);
+
+    return [
+        'created' => true,
+        'reason' => 'backup_created',
+        'file' => $zip_file,
+        'counts' => [
+            'controles' => count($new_controles),
+            'litiges' => count($new_litiges),
+            'non_vus' => count($new_non_vus)
+        ]
+    ];
+}
+
+/**
+ * Wrapper de compatibilité avec l'ancien appel.
+ */
+function generate_backup($include_non_vus = true)
+{
+    $result = maybe_create_backup(true);
+    return (bool)($result['created'] ?? false);
+}
 
 // Programme de nettoyage automatique (1% de chance à chaque chargement)
 // Décommentez si vous voulez activer le nettoyage aléatoire

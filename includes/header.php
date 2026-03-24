@@ -155,11 +155,7 @@ if (!is_array($protectedRouteRoles)) {
 // DÉTERMINATION DES CLASSES DU BODY
 // ------------------------------------------------------------
 $bodyClass = 'hold-transition';
-if ($user_profil === 'CONTROLEUR') {
-    $bodyClass .= ' layout-top-nav';
-} else {
-    $bodyClass .= ' sidebar-mini layout-fixed';
-}
+$bodyClass .= ' sidebar-mini layout-fixed';
 if (isset($_SESSION['user_id'])) {
     $bodyClass .= ' user-logged-in';
 }
@@ -889,7 +885,6 @@ if (isset($_SESSION['user_id'])) {
         <!-- Navbar (HEADER) -->
         <nav class="main-header navbar navbar-expand navbar-white navbar-light">
             <ul class="navbar-nav">
-                <?php if ($user_profil !== 'CONTROLEUR'): ?>
                     <li class="nav-item">
                         <a class="nav-link" data-widget="pushmenu" href="#" role="button"><i class="fas fa-bars"></i></a>
                     </li>
@@ -911,7 +906,6 @@ if (isset($_SESSION['user_id'])) {
                         <a href="/ctr.net-fardc/modules/controles/ajouter.php" class="nav-link"><i class="fas fa-plus"></i>
                             Nouveau</a>
                     </li>
-                <?php endif; ?>
             </ul>
 
             <ul class="navbar-nav ml-auto">
@@ -931,9 +925,7 @@ if (isset($_SESSION['user_id'])) {
             </ul>
         </nav>
 
-        <!-- Sidebar -->
-        <?php if ($user_profil !== 'CONTROLEUR'): ?>
-            <aside class="main-sidebar sidebar-dark-primary elevation-4">
+        <!-- Sidebar -->\n            <aside class=\"main-sidebar sidebar-dark-primary elevation-4\">", "oldString": "        <!-- Sidebar -->\n        <?php if ($user_profil !== 'CONTROLEUR'): ?>\n            <aside class=\"main-sidebar sidebar-dark-primary elevation-4\">"
                 <a href="/ctr.net-fardc/index.php" class="brand-link">
                     <img src="/ctr.net-fardc/assets/img/logo-fardc.png" alt="FARDC Logo"
                         class="brand-image img-circle elevation-3" style="opacity: .8">
@@ -987,7 +979,6 @@ if (isset($_SESSION['user_id'])) {
                     </nav>
                 </div>
             </aside>
-        <?php endif; ?>
 
         <!-- Content Wrapper -->
         <div class="content-wrapper">

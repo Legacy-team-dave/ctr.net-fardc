@@ -55,7 +55,7 @@ Profils effectivement utilisés :
 
 - `ADMIN_IG` -> `index.php`
 - `OPERATEUR` -> `preferences.php` si pas de préférences → `equipes.php` (enregistrement équipe) → `index.php`, sinon `modules/controles/ajouter.php`
-- `CONTROLEUR` -> `modules/controles/ajouter.php`
+- `CONTROLEUR` -> **bloqué côté web** (profil réservé à l'application mobile CTR.NET Mobile)
 
 ## 3.2 Se souvenir de moi
 
@@ -128,7 +128,7 @@ Après la validation des préférences, l'opérateur est redirigé vers `equipes
 
 ## 6.1 Saisie d'un contrôle (`modules/controles/ajouter.php`)
 
-Accès prévu : `ADMIN_IG`, `OPERATEUR`, `CONTROLEUR`.
+Accès prévu : `ADMIN_IG`, `OPERATEUR`.
 
 ### Recherche militaire
 

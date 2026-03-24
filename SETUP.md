@@ -75,13 +75,13 @@ Consulter [ENCRYPTION.md](ENCRYPTION.md) pour :
 
 - `ADMIN_IG`
 - `OPERATEUR`
-- `CONTROLEUR`
+- `CONTROLEUR` (mobile uniquement — non accessible côté web)
 
 ## Vérification minimale après setup
 
 - Connexion utilisateur possible
 - Accès à `index.php` pour `ADMIN_IG` / `OPERATEUR`
-- Redirection `CONTROLEUR` vers `modules/controles/ajouter.php`
+- Connexion `CONTROLEUR` côté web bloquée (profil réservé à l'app mobile)
 - Enregistrement d'un contrôle fonctionnel
 
 ## Mentions à valider en test

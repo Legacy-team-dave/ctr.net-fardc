@@ -10,29 +10,32 @@ if (!isset($_SESSION['user_id']) && isset($_COOKIE['remember_token'])) {
         $user = $stmt->fetch();
 
         if ($user) {
-            session_regenerate_id(true);
-            $_SESSION['user_id'] = $user['id_utilisateur'];
-            $_SESSION['user_login'] = $user['login'];
-            $_SESSION['user_nom'] = $user['nom_complet'];
-            $_SESSION['user_email'] = $user['email'];
-            $_SESSION['user_profil'] = $user['profil'];
-            $_SESSION['user_avatar'] = $user['avatar'];
-
-            if (!empty($user['preferences'])) {
-                $_SESSION['filtres'] = json_decode($user['preferences'], true);
-            }
-
-            if ($user['profil'] === 'OPERATEUR') {
-                $redirectUrl = !empty($user['preferences']) ? 'modules/controles/ajouter.php' : 'preferences.php';
-            } elseif ($user['profil'] === 'ADMIN_IG') {
-                $redirectUrl = 'index.php';
-            } elseif ($user['profil'] === 'CONTROLEUR') {
-                $redirectUrl = 'modules/controles/ajouter.php';
+            // Bloquer le profil CONTROLEUR côté web (réservé au mobile)
+            if ($user['profil'] === 'CONTROLEUR') {
+                setcookie('remember_token', '', time() - 3600, '/', '', false, true);
             } else {
-                $redirectUrl = 'index.php';
+                session_regenerate_id(true);
+                $_SESSION['user_id'] = $user['id_utilisateur'];
+                $_SESSION['user_login'] = $user['login'];
+                $_SESSION['user_nom'] = $user['nom_complet'];
+                $_SESSION['user_email'] = $user['email'];
+                $_SESSION['user_profil'] = $user['profil'];
+                $_SESSION['user_avatar'] = $user['avatar'];
+
+                if (!empty($user['preferences'])) {
+                    $_SESSION['filtres'] = json_decode($user['preferences'], true);
+                }
+
+                if ($user['profil'] === 'OPERATEUR') {
+                    $redirectUrl = !empty($user['preferences']) ? 'modules/controles/ajouter.php' : 'preferences.php';
+                } elseif ($user['profil'] === 'ADMIN_IG') {
+                    $redirectUrl = 'index.php';
+                } else {
+                    $redirectUrl = 'index.php';
+                }
+                header('Location: ' . $redirectUrl);
+                exit;
             }
-            header('Location: ' . $redirectUrl);
-            exit;
         } else {
             setcookie('remember_token', '', time() - 3600, '/', '', false, true);
         }
@@ -65,7 +68,9 @@ if (isset($_SESSION['user_id']) && !isset($_GET['success'])) {
         header('Location: index.php');
         exit;
     } elseif ($profil === 'CONTROLEUR') {
-        header('Location: modules/controles/ajouter.php');
+        // CONTROLEUR réservé au mobile — forcer déconnexion web
+        session_destroy();
+        header('Location: login.php');
         exit;
     } else {
         header('Location: index.php');
@@ -93,55 +98,59 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $user = $stmt->fetch();
 
         if ($user && password_verify($password, $user['mot_de_passe'])) {
-            session_regenerate_id(true);
-
-            $_SESSION['user_id'] = $user['id_utilisateur'];
-            $_SESSION['user_login'] = $user['login'];
-            $_SESSION['user_nom'] = $user['nom_complet'];
-            $_SESSION['user_email'] = $user['email'];
-            $_SESSION['user_profil'] = $user['profil'];
-            $_SESSION['user_avatar'] = $user['avatar'];
-
-            $updateStmt = $pdo->prepare("UPDATE utilisateurs SET dernier_acces = NOW() WHERE id_utilisateur = ?");
-            $updateStmt->execute([$user['id_utilisateur']]);
-
-            audit_action('CONNEXION', 'utilisateurs', $user['id_utilisateur'], 'Connexion réussie');
-
-            if (!empty($user['preferences'])) {
-                $_SESSION['filtres'] = json_decode($user['preferences'], true);
-            }
-
-            // Gestion du "Se souvenir de moi"
-            if ($remember) {
-                $token = bin2hex(random_bytes(32));
-                $expires = date('Y-m-d H:i:s', strtotime('+30 days'));
-                $stmtToken = $pdo->prepare("UPDATE utilisateurs SET remember_token = ?, remember_token_expires = ? WHERE id_utilisateur = ?");
-                $stmtToken->execute([$token, $expires, $user['id_utilisateur']]);
-                setcookie('remember_token', $token, time() + (30 * 24 * 3600), '/', '', false, true);
+            // Bloquer le profil CONTROLEUR côté web (réservé au mobile)
+            if ($user['profil'] === 'CONTROLEUR') {
+                audit_action('ECHEC_CONNEXION', 'utilisateurs', $user['id_utilisateur'], 'Tentative connexion web profil CONTROLEUR');
+                $error = "Le profil CONTROLEUR est réservé à l'application mobile.";
             } else {
-                $stmtToken = $pdo->prepare("UPDATE utilisateurs SET remember_token = NULL, remember_token_expires = NULL WHERE id_utilisateur = ?");
-                $stmtToken->execute([$user['id_utilisateur']]);
-                setcookie('remember_token', '', time() - 3600, '/', '', false, true);
-            }
+                session_regenerate_id(true);
 
-            // Déterminer l'URL de redirection finale
-            if ($user['profil'] === 'OPERATEUR') {
-                $redirect_url = !empty($user['preferences']) ? 'modules/controles/ajouter.php' : 'preferences.php';
-            } elseif ($user['profil'] === 'ADMIN_IG') {
-                $redirect_url = 'index.php';
-            } elseif ($user['profil'] === 'CONTROLEUR') {
-                $redirect_url = 'modules/controles/ajouter.php';
-            } else {
-                $redirect_url = 'index.php';
-            }
+                $_SESSION['user_id'] = $user['id_utilisateur'];
+                $_SESSION['user_login'] = $user['login'];
+                $_SESSION['user_nom'] = $user['nom_complet'];
+                $_SESSION['user_email'] = $user['email'];
+                $_SESSION['user_profil'] = $user['profil'];
+                $_SESSION['user_avatar'] = $user['avatar'];
 
-            // Indiquer que la connexion est réussie et conserver les valeurs saisies pour affichage
-            $login_success = true;
-            // On garde les valeurs postées pour pré-remplir le formulaire
-            $_SESSION['post_data'] = [
-                'login' => $login,
-                'remember' => $remember
-            ];
+                $updateStmt = $pdo->prepare("UPDATE utilisateurs SET dernier_acces = NOW() WHERE id_utilisateur = ?");
+                $updateStmt->execute([$user['id_utilisateur']]);
+
+                audit_action('CONNEXION', 'utilisateurs', $user['id_utilisateur'], 'Connexion réussie');
+
+                if (!empty($user['preferences'])) {
+                    $_SESSION['filtres'] = json_decode($user['preferences'], true);
+                }
+
+                // Gestion du "Se souvenir de moi"
+                if ($remember) {
+                    $token = bin2hex(random_bytes(32));
+                    $expires = date('Y-m-d H:i:s', strtotime('+30 days'));
+                    $stmtToken = $pdo->prepare("UPDATE utilisateurs SET remember_token = ?, remember_token_expires = ? WHERE id_utilisateur = ?");
+                    $stmtToken->execute([$token, $expires, $user['id_utilisateur']]);
+                    setcookie('remember_token', $token, time() + (30 * 24 * 3600), '/', '', false, true);
+                } else {
+                    $stmtToken = $pdo->prepare("UPDATE utilisateurs SET remember_token = NULL, remember_token_expires = NULL WHERE id_utilisateur = ?");
+                    $stmtToken->execute([$user['id_utilisateur']]);
+                    setcookie('remember_token', '', time() - 3600, '/', '', false, true);
+                }
+
+                // Déterminer l'URL de redirection finale
+                if ($user['profil'] === 'OPERATEUR') {
+                    $redirect_url = !empty($user['preferences']) ? 'modules/controles/ajouter.php' : 'preferences.php';
+                } elseif ($user['profil'] === 'ADMIN_IG') {
+                    $redirect_url = 'index.php';
+                } else {
+                    $redirect_url = 'index.php';
+                }
+
+                // Indiquer que la connexion est réussie et conserver les valeurs saisies pour affichage
+                $login_success = true;
+                // On garde les valeurs postées pour pré-remplir le formulaire
+                $_SESSION['post_data'] = [
+                    'login' => $login,
+                    'remember' => $remember
+                ];
+            } // fin else CONTROLEUR
         } else {
             $error = "Identifiant ou mot de passe incorrect.";
             audit_action('ECHEC_CONNEXION', null, null, "Tentative avec identifiant: $login");

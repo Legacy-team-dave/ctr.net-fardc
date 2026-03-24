@@ -15,9 +15,9 @@
 - Vérifier le profil dans `utilisateurs`
 - Vérifier la règle `check_profil(...)` dans la page
 
-## 4) Le CONTROLEUR ne voit pas le dashboard
+## 4) Le CONTROLEUR ne peut pas se connecter au web
 
-Comportement normal : le profil `CONTROLEUR` est limité à la saisie de contrôles.
+Comportement normal : le profil `CONTROLEUR` est désormais réservé à l'application mobile CTR.NET Mobile. La connexion web est bloquée.
 
 ## 5) Mentions inattendues
 

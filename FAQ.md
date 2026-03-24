@@ -5,13 +5,13 @@ FAQ opérationnelle basée sur le comportement réel du code.
 ## 1) Profils et accès
 
 ### Quels profils existent dans l'application ?
-Trois profils sont utilisés : `ADMIN_IG`, `OPERATEUR`, `CONTROLEUR`.
+Trois profils sont utilisés : `ADMIN_IG`, `OPERATEUR`, `CONTROLEUR` (mobile uniquement).
 
 ### Quel profil voit le tableau de bord (`index.php`) ?
 `ADMIN_IG` et `OPERATEUR` uniquement.
 
-### Pourquoi un `CONTROLEUR` ne va pas sur `index.php` après connexion ?
-Parce que la redirection de connexion envoie `CONTROLEUR` vers `modules/controles/ajouter.php`.
+### Pourquoi un `CONTROLEUR` ne peut pas se connecter sur le web ?
+Le profil `CONTROLEUR` est désormais réservé exclusivement à l'application mobile CTR.NET Mobile. La connexion web est bloquée.
 
 ### Où va un `OPERATEUR` juste après connexion ?
 - vers `preferences.php` si aucune préférence n'est enregistrée,
@@ -140,7 +140,7 @@ Oui, à partir de la province via une fonction de mapping.
 Le module administration est conçu pour `ADMIN_IG`.
 
 ### Peut-on créer un compte `CONTROLEUR` ?
-Oui, le formulaire d'ajout utilisateur propose explicitement ce profil.
+Oui, le formulaire d'ajout utilisateur propose ce profil. Il est utilisé exclusivement via l'application mobile CTR.NET Mobile.
 
 ### Le mot de passe minimal à la création d'un utilisateur est de combien ?
 6 caractères.
@@ -325,7 +325,7 @@ Voir [TROUBLESHOOTING.md](TROUBLESHOOTING.md) section "Problèmes de Chiffrement
 ## 12) Bonnes pratiques d'exploitation
 
 ### Recommandation pour les profils
-Réserver `ADMIN_IG` à l'administration; utiliser `OPERATEUR`/`CONTROLEUR` pour la production quotidienne.
+Réserver `ADMIN_IG` à l'administration; utiliser `OPERATEUR` pour la production web quotidienne et `CONTROLEUR` pour l'app mobile.
 
 ### Recommandation pour les sauvegardes
 Contrôler régulièrement le volume du dossier `backups/` et définir une rotation.

@@ -1,5 +1,21 @@
 # Modifications récentes
 
+## Profil CONTROLEUR réservé au mobile (Mars 2026 - v1.4.0)
+
+### Fichiers modifiés
+
+- **`login.php`** : Connexion web bloquée pour CONTROLEUR (remember_token, session, POST)
+- **`includes/header.php`** : Suppression du layout top-nav et masquage sidebar/navbar CONTROLEUR
+- **`modules/controles/ajouter.php`** : Accès limité à OPERATEUR, suppression du mode contrôleur (CSS/JS)
+- **`config/protected_routes.php`** : CONTROLEUR retiré des 5 routes protégées web
+- **`modules/administration/ajouter_utilisateur.php`** : Badge CONTROLEUR renommé "Mobile"
+
+### Impact
+
+- Le profil CONTROLEUR ne peut plus se connecter côté web
+- Les comptes CONTROLEUR restent créables par l'admin (usage mobile uniquement)
+- L'API REST (`api/auth.php`, `api/controles.php`, `api/profil.php`) reste fonctionnelle pour l'app mobile
+
 ## Gestion des équipes de contrôle (Mars 2026 - v1.3.0)
 
 ### Nouveau fichier

@@ -3,7 +3,7 @@ require_once '../../includes/functions.php';
 require_login();
 
 // MODIFICATION : Vérifier que seuls les profils autorisés accèdent à cette page
-check_profil(['OPERATEUR', 'CONTROLEUR']);
+check_profil(['OPERATEUR']);
 
 // --- AJAX : recherche en temps réel ---
 if (isset($_GET['ajax']) && $_GET['ajax'] === 'search' && isset($_GET['q'])) {
@@ -212,9 +212,6 @@ if ($q !== '') {
 
 $page_titre = 'Effectuer un contrôle';
 include '../../includes/header.php';
-
-// MODIFICATION : Détection du profil pour charger des styles spécifiques
-$is_controleur = isset($_SESSION['user_profil']) && $_SESSION['user_profil'] === 'CONTROLEUR';
 ?>
 
 <!-- Styles principaux -->
@@ -768,185 +765,8 @@ $is_controleur = isset($_SESSION['user_profil']) && $_SESSION['user_profil'] ===
             padding: 12px 20px;
         }
     }
+</style>
 
-    /* ==============================================
-   STYLES SPÉCIFIQUES POUR LE PROFIL CONTROLEUR (MOBILE)
-   ============================================== */
-    <?php if ($is_controleur): ?>
-
-    /* Styles spécifiques au profil CONTROLEUR (agrandissement pour mobile/tablette) */
-    body.controleur-mode {
-        font-size: 18px;
-    }
-
-    body.controleur-mode .card-modern {
-        border-radius: 16px;
-        margin-bottom: 25px;
-    }
-
-    body.controleur-mode .card-modern .card-header {
-        padding: 20px 25px;
-    }
-
-    body.controleur-mode .card-modern .card-header h3 {
-        font-size: 1.5rem;
-    }
-
-    body.controleur-mode .card-modern .card-body {
-        padding: 24px;
-    }
-
-    body.controleur-mode .btn-mention {
-        padding: 12px 24px;
-        font-size: 1.1rem;
-        border-radius: 40px;
-        margin: 5px;
-    }
-
-    body.controleur-mode .btn-present {
-        padding: 14px 28px;
-        font-size: 1.2rem;
-    }
-
-    body.controleur-mode .btn-new-search {
-        padding: 8px 18px;
-        font-size: 0.95rem;
-    }
-
-    body.controleur-mode .form-control-modern,
-    body.controleur-mode textarea.form-control-modern {
-        font-size: 18px !important;
-        padding: 12px;
-    }
-
-    body.controleur-mode .form-check-input {
-        width: 1.4rem;
-        height: 1.4rem;
-        margin-top: 0.2rem;
-    }
-
-    body.controleur-mode .form-check-label {
-        font-size: 1rem;
-        margin-left: 0.5rem;
-    }
-
-    body.controleur-mode .militaire-info {
-        padding: 1.3rem;
-        margin-bottom: 2rem;
-    }
-
-    body.controleur-mode .militaire-info .info-item {
-        font-size: 1rem;
-    }
-
-    body.controleur-mode .lien-groupe {
-        padding: 12px;
-    }
-
-    body.controleur-mode .lien-groupe label {
-        font-size: 1rem;
-        margin-bottom: 8px;
-    }
-
-    body.controleur-mode .lien-groupe .form-check {
-        font-size: 0.95rem;
-    }
-
-    body.controleur-mode .beneficiaire-card {
-        padding: 12px;
-    }
-
-    body.controleur-mode .observations-group textarea {
-        min-height: 100px;
-        font-size: 1rem;
-    }
-
-    body.controleur-mode .actions-container .btn-mention {
-        padding: 12px 20px;
-    }
-
-    /* Media queries pour mobile/tablette */
-    @media (max-width: 768px) {
-        body.controleur-mode .btn-mention {
-            padding: 14px 20px;
-            font-size: 1.2rem;
-            width: 100%;
-        }
-
-        body.controleur-mode .btn-present {
-            padding: 16px 0;
-            font-size: 1.3rem;
-        }
-
-        body.controleur-mode .form-control-modern,
-        body.controleur-mode textarea.form-control-modern {
-            font-size: 18px !important;
-            padding: 14px;
-        }
-
-        body.controleur-mode .form-check-input {
-            width: 1.5rem;
-            height: 1.5rem;
-        }
-
-        body.controleur-mode .form-check-label {
-            font-size: 1.1rem;
-        }
-
-        body.controleur-mode .militaire-info .info-item {
-            font-size: 1.1rem;
-        }
-
-        body.controleur-mode .lien-groupe label {
-            font-size: 1.1rem;
-        }
-
-        body.controleur-mode .lien-groupe .form-check {
-            font-size: 1rem;
-        }
-    }
-
-    @media (max-width: 480px) {
-        body.controleur-mode .btn-mention {
-            padding: 16px 20px;
-            font-size: 1.3rem;
-        }
-
-        body.controleur-mode .btn-present {
-            padding: 18px 0;
-            font-size: 1.4rem;
-        }
-
-        body.controleur-mode .form-control-modern,
-        body.controleur-mode textarea.form-control-modern {
-            font-size: 20px !important;
-            padding: 16px;
-        }
-
-        body.controleur-mode .form-check-input {
-            width: 1.6rem;
-            height: 1.6rem;
-        }
-
-        body.controleur-mode .form-check-label {
-            font-size: 1.2rem;
-        }
-
-        body.controleur-mode .militaire-info .info-item {
-            font-size: 1.2rem;
-        }
-
-        body.controleur-mode .lien-groupe label {
-            font-size: 1.2rem;
-        }
-
-        body.controleur-mode .lien-groupe .form-check {
-            font-size: 1.1rem;
-        }
-    }
-
-    <?php endif;
-    ?>
 </style>
 
 <!-- Conteneur pour les toasts -->
@@ -1227,9 +1047,6 @@ $is_controleur = isset($_SESSION['user_profil']) && $_SESSION['user_profil'] ===
             if ('ontouchstart' in window) {
                 $('body').addClass('touch-device');
             }
-            <?php if ($is_controleur): ?>
-                document.body.classList.add('controleur-mode');
-            <?php endif; ?>
         });
 
         function showToast(message, type = 'success') {

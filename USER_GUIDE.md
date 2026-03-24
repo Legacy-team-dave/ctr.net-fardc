@@ -4,7 +4,7 @@
 
 - `ADMIN_IG` : gestion globale
 - `OPERATEUR` : militaires + contrôles
-- `CONTROLEUR` : saisie contrôles uniquement
+- `CONTROLEUR` : réservé à l'application mobile CTR.NET Mobile (non accessible côté web)
 
 ## Connexion
 
@@ -28,11 +28,11 @@ Statuts de contexte :
 ## Navigation selon profil
 
 - `ADMIN_IG` et `OPERATEUR` accèdent au dashboard (`index.php`)
-- `CONTROLEUR` est orienté vers la saisie de contrôle
+- `CONTROLEUR` n'accède plus au web (profil mobile uniquement)
 
 ## Références
 
 - `ADMIN_GUIDE.md`
 - `OPERATEUR_GUIDE.md`
-- `CONTROLEUR_GUIDE.md`
+- `CONTROLEUR_GUIDE.md` (guide mobile)
 - `TROUBLESHOOTING.md`

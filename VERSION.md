@@ -1,5 +1,16 @@
 # Versioning - CTR.NET-FARDC
 
+## 1.4.0 (2026-03-24)
+
+### 🔒 Profil CONTROLEUR réservé au mobile
+
+- Connexion web bloquée pour le profil `CONTROLEUR` (3 points d'entrée sécurisés)
+- Suppression du layout `layout-top-nav` et du mode contrôleur (`controleur-mode`)
+- Suppression de `CONTROLEUR` des routes protégées web
+- API REST conservée pour l'application mobile CTR.NET Mobile
+- Badge profil `CONTROLEUR` renommé "Mobile" dans l'administration
+- Documentation mise à jour (9 fichiers)
+
 ## 1.3.0 (2026-03-24)
 
 ### 👥 Gestion des équipes de contrôle

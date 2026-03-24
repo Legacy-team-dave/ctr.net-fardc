@@ -13,8 +13,8 @@ Application PHP de contrôle des effectifs militaires.
   - Saisie de contrôles
   - Accès au tableau de bord opérateur
 - `CONTROLEUR`
-  - Saisie de contrôles uniquement (interface simplifiée)
-  - Redirection directe vers `modules/controles/ajouter.php`
+  - Profil réservé à l'application mobile CTR.NET Mobile
+  - Non accessible côté web (connexion bloquée)
 
 ## Mentions de contrôle (réelles)
 

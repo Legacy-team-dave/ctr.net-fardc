@@ -11,7 +11,7 @@
 
 return [
     // Index and Dashboard
-    '/ctr.net-fardc/index.php' => ['ADMIN_IG', 'OPERATEUR', 'CONTROLEUR'],
+    '/ctr.net-fardc/index.php' => ['ADMIN_IG', 'OPERATEUR'],
 
     // Administration Module
     '/ctr.net-fardc/modules/administration/liste.php' => ['ADMIN_IG'],
@@ -20,11 +20,11 @@ return [
     '/ctr.net-fardc/modules/administration/supprimer.php' => ['ADMIN_IG'],
 
     // Contrôles Module
-    '/ctr.net-fardc/modules/controles/liste.php' => ['ADMIN_IG', 'OPERATEUR', 'CONTROLEUR'],
+    '/ctr.net-fardc/modules/controles/liste.php' => ['ADMIN_IG', 'OPERATEUR'],
     '/ctr.net-fardc/modules/controles/ajouter.php' => ['ADMIN_IG', 'OPERATEUR'],
     '/ctr.net-fardc/modules/controles/modifier.php' => ['ADMIN_IG', 'OPERATEUR'],
     '/ctr.net-fardc/modules/controles/supprimer.php' => ['ADMIN_IG'],
-    '/ctr.net-fardc/modules/controles/consulter.php' => ['ADMIN_IG', 'OPERATEUR', 'CONTROLEUR'],
+    '/ctr.net-fardc/modules/controles/consulter.php' => ['ADMIN_IG', 'OPERATEUR'],
 
     // Litiges Module
     '/ctr.net-fardc/modules/litige/liste.php' => ['ADMIN_IG', 'OPERATEUR'],
@@ -39,6 +39,6 @@ return [
 
     // Settings and Profile
     '/ctr.net-fardc/parametres.php' => ['ADMIN_IG'],
-    '/ctr.net-fardc/profil.php' => ['ADMIN_IG', 'OPERATEUR', 'CONTROLEUR'],
-    '/ctr.net-fardc/preferences.php' => ['ADMIN_IG', 'OPERATEUR', 'CONTROLEUR'],
+    '/ctr.net-fardc/profil.php' => ['ADMIN_IG', 'OPERATEUR'],
+    '/ctr.net-fardc/preferences.php' => ['ADMIN_IG', 'OPERATEUR'],
 ];

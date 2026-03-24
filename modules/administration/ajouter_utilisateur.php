@@ -539,7 +539,7 @@ include '../../includes/header.php';
                     <strong>Profils :</strong>
                     <span class="profile-badge" style="background:#2e7d32; color:white;">ADMIN_IG</span> Admin
                     <span class="profile-badge" style="background:#17a2b8; color:white;">OPERATEUR</span> Gestion
-                    <span class="profile-badge" style="background:#ffc107; color:#212529;">CONTROLEUR</span> Contrôle
+                    <span class="profile-badge" style="background:#ffc107; color:#212529;">CONTROLEUR</span> Mobile
                 </div>
 
                 <form method="post" id="userForm">

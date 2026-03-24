@@ -1,5 +1,18 @@
 -# 🔧 Guide de Compilation .EXE - CTR.NET-FARDC
 
+## ⚠️ Important (v1.1.0+)
+
+Si le chiffrement est activé, vous **DEVEZ** inclure le fichier `.env` dans le package de distribution!
+
+```bash
+# Vérifier le statut du chiffrement
+php bin/encrypt.php status
+
+# Si des fichiers sont [✓ Encrypté], le .env est CRITIQUE
+```
+
+---
+
 ## 📦 Préparation
 
 ### Prérequis

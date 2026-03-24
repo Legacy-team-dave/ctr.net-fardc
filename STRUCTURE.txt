@@ -12,6 +12,23 @@ RACINE
 - reset_password.php
 - splash_screen.php
 - test.php
+- run_backup_job.ps1
+- run_backup_purge.ps1
+- run_backup_purge.bat
+- setup_backup_task.ps1
+- setup_backup_task.bat
+
+OUTILS DE CHIFFREMENT (v1.1.0+)
+- bin/encrypt.php              (CLI principale)
+- encrypt.bat                  (Lanceur général)
+- encrypt_init.bat             (Initialiser clé)
+- encrypt_all.bat              (Chiffrer tous les fichiers)
+- encrypt_status.bat           (Voir l'état du chiffrement)
+- encrypt_list.bat             (Lister les fichiers chiffrables)
+- encrypt_sources.ps1          (Interface PowerShell)
+- rotate_encryption_key.ps1    (Rotation de clé)
+- .env                         (Clé secrète - à sauvegarder)
+- .gitignore.encryption        (Règles Git pour clé)
 
 DOSSIERS PRINCIPAUX
 - ajax/
@@ -23,9 +40,14 @@ DOSSIERS PRINCIPAUX
   - data/
   - uploads/avatars/
 - backups/
+- bin/
+  - encrypt.php (CLI de chiffrement)
 - config/
   - database.php
   - load_config.php
+  - encryption.php              (Fonctions crypto - v1.1.0+)
+  - encrypted_loader.php        (Autoloader transparent - v1.1.0+)
+  - protected_routes.php        (Contrôle d'accès)
 - includes/
   - auth.php
   - functions.php

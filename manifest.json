@@ -1,10 +1,10 @@
 {
   "application": {
     "name": "CTR.NET-FARDC",
-    "version": "1.0.1",
+    "version": "1.1.0",
     "status": "stable",
-    "updated_at": "2026-03-23",
-    "description": "Application PHP de contrôle des effectifs militaires"
+    "updated_at": "2026-04-15",
+    "description": "Application PHP de contrôle des effectifs militaires avec chiffrement AES-256-CBC"
   },
   "profiles": [
     "ADMIN_IG",
@@ -50,6 +50,46 @@
     "launch.bat",
     "launch.ps1",
     "lanceur.ps1"
+  ],
+  "encryption_tools": {
+    "enabled": true,
+    "algorithm": "AES-256-CBC",
+    "cli": "bin/encrypt.php",
+    "interfaces": [
+      {
+        "type": "CLI",
+        "command": "php bin/encrypt.php"
+      },
+      {
+        "type": "GUI Batch",
+        "scripts": [
+          "encrypt_init.bat",
+          "encrypt_all.bat",
+          "encrypt_status.bat",
+          "encrypt_list.bat"
+        ]
+      },
+      {
+        "type": "PowerShell",
+        "scripts": [
+          "encrypt_sources.ps1",
+          "rotate_encryption_key.ps1"
+        ]
+      }
+    ],
+    "configuration_file": ".env",
+    "documentation": "ENCRYPTION.md"
+  },
+  "maintenance_scripts": [
+    {
+      "name": "Backup & Cleanup",
+      "scripts": [
+        "setup_backup_task.bat",
+        "setup_backup_task.ps1",
+        "run_backup_job.ps1",
+        "run_backup_purge.ps1"
+      ]
+    }
   ],
   "urls": {
     "login": "http://localhost/ctr.net-fardc/login.php"

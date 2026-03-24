@@ -115,334 +115,334 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <!-- Font Awesome local -->
     <link rel="stylesheet" href="assets/fontawesome/css/all.min.css">
     <style>
-    /* Police globale pour cette page */
-    body {
-        font-family: 'Barlow', sans-serif;
-        font-size: 14px;
-    }
-
-    /* Style ultra-compact avec fond image et logo */
-    * {
-        margin: 0;
-        padding: 0;
-        box-sizing: border-box;
-    }
-
-    :root {
-        --fb-blue: #1877f2;
-        --fb-blue-hover: #166fe5;
-        --fb-green: #42b72a;
-        --fb-green-hover: #36a420;
-        --primary: #2e7d32;
-        --primary-dark: #1b5e20;
-    }
-
-    html,
-    body {
-        height: 100%;
-        overflow: hidden;
-    }
-
-    body.register-page {
-        /* Fond avec image et superposition sombre */
-        background: linear-gradient(135deg, rgba(0, 0, 0, 0.7) 0%, rgba(0, 0, 0, 0.7) 100%),
-            url('assets/img/fardc2.png') no-repeat center center fixed;
-        background-size: cover;
-        font-family: 'Barlow', sans-serif;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        min-height: 100vh;
-        padding: 5px;
-    }
-
-    .register-wrapper {
-        width: 100%;
-        max-width: 340px;
-        /* encore plus compact */
-        animation: fadeInUp 0.3s ease-out;
-    }
-
-    @keyframes fadeInUp {
-        from {
-            opacity: 0;
-            transform: translateY(10px);
+        /* Police globale pour cette page */
+        body {
+            font-family: 'Barlow', sans-serif;
+            font-size: 14px;
         }
 
-        to {
-            opacity: 1;
-            transform: translateY(0);
+        /* Style ultra-compact avec fond image et logo */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
         }
-    }
 
-    .register-logo {
-        text-align: center;
-        margin-bottom: 8px;
-        flex-shrink: 0;
-    }
+        :root {
+            --fb-blue: #1877f2;
+            --fb-blue-hover: #166fe5;
+            --fb-green: #42b72a;
+            --fb-green-hover: #36a420;
+            --primary: #2e7d32;
+            --primary-dark: #1b5e20;
+        }
 
-    .register-logo .brand-link {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        text-decoration: none;
-    }
+        html,
+        body {
+            height: 100%;
+            overflow: hidden;
+        }
 
-    .register-logo .brand-image {
-        max-height: 40px;
-        /* logo plus petit */
-        width: auto;
-        margin-bottom: 2px;
-        border: 2px solid white;
-        border-radius: 50%;
-        padding: 2px;
-        background: rgba(255, 255, 255, 0.2);
-        transition: transform 0.5s ease;
-    }
+        body.register-page {
+            /* Fond avec image et superposition sombre */
+            background: linear-gradient(135deg, rgba(0, 0, 0, 0.7) 0%, rgba(0, 0, 0, 0.7) 100%),
+                url('assets/img/fardc2.png') no-repeat center center fixed;
+            background-size: cover;
+            font-family: 'Barlow', sans-serif;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 5px;
+        }
 
-    .register-logo .brand-link:hover .brand-image {
-        transform: rotate(360deg);
-    }
+        .register-wrapper {
+            width: 100%;
+            max-width: 340px;
+            /* encore plus compact */
+            animation: fadeInUp 0.3s ease-out;
+        }
 
-    .register-logo .brand-text {
-        font-size: 1.2rem;
-        /* réduit */
-        font-weight: 700;
-        color: white;
-        /* blanc pour contraster sur fond sombre */
-        text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
-        letter-spacing: 0.3px;
-        line-height: 1.2;
-    }
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
 
-    .card-modern {
-        background: white;
-        border: none;
-        border-radius: 8px;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-        padding: 12px 10px 14px;
-        /* encore plus compact */
-    }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
 
-    .form-header {
-        text-align: center;
-        margin-bottom: 8px;
-    }
+        .register-logo {
+            text-align: center;
+            margin-bottom: 8px;
+            flex-shrink: 0;
+        }
 
-    .form-header .title {
-        font-size: 1.3rem;
-        /* réduit */
-        font-weight: 700;
-        color: var(--primary-dark);
-        margin-bottom: 0;
-        line-height: 1.2;
-    }
+        .register-logo .brand-link {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-decoration: none;
+        }
 
-    .form-header .subtitle {
-        font-size: 0.7rem;
-        /* plus petit */
-        color: #6c757d;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 3px;
-    }
+        .register-logo .brand-image {
+            max-height: 40px;
+            /* logo plus petit */
+            width: auto;
+            margin-bottom: 2px;
+            border: 2px solid white;
+            border-radius: 50%;
+            padding: 2px;
+            background: rgba(255, 255, 255, 0.2);
+            transition: transform 0.5s ease;
+        }
 
-    .input-group-modern {
-        margin-bottom: 8px;
-        /* réduit */
-        position: relative;
-    }
+        .register-logo .brand-link:hover .brand-image {
+            transform: rotate(360deg);
+        }
 
-    .input-group-modern .form-control,
-    .input-group-modern select {
-        width: 100%;
-        padding: 8px 10px;
-        /* moins de padding */
-        border: 1.5px solid #e0e0e0;
-        border-radius: 5px;
-        font-size: 0.8rem;
-        /* plus petit */
-        transition: all 0.2s;
-        font-family: 'Barlow', sans-serif;
-        background: white;
-    }
+        .register-logo .brand-text {
+            font-size: 1.2rem;
+            /* réduit */
+            font-weight: 700;
+            color: white;
+            /* blanc pour contraster sur fond sombre */
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+            letter-spacing: 0.3px;
+            line-height: 1.2;
+        }
 
-    .input-group-modern .form-control:focus,
-    .input-group-modern select:focus {
-        border-color: var(--primary);
-        box-shadow: 0 0 0 2px rgba(46, 125, 50, 0.15);
-        outline: none;
-    }
+        .card-modern {
+            background: white;
+            border: none;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            padding: 12px 10px 14px;
+            /* encore plus compact */
+        }
 
-    /* Champ fichier */
-    .input-group-modern input[type="file"] {
-        padding: 5px 10px;
-        font-size: 0.75rem;
-    }
+        .form-header {
+            text-align: center;
+            margin-bottom: 8px;
+        }
 
-    /* Icônes de validation */
-    .validation-icon {
-        position: absolute;
-        right: 10px;
-        top: 50%;
-        transform: translateY(-50%);
-        font-size: 0.8rem;
-        pointer-events: none;
-    }
+        .form-header .title {
+            font-size: 1.3rem;
+            /* réduit */
+            font-weight: 700;
+            color: var(--primary-dark);
+            margin-bottom: 0;
+            line-height: 1.2;
+        }
 
-    .password-toggle {
-        position: absolute;
-        right: 10px;
-        top: 50%;
-        transform: translateY(-50%);
-        cursor: pointer;
-        color: #6c757d;
-        z-index: 2;
-        font-size: 0.8rem;
-        background: transparent;
-        padding: 0;
-    }
+        .form-header .subtitle {
+            font-size: 0.7rem;
+            /* plus petit */
+            color: #6c757d;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 3px;
+        }
 
-    /* Barre de force du mot de passe ultra-compacte */
-    .password-strength {
-        margin-top: 2px;
-        display: flex;
-        align-items: center;
-        gap: 4px;
-    }
+        .input-group-modern {
+            margin-bottom: 8px;
+            /* réduit */
+            position: relative;
+        }
 
-    .strength-bar {
-        flex: 1;
-        height: 3px;
-        background-color: #e0e0e0;
-        border-radius: 2px;
-        overflow: hidden;
-    }
+        .input-group-modern .form-control,
+        .input-group-modern select {
+            width: 100%;
+            padding: 8px 10px;
+            /* moins de padding */
+            border: 1.5px solid #e0e0e0;
+            border-radius: 5px;
+            font-size: 0.8rem;
+            /* plus petit */
+            transition: all 0.2s;
+            font-family: 'Barlow', sans-serif;
+            background: white;
+        }
 
-    .strength-bar-fill {
-        height: 100%;
-        width: 0%;
-        transition: width 0.3s, background-color 0.3s;
-    }
+        .input-group-modern .form-control:focus,
+        .input-group-modern select:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 2px rgba(46, 125, 50, 0.15);
+            outline: none;
+        }
 
-    .strength-text {
-        min-width: 35px;
-        font-size: 0.65rem;
-        /* tout petit */
-        color: #6c757d;
-        text-align: right;
-    }
+        /* Champ fichier */
+        .input-group-modern input[type="file"] {
+            padding: 5px 10px;
+            font-size: 0.75rem;
+        }
 
-    .field-error {
-        color: #dc3545;
-        font-size: 0.65rem;
-        margin-top: 1px;
-        padding-left: 2px;
-    }
+        /* Icônes de validation */
+        .validation-icon {
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 0.8rem;
+            pointer-events: none;
+        }
 
-    /* Boutons avec icônes - compacts */
-    .btn-register,
-    .btn-secondary {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        gap: 5px;
-        border: none;
-        border-radius: 5px;
-        padding: 8px 10px;
-        /* réduit */
-        font-weight: 600;
-        color: white;
-        width: 100%;
-        cursor: pointer;
-        transition: background 0.2s, transform 0.1s;
-        font-family: 'Barlow', sans-serif;
-        text-decoration: none;
-        font-size: 0.85rem;
-        /* plus petit */
-        margin-top: 5px;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    }
+        .password-toggle {
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            cursor: pointer;
+            color: #6c757d;
+            z-index: 2;
+            font-size: 0.8rem;
+            background: transparent;
+            padding: 0;
+        }
 
-    .btn-register {
-        background: #1b5e20;
-    }
+        /* Barre de force du mot de passe ultra-compacte */
+        .password-strength {
+            margin-top: 2px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
 
-    .btn-register:hover {
-        background: #2e7d32;
-        transform: translateY(-1px);
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
-    }
+        .strength-bar {
+            flex: 1;
+            height: 3px;
+            background-color: #e0e0e0;
+            border-radius: 2px;
+            overflow: hidden;
+        }
 
-    .btn-register:disabled {
-        background: #9cb4d8;
-        cursor: not-allowed;
-        transform: none;
-    }
+        .strength-bar-fill {
+            height: 100%;
+            width: 0%;
+            transition: width 0.3s, background-color 0.3s;
+        }
 
-    .btn-secondary {
-        background: #60757d;
-        margin-top: 10px;
-        /* légèrement plus d'espace */
-    }
+        .strength-text {
+            min-width: 35px;
+            font-size: 0.65rem;
+            /* tout petit */
+            color: #6c757d;
+            text-align: right;
+        }
 
-    .btn-secondary:hover {
-        background: #6c757d;
-        transform: translateY(-1px);
-        color: white;
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
-    }
+        .field-error {
+            color: #dc3545;
+            font-size: 0.65rem;
+            margin-top: 1px;
+            padding-left: 2px;
+        }
 
-    .alert-modern {
-        border-radius: 5px;
-        padding: 6px 10px;
-        margin-bottom: 8px;
-        font-size: 0.75rem;
-        display: flex;
-        align-items: center;
-        gap: 5px;
-    }
+        /* Boutons avec icônes - compacts */
+        .btn-register,
+        .btn-secondary {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+            border: none;
+            border-radius: 5px;
+            padding: 8px 10px;
+            /* réduit */
+            font-weight: 600;
+            color: white;
+            width: 100%;
+            cursor: pointer;
+            transition: background 0.2s, transform 0.1s;
+            font-family: 'Barlow', sans-serif;
+            text-decoration: none;
+            font-size: 0.85rem;
+            /* plus petit */
+            margin-top: 5px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
 
-    .alert-modern.error {
-        background: #fee2e2;
-        color: #991b1b;
-        border-left: 3px solid #dc3545;
-    }
+        .btn-register {
+            background: #1b5e20;
+        }
 
-    .alert-modern.success {
-        background: #d4edda;
-        color: #155724;
-        border-left: 3px solid #28a745;
-    }
+        .btn-register:hover {
+            background: #2e7d32;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+        }
 
-    .register-footer {
-        text-align: center;
-        margin-top: 8px;
-        color: rgba(255, 255, 255, 0.8);
-        /* blanc pour fond sombre */
-        font-size: 0.65rem;
-        border-top: 1px solid rgba(255, 255, 255, 0.2);
-        padding-top: 6px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 3px;
-    }
+        .btn-register:disabled {
+            background: #9cb4d8;
+            cursor: not-allowed;
+            transform: none;
+        }
 
-    .register-footer i {
-        color: #ffc107;
-        font-size: 0.6rem;
-    }
+        .btn-secondary {
+            background: #60757d;
+            margin-top: 10px;
+            /* légèrement plus d'espace */
+        }
 
-    /* Petit texte sous le champ fichier */
-    .input-group-modern small {
-        display: block;
-        margin-top: 2px;
-        color: #6c757d;
-        font-size: 0.6rem;
-        padding-left: 2px;
-    }
+        .btn-secondary:hover {
+            background: #6c757d;
+            transform: translateY(-1px);
+            color: white;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+        }
+
+        .alert-modern {
+            border-radius: 5px;
+            padding: 6px 10px;
+            margin-bottom: 8px;
+            font-size: 0.75rem;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .alert-modern.error {
+            background: #fee2e2;
+            color: #991b1b;
+            border-left: 3px solid #dc3545;
+        }
+
+        .alert-modern.success {
+            background: #d4edda;
+            color: #155724;
+            border-left: 3px solid #28a745;
+        }
+
+        .register-footer {
+            text-align: center;
+            margin-top: 8px;
+            color: rgba(255, 255, 255, 0.8);
+            /* blanc pour fond sombre */
+            font-size: 0.65rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.2);
+            padding-top: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 3px;
+        }
+
+        .register-footer i {
+            color: #ffc107;
+            font-size: 0.6rem;
+        }
+
+        /* Petit texte sous le champ fichier */
+        .input-group-modern small {
+            display: block;
+            margin-top: 2px;
+            color: #6c757d;
+            font-size: 0.6rem;
+            padding-left: 2px;
+        }
     </style>
 </head>
 
@@ -466,10 +466,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             </div>
 
             <?php if ($error): ?>
-            <div class="alert-modern error">
-                <i class="fas fa-exclamation-circle"></i>
-                <?= htmlspecialchars($error) ?>
-            </div>
+                <div class="alert-modern error">
+                    <i class="fas fa-exclamation-circle"></i>
+                    <?= htmlspecialchars($error) ?>
+                </div>
             <?php endif; ?>
 
             <form method="post" id="registerForm" enctype="multipart/form-data">
@@ -494,10 +494,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <select name="profil" id="profil" class="form-control" required>
                         <option value="">Sélectionner un profil</option>
                         <?php foreach ($profils as $code => $libelle): ?>
-                        <option value="<?= htmlspecialchars($code) ?>"
-                            <?= (isset($_POST['profil']) && $_POST['profil'] == $code) ? 'selected' : '' ?>>
-                            <?= htmlspecialchars($libelle) ?>
-                        </option>
+                            <option value="<?= htmlspecialchars($code) ?>"
+                                <?= (isset($_POST['profil']) && $_POST['profil'] == $code) ? 'selected' : '' ?>>
+                                <?= htmlspecialchars($libelle) ?>
+                            </option>
                         <?php endforeach; ?>
                     </select>
                 </div>
@@ -544,117 +544,117 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         </div>
 
         <div class="register-footer">
-            <i class="fas fa-shield-alt"></i>CTR.NET-FARDC v1.0
+            <i class="fas fa-shield-alt"></i>CTR.NET-FARDC v1.1.0
         </div>
     </div>
 
     <script src="assets/js/jquery-3.6.0.min.js"></script>
     <script>
-    $('#registerForm').on('submit', function() {
-        $('#submitBtn').prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Inscription...');
-    });
+        $('#registerForm').on('submit', function() {
+            $('#submitBtn').prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Inscription...');
+        });
 
-    function togglePasswordVisibility(fieldId, element) {
-        const input = document.getElementById(fieldId);
-        const icon = element.querySelector('i');
-        if (input.type === 'password') {
-            input.type = 'text';
-            icon.classList.remove('fa-eye');
-            icon.classList.add('fa-eye-slash');
-        } else {
-            input.type = 'password';
-            icon.classList.remove('fa-eye-slash');
-            icon.classList.add('fa-eye');
-        }
-    }
-
-    const passwordInput = document.getElementById('password');
-    const confirmInput = document.getElementById('confirm_password');
-    const confirmIcon = document.getElementById('confirmIcon');
-    const confirmError = document.getElementById('confirmError');
-    const strengthBarFill = document.getElementById('strengthBarFill');
-    const strengthText = document.getElementById('strengthText');
-    const passwordStrengthIcon = document.getElementById('passwordStrengthIcon');
-
-    function evaluatePasswordStrength(password) {
-        let strength = 0;
-        if (password.length >= 4) strength += 1;
-        if (password.length >= 6) strength += 1;
-        if (/[a-z]/.test(password) && /[A-Z]/.test(password)) strength += 1;
-        if (/[0-9]/.test(password)) strength += 1;
-        if (/[^a-zA-Z0-9]/.test(password)) strength += 1;
-        return Math.min(strength, 5);
-    }
-
-    function updatePasswordStrength() {
-        const password = passwordInput.value;
-        const strength = evaluatePasswordStrength(password);
-        let fillPercent = 0;
-        let text = '';
-        let color = '#e0e0e0';
-        let iconHtml = '';
-
-        if (password.length === 0) {
-            fillPercent = 0;
-            text = '';
-            color = '#e0e0e0';
-            iconHtml = '';
-        } else if (strength <= 2) {
-            fillPercent = 20;
-            text = 'Faible';
-            color = '#dc3545';
-            iconHtml = '<i class="fas fa-exclamation-triangle" style="color:#dc3545;"></i>';
-        } else if (strength <= 3) {
-            fillPercent = 50;
-            text = 'Moyen';
-            color = '#f7b731';
-            iconHtml = '<i class="fas fa-exclamation-circle" style="color:#f7b731;"></i>';
-        } else if (strength <= 4) {
-            fillPercent = 75;
-            text = 'Bon';
-            color = '#17a2b8';
-            iconHtml = '<i class="fas fa-check-circle" style="color:#17a2b8;"></i>';
-        } else {
-            fillPercent = 100;
-            text = 'Fort';
-            color = '#28a745';
-            iconHtml = '<i class="fas fa-check-circle" style="color:#28a745;"></i>';
+        function togglePasswordVisibility(fieldId, element) {
+            const input = document.getElementById(fieldId);
+            const icon = element.querySelector('i');
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.classList.remove('fa-eye');
+                icon.classList.add('fa-eye-slash');
+            } else {
+                input.type = 'password';
+                icon.classList.remove('fa-eye-slash');
+                icon.classList.add('fa-eye');
+            }
         }
 
-        strengthBarFill.style.width = fillPercent + '%';
-        strengthBarFill.style.backgroundColor = color;
-        strengthText.textContent = text;
-        strengthText.style.color = color;
-        passwordStrengthIcon.innerHTML = iconHtml;
-    }
+        const passwordInput = document.getElementById('password');
+        const confirmInput = document.getElementById('confirm_password');
+        const confirmIcon = document.getElementById('confirmIcon');
+        const confirmError = document.getElementById('confirmError');
+        const strengthBarFill = document.getElementById('strengthBarFill');
+        const strengthText = document.getElementById('strengthText');
+        const passwordStrengthIcon = document.getElementById('passwordStrengthIcon');
 
-    function updateConfirmation() {
-        const password = passwordInput.value;
-        const confirm = confirmInput.value;
-
-        if (confirm.length === 0) {
-            confirmIcon.innerHTML = '';
-            confirmError.textContent = '';
-            return;
+        function evaluatePasswordStrength(password) {
+            let strength = 0;
+            if (password.length >= 4) strength += 1;
+            if (password.length >= 6) strength += 1;
+            if (/[a-z]/.test(password) && /[A-Z]/.test(password)) strength += 1;
+            if (/[0-9]/.test(password)) strength += 1;
+            if (/[^a-zA-Z0-9]/.test(password)) strength += 1;
+            return Math.min(strength, 5);
         }
 
-        if (password === confirm) {
-            confirmIcon.innerHTML = '<i class="fas fa-check-circle" style="color:#28a745;"></i>';
-            confirmError.textContent = '';
-        } else {
-            confirmIcon.innerHTML = '<i class="fas fa-times-circle" style="color:#dc3545;"></i>';
-            confirmError.textContent = 'Les mots de passe ne correspondent pas.';
-        }
-    }
+        function updatePasswordStrength() {
+            const password = passwordInput.value;
+            const strength = evaluatePasswordStrength(password);
+            let fillPercent = 0;
+            let text = '';
+            let color = '#e0e0e0';
+            let iconHtml = '';
 
-    passwordInput.addEventListener('input', function() {
+            if (password.length === 0) {
+                fillPercent = 0;
+                text = '';
+                color = '#e0e0e0';
+                iconHtml = '';
+            } else if (strength <= 2) {
+                fillPercent = 20;
+                text = 'Faible';
+                color = '#dc3545';
+                iconHtml = '<i class="fas fa-exclamation-triangle" style="color:#dc3545;"></i>';
+            } else if (strength <= 3) {
+                fillPercent = 50;
+                text = 'Moyen';
+                color = '#f7b731';
+                iconHtml = '<i class="fas fa-exclamation-circle" style="color:#f7b731;"></i>';
+            } else if (strength <= 4) {
+                fillPercent = 75;
+                text = 'Bon';
+                color = '#17a2b8';
+                iconHtml = '<i class="fas fa-check-circle" style="color:#17a2b8;"></i>';
+            } else {
+                fillPercent = 100;
+                text = 'Fort';
+                color = '#28a745';
+                iconHtml = '<i class="fas fa-check-circle" style="color:#28a745;"></i>';
+            }
+
+            strengthBarFill.style.width = fillPercent + '%';
+            strengthBarFill.style.backgroundColor = color;
+            strengthText.textContent = text;
+            strengthText.style.color = color;
+            passwordStrengthIcon.innerHTML = iconHtml;
+        }
+
+        function updateConfirmation() {
+            const password = passwordInput.value;
+            const confirm = confirmInput.value;
+
+            if (confirm.length === 0) {
+                confirmIcon.innerHTML = '';
+                confirmError.textContent = '';
+                return;
+            }
+
+            if (password === confirm) {
+                confirmIcon.innerHTML = '<i class="fas fa-check-circle" style="color:#28a745;"></i>';
+                confirmError.textContent = '';
+            } else {
+                confirmIcon.innerHTML = '<i class="fas fa-times-circle" style="color:#dc3545;"></i>';
+                confirmError.textContent = 'Les mots de passe ne correspondent pas.';
+            }
+        }
+
+        passwordInput.addEventListener('input', function() {
+            updatePasswordStrength();
+            updateConfirmation();
+        });
+        confirmInput.addEventListener('input', updateConfirmation);
+
         updatePasswordStrength();
         updateConfirmation();
-    });
-    confirmInput.addEventListener('input', updateConfirmation);
-
-    updatePasswordStrength();
-    updateConfirmation();
     </script>
 </body>
 

@@ -47,6 +47,59 @@ Le flux utilise aussi les statuts :
 - `launch.ps1`
 - `lanceur.ps1`
 
+## Sauvegarde automatique incrémentale
+
+Les sauvegardes sont effectuées via un job Windows planifié, avec rotation automatique.
+
+## 🔐 Système de Chiffrement
+
+**CTR.NET-FARDC inclut un système de chiffrement AES-256-CBC complète** pour protéger le code source contre la lecture en clair.
+
+### Démarrage Rapide
+
+```bash
+# 1. Initialiser (générer clé unique)
+php bin/encrypt.php init
+
+# 2. Chiffrer fichiers sensibles
+php bin/encrypt.php encrypt
+
+# 3. Vérifier stato
+php bin/encrypt.php status
+```
+
+### Caractéristiques
+
+- ✅ **Algorithme:** AES-256-CBC (standard militaire NIST FIPS 197)
+- ✅ **Transparent:** Déchiffrement automatique au runtime
+- ✅ **Zéro impact:** Aucune modification du code applicatif
+- ✅ **Interfaces multiples:** GUI (batch), CLI (PHP), PowerShell
+
+### Documentation Chiffrement
+
+Pour une documentation complète et des exemples pratiques:
+
+- **[ENCRYPTION.md](ENCRYPTION.md)** — Guide complet
+- **[ENCRYPTION_QUICKSTART.md](ENCRYPTION_QUICKSTART.md)** — 3 étapes
+- **[ENCRYPTION_EXAMPLES.md](ENCRYPTION_EXAMPLES.md)** — Cas réels
+- **[ENCRYPTION_IMPLEMENTATION_GUIDE.md](ENCRYPTION_IMPLEMENTATION_GUIDE.md)** — Guide IT
+
+### Fichiers Clés
+
+**Configuration & Crypto:**
+- `config/encryption.php` — Fonctions AES-256-CBC
+- `config/encrypted_loader.php` — Déchiffrement automatique
+- `.env` — Clé secrète (à générer une fois)
+
+- Fréquence : toutes les 8 heures (tâche planifiée Windows)
+- Format : CSV (Excel compatible) + XLSX
+- Mode : incrémental (seulement nouveaux éléments)
+- Sources : `controles`, `litiges`, `non_vus`
+- Scripts : `setup_backup_task.bat`, `setup_backup_task.ps1`, `run_backup_job.ps1`
+- Purge auto : suppression des doublons + conservation des 30 dernières archives non identiques
+- Purge auto paramétrable : `setup_backup_task.ps1 -MaxKeep 30` (ou `setup_backup_task.bat 30`)
+- Script de purge manuelle : `run_backup_purge.ps1 -MaxKeep 30` ou `run_backup_purge.bat 30`
+
 ## URL
 
 - `http://localhost/ctr.net-fardc/login.php`
@@ -66,6 +119,8 @@ Tables principales utilisées :
 
 - `SETUP.md`
 - `ARCHITECTURE.md`
+- `FAQ.md`
+- `FONCTIONNEMENT_APPLICATION.md`
 - `USER_GUIDE.md`
 - `ADMIN_GUIDE.md`
 - `OPERATEUR_GUIDE.md`

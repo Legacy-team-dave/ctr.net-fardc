@@ -32,3 +32,84 @@ Ce document décrit une migration **réaliste** pour ce dépôt tel qu'il existe
 ### 3) Documentation
 
 Mettre à jour toute documentation après chaque changement validé.
+
+## Migration vers v1.1.0+ (Chiffrement ajouté)
+
+### Prérequis
+
+- OpenSSL disponible (inclus dans Laragon)
+- PHP 7.4+ (pour `openssl_*` fonctions)
+- Sauvegarde complète de `config/database.php` et autres fichiers sensibles
+
+### Étapes
+
+1. **Backup initial** :
+   ```bash
+   cd C:\laragon\www\ctr.net-fardc
+   xcopy config backups\config_backup /E
+   ```
+
+2. **Initialiser chiffrement** (une seule fois) :
+   ```bash
+   php bin/encrypt.php init
+   ```
+   → Génère `.env` avec `ENCRYPTION_KEY`
+
+3. **Vérifier clé générée** :
+   ```bash
+   # Affiche la clé (vérifier qu'elle n'est pas vide)
+   type .env | findstr ENCRYPTION_KEY
+   ```
+
+4. **Tester déchiffrement** :
+   ```bash
+   # Sans chiffrer les fichiers, vérifier que l'app démarre
+   php -S localhost:8000
+   ```
+
+5. **Sauvegarde de la clé** :
+   ```bash
+   # CRITIQUE : copier .env hors ligne
+   xcopy .env "C:\Backup_Securise\encryption_key_[date].env"
+   ```
+
+6. **Optionnel : Activer chiffrement** :
+   ```bash
+   php bin/encrypt.php encrypt
+   # Cela crée versions .encrypted, les originaux restent (pour rollback facile)
+   ```
+
+7. **Vérifier chiffrement** :
+   ```bash
+   php bin/encrypt.php status
+   # Tous les fichiers critiques doivent montrer [✓ Encrypté]
+   ```
+
+8. **Tester l'app** :
+   - Naviguer `http://localhost/ctr.net-fardc/login.php`
+   - Effectuer une connexion test
+   - Vérifier les logs (action `CONNEXION` enregistrée)
+
+### Rollback d'urgence (v1.1.0 → v1.0.x)
+
+1. **Déchiffrer tous les fichiers** :
+   ```bash
+   php bin/encrypt.php decrypt
+   ```
+
+2. **Supprimer `.env`** :
+   ```bash
+   del .env
+   ```
+
+3. **Revenir à ancienne version** de code (git/backup)
+
+4. **Redémarrer l'app**
+
+### Important après migration
+
+- ⚠️ **Ne pas oublier de sauvegarder `.env`** (sans lui, données inaccessibles)
+- Git ignore automatiquement `.env` (voir `.gitignore.encryption`)
+- Documenter la localisation du backup de clé
+- Former le personnel d'administration à la gestion de la clé
+- Tester la rotation de clé annuellement

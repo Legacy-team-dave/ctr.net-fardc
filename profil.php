@@ -686,7 +686,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <!-- Footer -->
         <div class="profile-footer">
             <i class="fas fa-shield-alt"></i>
-            <span>IG - FARDC v1.0</span>
+            <span>IG - FARDC v1.1.0</span>
         </div>
     </div>
 

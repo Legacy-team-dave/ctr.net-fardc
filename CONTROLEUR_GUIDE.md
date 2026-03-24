@@ -366,4 +366,4 @@ Toutes vos actions dans l'application sont **journalisées** dans le log d'audit
 
 ---
 
-*Guide CONTROLEUR - CTR.NET-FARDC v1.0 - Mars 2026*
+*Guide CONTROLEUR - CTR.NET-FARDC v1.1.0 - Mars 2026*

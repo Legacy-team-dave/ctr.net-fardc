@@ -3,7 +3,7 @@ require_once '../../includes/functions.php';
 require_login();
 
 // MODIFICATION : Vérifier que seuls les profils autorisés accèdent à cette page
-check_profil(['ADMIN_IG', 'OPERATEUR', 'CONTROLEUR']);
+check_profil(['OPERATEUR', 'CONTROLEUR']);
 
 // --- AJAX : recherche en temps réel ---
 if (isset($_GET['ajax']) && $_GET['ajax'] === 'search' && isset($_GET['q'])) {
@@ -225,728 +225,728 @@ $is_controleur = isset($_SESSION['user_profil']) && $_SESSION['user_profil'] ===
 <link rel="stylesheet" href="../../assets/css/fonts.css">
 
 <style>
-    :root {
-        --primary: #2e7d32;
-        --primary-dark: #1b5e20;
-        --success: #28a745;
-        --warning: #ffc107;
-        --danger: #dc3545;
-        --info: #17a2b8;
-        --gray: #6c757d;
-        --light: #f8f9fa;
+:root {
+    --primary: #2e7d32;
+    --primary-dark: #1b5e20;
+    --success: #28a745;
+    --warning: #ffc107;
+    --danger: #dc3545;
+    --info: #17a2b8;
+    --gray: #6c757d;
+    --light: #f8f9fa;
+}
+
+body {
+    font-family: 'Barlow', sans-serif;
+    background: #f5f5f5;
+    padding: 12px;
+    font-size: 16px;
+}
+
+.card-modern {
+    border: none;
+    border-radius: 15px;
+    box-shadow: 0 0 30px rgba(0, 0, 0, 0.1);
+    margin-bottom: 30px;
+    overflow: unset;
+}
+
+.card-modern .card-header {
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+    padding: 18px 25px;
+    /* augmenté */
+    border: none;
+    color: white;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 15px;
+}
+
+.card-modern .card-header h3 {
+    margin: 0;
+    font-weight: 600;
+    font-size: 1.4rem;
+    /* augmenté */
+}
+
+.card-modern .card-header h3 i {
+    margin-right: 8px;
+}
+
+.card-modern .card-body {
+    padding: 24px;
+    /* augmenté */
+}
+
+.btn-gradient {
+    border-radius: 10px;
+    padding: 12px 25px;
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+    border: none;
+    color: white;
+    font-weight: 600;
+    transition: all 0.3s;
+}
+
+.btn-gradient:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(46, 125, 50, 0.3);
+    color: white;
+}
+
+.btn-mention {
+    border-radius: 30px;
+    /* plus arrondi */
+    padding: 8px 18px;
+    /* augmenté */
+    font-weight: 600;
+    font-size: 0.9rem;
+    /* augmenté */
+    border: none;
+    cursor: pointer;
+    margin: 3px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.3s;
+}
+
+.btn-mention:hover {
+    transform: translateY(-2px);
+}
+
+.btn-present {
+    background: var(--success);
+    color: white;
+}
+
+.btn-present:hover {
+    background: #218838;
+    box-shadow: 0 5px 15px rgba(40, 167, 69, 0.3);
+}
+
+.btn-favorable {
+    background: var(--warning);
+    color: #212529;
+}
+
+.btn-favorable:hover {
+    background: #e0a800;
+    box-shadow: 0 5px 15px rgba(255, 193, 7, 0.3);
+}
+
+.btn-defavorable {
+    background: var(--danger);
+    color: white;
+}
+
+.btn-defavorable:hover {
+    background: #c82333;
+    box-shadow: 0 5px 15px rgba(220, 53, 69, 0.3);
+}
+
+.btn-new-search {
+    border-radius: 30px;
+    padding: 6px 16px;
+    background: transparent;
+    border: 1px solid white;
+    color: white;
+    transition: all 0.3s;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 0.9rem;
+}
+
+.btn-new-search:hover {
+    background: rgba(255, 255, 255, 0.1);
+    transform: translateY(-2px);
+}
+
+.badge-statut {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 30px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    margin-left: 10px;
+    color: white;
+}
+
+/* === BADGES GRANDS (pour la fiche militaire) === */
+.badge-actif {
+    background: var(--success);
+}
+
+.badge-decede-av-bio {
+    background: #6c757d;
+}
+
+.badge-dcd-ap-bio {
+    background: linear-gradient(135deg, #6f42c1, #6610f2);
+}
+
+.badge-retraite {
+    background: linear-gradient(135deg, #0d6efd, #0a58ca);
+}
+
+.badge-integre {
+    background: linear-gradient(135deg, #dc3545, #b02a37);
+}
+
+/* === MINI-BADGES (pour les résultats de recherche) === */
+#search-results .badge-statut-mini {
+    display: inline-block;
+    padding: 2px 6px;
+    border-radius: 12px;
+    font-size: 0.65rem;
+    font-weight: 600;
+    margin-left: 5px;
+    color: white;
+}
+
+.badge-actif-mini {
+    background: var(--success);
+}
+
+.badge-decede-av-bio-mini {
+    background: #6c757d;
+}
+
+.badge-dcd-ap-bio-mini {
+    background: linear-gradient(135deg, #6f42c1, #6610f2);
+}
+
+.badge-retraite-mini {
+    background: linear-gradient(135deg, #0d6efd, #0a58ca);
+}
+
+.badge-integre-mini {
+    background: linear-gradient(135deg, #dc3545, #b02a37);
+}
+
+/* ===================================================== */
+
+.militaire-info {
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+    color: white;
+    padding: 1.2rem 1.8rem;
+    border-radius: 12px;
+    margin-bottom: 1.8rem;
+    box-shadow: 0 4px 15px rgba(46, 125, 50, 0.3);
+}
+
+.militaire-info .info-grid {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 1.5rem;
+}
+
+.militaire-info .info-item {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 1rem;
+}
+
+.militaire-info .info-label {
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.9);
+}
+
+.militaire-info .info-value {
+    font-weight: 500;
+}
+
+.militaire-info .separator {
+    width: 1px;
+    height: 20px;
+    background: rgba(255, 255, 255, 0.3);
+}
+
+.statut-temp {
+    background: var(--light);
+    border-radius: 10px;
+    padding: 12px;
+    margin: 12px 0;
+    border-left: 4px solid var(--primary);
+}
+
+.statut-temp .form-check-inline {
+    margin-right: 1rem;
+}
+
+.statut-temp .form-check-input {
+    width: 1.2rem;
+    height: 1.2rem;
+    margin-top: 0.2rem;
+}
+
+.statut-temp .form-check-input:checked {
+    background-color: var(--primary);
+    border-color: var(--primary);
+}
+
+.liens-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+    margin-bottom: 12px;
+}
+
+.lien-groupe {
+    border: 1px solid #e0e0e0;
+    border-radius: 10px;
+    padding: 10px;
+    background: var(--light);
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+.lien-groupe label {
+    font-weight: 600;
+    color: var(--primary);
+    margin-bottom: 8px;
+    display: block;
+    border-bottom: 1px solid #dee2e6;
+    padding-bottom: 5px;
+    font-size: 0.9rem;
+}
+
+.lien-groupe .form-check {
+    margin-bottom: 5px;
+    font-size: 0.85rem;
+}
+
+.lien-groupe small {
+    color: var(--gray);
+    font-size: 0.7rem;
+    margin-left: 3px;
+}
+
+.form-control-modern {
+    border-radius: 8px;
+    border: 1px solid #ced4da;
+    padding: 8px 12px;
+    width: 100%;
+    transition: all 0.3s;
+    font-size: 0.9rem;
+}
+
+.form-control-modern:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 0.2rem rgba(46, 125, 50, 0.25);
+    outline: none;
+}
+
+/* Styles pour les cartes bénéficiaires */
+.beneficiaire-card {
+    background: white;
+    border-radius: 10px;
+    padding: 12px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+    border: 1px solid #e0e0e0;
+    height: 100%;
+}
+
+.beneficiaire-card.compact {
+    padding: 10px 12px;
+}
+
+.beneficiaire-card .form-control-modern {
+    padding: 6px 10px;
+    font-size: 0.85rem;
+}
+
+.beneficiaire-card .bg-light {
+    background-color: #f1f3f5 !important;
+    padding: 8px 12px;
+    font-size: 0.95rem;
+    word-break: break-word;
+}
+
+.observations-group {
+    background: var(--light);
+    border-radius: 10px;
+    padding: 12px;
+    margin: 12px 0;
+    border: 1px solid #e0e0e0;
+}
+
+.observations-group textarea {
+    min-height: 80px;
+    resize: vertical;
+    font-family: 'Barlow', sans-serif;
+    font-size: 0.9rem;
+}
+
+.actions-container {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 2px dashed #dee2e6;
+}
+
+#search-results .list-group-item {
+    cursor: pointer;
+    border-left: none;
+    border-right: none;
+    padding: 10px 15px;
+    transition: background 0.2s;
+    font-size: 0.9rem;
+}
+
+#search-results .list-group-item small {
+    font-size: 0.75rem;
+}
+
+/* Ajustement pour que la liste des résultats s'allonge selon le contenu */
+#search-results {
+    max-height: 400px !important;
+    overflow-y: auto !important;
+}
+
+/* Style pour le toast de succès */
+.toast-container {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 9999;
+}
+
+.toast-message {
+    background: linear-gradient(135deg, var(--success) 0%, #218838 100%);
+    color: white;
+    padding: 15px 25px;
+    border-radius: 12px;
+    box-shadow: 0 5px 20px rgba(40, 167, 69, 0.3);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+    animation: slideIn 0.3s ease-out, fadeOut 0.5s ease-out 2.5s forwards;
+    font-weight: 500;
+    min-width: 320px;
+    font-size: 0.95rem;
+}
+
+.toast-message i {
+    font-size: 1.2rem;
+}
+
+.toast-message.error {
+    background: linear-gradient(135deg, var(--danger) 0%, #c82333 100%);
+    box-shadow: 0 5px 20px rgba(220, 53, 69, 0.3);
+}
+
+.toast-message.warning {
+    background: linear-gradient(135deg, var(--warning) 0%, #e0a800 100%);
+    color: #212529;
+}
+
+@keyframes slideIn {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
     }
 
-    body {
-        font-family: 'Barlow', sans-serif;
-        background: #f5f5f5;
-        padding: 12px;
-        font-size: 16px;
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+@keyframes fadeOut {
+    from {
+        opacity: 1;
+        transform: translateX(0);
     }
 
-    .card-modern {
-        border: none;
-        border-radius: 15px;
-        box-shadow: 0 0 30px rgba(0, 0, 0, 0.1);
-        margin-bottom: 30px;
-        overflow: unset;
+    to {
+        opacity: 0;
+        transform: translateX(100%);
     }
+}
 
-    .card-modern .card-header {
-        background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
-        padding: 18px 25px;
-        /* augmenté */
-        border: none;
-        color: white;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        flex-wrap: wrap;
-        gap: 15px;
-    }
+/* === STYLES COMPACTS POUR LA CARTE BÉNÉFICIAIRE === */
+.compact-form .liens-grid {
+    gap: 8px;
+}
 
-    .card-modern .card-header h3 {
-        margin: 0;
-        font-weight: 600;
-        font-size: 1.4rem;
-        /* augmenté */
-    }
+.compact-form .lien-groupe.compact {
+    padding: 8px;
+}
 
-    .card-modern .card-header h3 i {
-        margin-right: 8px;
-    }
+.compact-form .lien-groupe.compact label {
+    font-size: 0.85rem;
+    margin-bottom: 5px;
+    padding-bottom: 3px;
+}
 
-    .card-modern .card-body {
-        padding: 24px;
-        /* augmenté */
-    }
+.compact-form .lien-groupe.compact .form-check {
+    margin-bottom: 3px;
+    font-size: 0.8rem;
+}
 
-    .btn-gradient {
-        border-radius: 10px;
-        padding: 12px 25px;
-        background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
-        border: none;
-        color: white;
-        font-weight: 600;
-        transition: all 0.3s;
-    }
+.compact-form .lien-groupe.compact .form-check small {
+    font-size: 0.7rem;
+}
 
-    .btn-gradient:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 5px 15px rgba(46, 125, 50, 0.3);
-        color: white;
-    }
+.compact-form .observations-group.compact {
+    padding: 10px;
+    margin: 0;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
 
-    .btn-mention {
-        border-radius: 30px;
-        /* plus arrondi */
-        padding: 8px 18px;
-        /* augmenté */
-        font-weight: 600;
-        font-size: 0.9rem;
-        /* augmenté */
-        border: none;
-        cursor: pointer;
-        margin: 3px;
-        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-        display: inline-flex;
-        align-items: center;
-        gap: 8px;
-        transition: all 0.3s;
-    }
+.compact-form .observations-group.compact textarea {
+    min-height: 100px;
+    flex: 1;
+    font-size: 0.85rem;
+}
 
-    .btn-mention:hover {
-        transform: translateY(-2px);
-    }
+.compact-form .actions-container.compact {
+    margin-top: 10px;
+    padding-top: 10px;
+}
 
-    .btn-present {
-        background: var(--success);
-        color: white;
-    }
-
-    .btn-present:hover {
-        background: #218838;
-        box-shadow: 0 5px 15px rgba(40, 167, 69, 0.3);
-    }
-
-    .btn-favorable {
-        background: var(--warning);
-        color: #212529;
-    }
-
-    .btn-favorable:hover {
-        background: #e0a800;
-        box-shadow: 0 5px 15px rgba(255, 193, 7, 0.3);
-    }
-
-    .btn-defavorable {
-        background: var(--danger);
-        color: white;
-    }
-
-    .btn-defavorable:hover {
-        background: #c82333;
-        box-shadow: 0 5px 15px rgba(220, 53, 69, 0.3);
-    }
-
-    .btn-new-search {
-        border-radius: 30px;
-        padding: 6px 16px;
-        background: transparent;
-        border: 1px solid white;
-        color: white;
-        transition: all 0.3s;
-        cursor: pointer;
-        display: inline-flex;
-        align-items: center;
-        gap: 5px;
-        font-size: 0.9rem;
-    }
-
-    .btn-new-search:hover {
-        background: rgba(255, 255, 255, 0.1);
-        transform: translateY(-2px);
-    }
-
-    .badge-statut {
-        display: inline-block;
-        padding: 4px 12px;
-        border-radius: 30px;
-        font-size: 0.8rem;
-        font-weight: 600;
-        margin-left: 10px;
-        color: white;
-    }
-
-    /* === BADGES GRANDS (pour la fiche militaire) === */
-    .badge-actif {
-        background: var(--success);
-    }
-
-    .badge-decede-av-bio {
-        background: #6c757d;
-    }
-
-    .badge-dcd-ap-bio {
-        background: linear-gradient(135deg, #6f42c1, #6610f2);
-    }
-
-    .badge-retraite {
-        background: linear-gradient(135deg, #0d6efd, #0a58ca);
-    }
-
-    .badge-integre {
-        background: linear-gradient(135deg, #dc3545, #b02a37);
-    }
-
-    /* === MINI-BADGES (pour les résultats de recherche) === */
-    #search-results .badge-statut-mini {
-        display: inline-block;
-        padding: 2px 6px;
-        border-radius: 12px;
-        font-size: 0.65rem;
-        font-weight: 600;
-        margin-left: 5px;
-        color: white;
-    }
-
-    .badge-actif-mini {
-        background: var(--success);
-    }
-
-    .badge-decede-av-bio-mini {
-        background: #6c757d;
-    }
-
-    .badge-dcd-ap-bio-mini {
-        background: linear-gradient(135deg, #6f42c1, #6610f2);
-    }
-
-    .badge-retraite-mini {
-        background: linear-gradient(135deg, #0d6efd, #0a58ca);
-    }
-
-    .badge-integre-mini {
-        background: linear-gradient(135deg, #dc3545, #b02a37);
-    }
-
-    /* ===================================================== */
-
-    .militaire-info {
-        background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
-        color: white;
-        padding: 1.2rem 1.8rem;
-        border-radius: 12px;
-        margin-bottom: 1.8rem;
-        box-shadow: 0 4px 15px rgba(46, 125, 50, 0.3);
-    }
-
-    .militaire-info .info-grid {
-        display: flex;
-        flex-wrap: wrap;
-        align-items: center;
-        gap: 1.5rem;
-    }
-
-    .militaire-info .info-item {
-        display: flex;
-        align-items: center;
-        gap: 0.4rem;
-        font-size: 1rem;
-    }
-
-    .militaire-info .info-label {
-        font-weight: 600;
-        color: rgba(255, 255, 255, 0.9);
-    }
-
-    .militaire-info .info-value {
-        font-weight: 500;
-    }
-
-    .militaire-info .separator {
-        width: 1px;
-        height: 20px;
-        background: rgba(255, 255, 255, 0.3);
-    }
-
-    .statut-temp {
-        background: var(--light);
-        border-radius: 10px;
-        padding: 12px;
-        margin: 12px 0;
-        border-left: 4px solid var(--primary);
-    }
-
-    .statut-temp .form-check-inline {
-        margin-right: 1rem;
-    }
-
-    .statut-temp .form-check-input {
-        width: 1.2rem;
-        height: 1.2rem;
-        margin-top: 0.2rem;
-    }
-
-    .statut-temp .form-check-input:checked {
-        background-color: var(--primary);
-        border-color: var(--primary);
-    }
-
-    .liens-grid {
-        display: grid;
-        grid-template-columns: repeat(2, 1fr);
-        gap: 12px;
-        margin-bottom: 12px;
-    }
-
-    .lien-groupe {
-        border: 1px solid #e0e0e0;
-        border-radius: 10px;
-        padding: 10px;
-        background: var(--light);
-        height: 100%;
-        display: flex;
+/* Pour les écrans étroits, on empile les colonnes */
+@media (max-width: 768px) {
+    .compact-form .row {
         flex-direction: column;
     }
 
-    .lien-groupe label {
-        font-weight: 600;
-        color: var(--primary);
-        margin-bottom: 8px;
-        display: block;
-        border-bottom: 1px solid #dee2e6;
-        padding-bottom: 5px;
-        font-size: 0.9rem;
-    }
-
-    .lien-groupe .form-check {
-        margin-bottom: 5px;
-        font-size: 0.85rem;
-    }
-
-    .lien-groupe small {
-        color: var(--gray);
-        font-size: 0.7rem;
-        margin-left: 3px;
-    }
-
-    .form-control-modern {
-        border-radius: 8px;
-        border: 1px solid #ced4da;
-        padding: 8px 12px;
+    .compact-form .col-md-8,
+    .compact-form .col-md-4,
+    .compact-form .col-md-6 {
         width: 100%;
-        transition: all 0.3s;
-        font-size: 0.9rem;
-    }
-
-    .form-control-modern:focus {
-        border-color: var(--primary);
-        box-shadow: 0 0 0 0.2rem rgba(46, 125, 50, 0.25);
-        outline: none;
-    }
-
-    /* Styles pour les cartes bénéficiaires */
-    .beneficiaire-card {
-        background: white;
-        border-radius: 10px;
-        padding: 12px;
-        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
-        border: 1px solid #e0e0e0;
-        height: 100%;
-    }
-
-    .beneficiaire-card.compact {
-        padding: 10px 12px;
-    }
-
-    .beneficiaire-card .form-control-modern {
-        padding: 6px 10px;
-        font-size: 0.85rem;
-    }
-
-    .beneficiaire-card .bg-light {
-        background-color: #f1f3f5 !important;
-        padding: 8px 12px;
-        font-size: 0.95rem;
-        word-break: break-word;
-    }
-
-    .observations-group {
-        background: var(--light);
-        border-radius: 10px;
-        padding: 12px;
-        margin: 12px 0;
-        border: 1px solid #e0e0e0;
-    }
-
-    .observations-group textarea {
-        min-height: 80px;
-        resize: vertical;
-        font-family: 'Barlow', sans-serif;
-        font-size: 0.9rem;
-    }
-
-    .actions-container {
-        display: flex;
-        justify-content: flex-end;
-        gap: 12px;
-        margin-top: 12px;
-        padding-top: 12px;
-        border-top: 2px dashed #dee2e6;
-    }
-
-    #search-results .list-group-item {
-        cursor: pointer;
-        border-left: none;
-        border-right: none;
-        padding: 10px 15px;
-        transition: background 0.2s;
-        font-size: 0.9rem;
-    }
-
-    #search-results .list-group-item small {
-        font-size: 0.75rem;
-    }
-
-    /* Ajustement pour que la liste des résultats s'allonge selon le contenu */
-    #search-results {
-        max-height: 400px !important;
-        overflow-y: auto !important;
-    }
-
-    /* Style pour le toast de succès */
-    .toast-container {
-        position: fixed;
-        top: 20px;
-        right: 20px;
-        z-index: 9999;
-    }
-
-    .toast-message {
-        background: linear-gradient(135deg, var(--success) 0%, #218838 100%);
-        color: white;
-        padding: 15px 25px;
-        border-radius: 12px;
-        box-shadow: 0 5px 20px rgba(40, 167, 69, 0.3);
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        margin-bottom: 10px;
-        animation: slideIn 0.3s ease-out, fadeOut 0.5s ease-out 2.5s forwards;
-        font-weight: 500;
-        min-width: 320px;
-        font-size: 0.95rem;
-    }
-
-    .toast-message i {
-        font-size: 1.2rem;
-    }
-
-    .toast-message.error {
-        background: linear-gradient(135deg, var(--danger) 0%, #c82333 100%);
-        box-shadow: 0 5px 20px rgba(220, 53, 69, 0.3);
-    }
-
-    .toast-message.warning {
-        background: linear-gradient(135deg, var(--warning) 0%, #e0a800 100%);
-        color: #212529;
-    }
-
-    @keyframes slideIn {
-        from {
-            transform: translateX(100%);
-            opacity: 0;
-        }
-
-        to {
-            transform: translateX(0);
-            opacity: 1;
-        }
-    }
-
-    @keyframes fadeOut {
-        from {
-            opacity: 1;
-            transform: translateX(0);
-        }
-
-        to {
-            opacity: 0;
-            transform: translateX(100%);
-        }
-    }
-
-    /* === STYLES COMPACTS POUR LA CARTE BÉNÉFICIAIRE === */
-    .compact-form .liens-grid {
-        gap: 8px;
-    }
-
-    .compact-form .lien-groupe.compact {
-        padding: 8px;
-    }
-
-    .compact-form .lien-groupe.compact label {
-        font-size: 0.85rem;
-        margin-bottom: 5px;
-        padding-bottom: 3px;
-    }
-
-    .compact-form .lien-groupe.compact .form-check {
-        margin-bottom: 3px;
-        font-size: 0.8rem;
-    }
-
-    .compact-form .lien-groupe.compact .form-check small {
-        font-size: 0.7rem;
     }
 
     .compact-form .observations-group.compact {
-        padding: 10px;
-        margin: 0;
-        height: 100%;
-        display: flex;
+        margin-top: 10px;
+    }
+
+    .liens-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .actions-container {
         flex-direction: column;
     }
 
-    .compact-form .observations-group.compact textarea {
-        min-height: 100px;
-        flex: 1;
-        font-size: 0.85rem;
+    .actions-container .btn-mention {
+        width: 100%;
+        justify-content: center;
     }
 
-    .compact-form .actions-container.compact {
-        margin-top: 10px;
-        padding-top: 10px;
+    .militaire-info .info-grid {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
     }
 
-    /* Pour les écrans étroits, on empile les colonnes */
-    @media (max-width: 768px) {
-        .compact-form .row {
-            flex-direction: column;
-        }
-
-        .compact-form .col-md-8,
-        .compact-form .col-md-4,
-        .compact-form .col-md-6 {
-            width: 100%;
-        }
-
-        .compact-form .observations-group.compact {
-            margin-top: 10px;
-        }
-
-        .liens-grid {
-            grid-template-columns: 1fr;
-        }
-
-        .actions-container {
-            flex-direction: column;
-        }
-
-        .actions-container .btn-mention {
-            width: 100%;
-            justify-content: center;
-        }
-
-        .militaire-info .info-grid {
-            flex-direction: column;
-            align-items: flex-start;
-            gap: 0.5rem;
-        }
-
-        .militaire-info .separator {
-            display: none;
-        }
-
-        .statut-temp .d-flex {
-            flex-direction: column;
-            gap: 10px;
-        }
-
-        .toast-message {
-            min-width: 280px;
-            padding: 12px 20px;
-        }
+    .militaire-info .separator {
+        display: none;
     }
 
-    /* ==============================================
+    .statut-temp .d-flex {
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .toast-message {
+        min-width: 280px;
+        padding: 12px 20px;
+    }
+}
+
+/* ==============================================
    STYLES SPÉCIFIQUES POUR LE PROFIL CONTROLEUR (MOBILE)
    ============================================== */
-    <?php if ($is_controleur): ?>
+<?php if ($is_controleur): ?>
 
-    /* Styles spécifiques au profil CONTROLEUR (agrandissement pour mobile/tablette) */
-    body.controleur-mode {
-        font-size: 18px;
-    }
+/* Styles spécifiques au profil CONTROLEUR (agrandissement pour mobile/tablette) */
+body.controleur-mode {
+    font-size: 18px;
+}
 
-    body.controleur-mode .card-modern {
-        border-radius: 16px;
-        margin-bottom: 25px;
-    }
+body.controleur-mode .card-modern {
+    border-radius: 16px;
+    margin-bottom: 25px;
+}
 
-    body.controleur-mode .card-modern .card-header {
-        padding: 20px 25px;
-    }
+body.controleur-mode .card-modern .card-header {
+    padding: 20px 25px;
+}
 
-    body.controleur-mode .card-modern .card-header h3 {
-        font-size: 1.5rem;
-    }
+body.controleur-mode .card-modern .card-header h3 {
+    font-size: 1.5rem;
+}
 
-    body.controleur-mode .card-modern .card-body {
-        padding: 24px;
-    }
+body.controleur-mode .card-modern .card-body {
+    padding: 24px;
+}
 
+body.controleur-mode .btn-mention {
+    padding: 12px 24px;
+    font-size: 1.1rem;
+    border-radius: 40px;
+    margin: 5px;
+}
+
+body.controleur-mode .btn-present {
+    padding: 14px 28px;
+    font-size: 1.2rem;
+}
+
+body.controleur-mode .btn-new-search {
+    padding: 8px 18px;
+    font-size: 0.95rem;
+}
+
+body.controleur-mode .form-control-modern,
+body.controleur-mode textarea.form-control-modern {
+    font-size: 18px !important;
+    padding: 12px;
+}
+
+body.controleur-mode .form-check-input {
+    width: 1.4rem;
+    height: 1.4rem;
+    margin-top: 0.2rem;
+}
+
+body.controleur-mode .form-check-label {
+    font-size: 1rem;
+    margin-left: 0.5rem;
+}
+
+body.controleur-mode .militaire-info {
+    padding: 1.3rem;
+    margin-bottom: 2rem;
+}
+
+body.controleur-mode .militaire-info .info-item {
+    font-size: 1rem;
+}
+
+body.controleur-mode .lien-groupe {
+    padding: 12px;
+}
+
+body.controleur-mode .lien-groupe label {
+    font-size: 1rem;
+    margin-bottom: 8px;
+}
+
+body.controleur-mode .lien-groupe .form-check {
+    font-size: 0.95rem;
+}
+
+body.controleur-mode .beneficiaire-card {
+    padding: 12px;
+}
+
+body.controleur-mode .observations-group textarea {
+    min-height: 100px;
+    font-size: 1rem;
+}
+
+body.controleur-mode .actions-container .btn-mention {
+    padding: 12px 20px;
+}
+
+/* Media queries pour mobile/tablette */
+@media (max-width: 768px) {
     body.controleur-mode .btn-mention {
-        padding: 12px 24px;
-        font-size: 1.1rem;
-        border-radius: 40px;
-        margin: 5px;
+        padding: 14px 20px;
+        font-size: 1.2rem;
+        width: 100%;
     }
 
     body.controleur-mode .btn-present {
-        padding: 14px 28px;
-        font-size: 1.2rem;
-    }
-
-    body.controleur-mode .btn-new-search {
-        padding: 8px 18px;
-        font-size: 0.95rem;
+        padding: 16px 0;
+        font-size: 1.3rem;
     }
 
     body.controleur-mode .form-control-modern,
     body.controleur-mode textarea.form-control-modern {
         font-size: 18px !important;
-        padding: 12px;
+        padding: 14px;
     }
 
     body.controleur-mode .form-check-input {
-        width: 1.4rem;
-        height: 1.4rem;
-        margin-top: 0.2rem;
+        width: 1.5rem;
+        height: 1.5rem;
     }
 
     body.controleur-mode .form-check-label {
-        font-size: 1rem;
-        margin-left: 0.5rem;
-    }
-
-    body.controleur-mode .militaire-info {
-        padding: 1.3rem;
-        margin-bottom: 2rem;
+        font-size: 1.1rem;
     }
 
     body.controleur-mode .militaire-info .info-item {
-        font-size: 1rem;
-    }
-
-    body.controleur-mode .lien-groupe {
-        padding: 12px;
+        font-size: 1.1rem;
     }
 
     body.controleur-mode .lien-groupe label {
-        font-size: 1rem;
-        margin-bottom: 8px;
+        font-size: 1.1rem;
     }
 
     body.controleur-mode .lien-groupe .form-check {
-        font-size: 0.95rem;
-    }
-
-    body.controleur-mode .beneficiaire-card {
-        padding: 12px;
-    }
-
-    body.controleur-mode .observations-group textarea {
-        min-height: 100px;
         font-size: 1rem;
     }
+}
 
-    body.controleur-mode .actions-container .btn-mention {
-        padding: 12px 20px;
+@media (max-width: 480px) {
+    body.controleur-mode .btn-mention {
+        padding: 16px 20px;
+        font-size: 1.3rem;
     }
 
-    /* Media queries pour mobile/tablette */
-    @media (max-width: 768px) {
-        body.controleur-mode .btn-mention {
-            padding: 14px 20px;
-            font-size: 1.2rem;
-            width: 100%;
-        }
-
-        body.controleur-mode .btn-present {
-            padding: 16px 0;
-            font-size: 1.3rem;
-        }
-
-        body.controleur-mode .form-control-modern,
-        body.controleur-mode textarea.form-control-modern {
-            font-size: 18px !important;
-            padding: 14px;
-        }
-
-        body.controleur-mode .form-check-input {
-            width: 1.5rem;
-            height: 1.5rem;
-        }
-
-        body.controleur-mode .form-check-label {
-            font-size: 1.1rem;
-        }
-
-        body.controleur-mode .militaire-info .info-item {
-            font-size: 1.1rem;
-        }
-
-        body.controleur-mode .lien-groupe label {
-            font-size: 1.1rem;
-        }
-
-        body.controleur-mode .lien-groupe .form-check {
-            font-size: 1rem;
-        }
+    body.controleur-mode .btn-present {
+        padding: 18px 0;
+        font-size: 1.4rem;
     }
 
-    @media (max-width: 480px) {
-        body.controleur-mode .btn-mention {
-            padding: 16px 20px;
-            font-size: 1.3rem;
-        }
-
-        body.controleur-mode .btn-present {
-            padding: 18px 0;
-            font-size: 1.4rem;
-        }
-
-        body.controleur-mode .form-control-modern,
-        body.controleur-mode textarea.form-control-modern {
-            font-size: 20px !important;
-            padding: 16px;
-        }
-
-        body.controleur-mode .form-check-input {
-            width: 1.6rem;
-            height: 1.6rem;
-        }
-
-        body.controleur-mode .form-check-label {
-            font-size: 1.2rem;
-        }
-
-        body.controleur-mode .militaire-info .info-item {
-            font-size: 1.2rem;
-        }
-
-        body.controleur-mode .lien-groupe label {
-            font-size: 1.2rem;
-        }
-
-        body.controleur-mode .lien-groupe .form-check {
-            font-size: 1.1rem;
-        }
+    body.controleur-mode .form-control-modern,
+    body.controleur-mode textarea.form-control-modern {
+        font-size: 20px !important;
+        padding: 16px;
     }
 
-    <?php endif;
-    ?>
+    body.controleur-mode .form-check-input {
+        width: 1.6rem;
+        height: 1.6rem;
+    }
+
+    body.controleur-mode .form-check-label {
+        font-size: 1.2rem;
+    }
+
+    body.controleur-mode .militaire-info .info-item {
+        font-size: 1.2rem;
+    }
+
+    body.controleur-mode .lien-groupe label {
+        font-size: 1.2rem;
+    }
+
+    body.controleur-mode .lien-groupe .form-check {
+        font-size: 1.1rem;
+    }
+}
+
+<?php endif;
+?>
 </style>
 
 <!-- Conteneur pour les toasts -->
@@ -1007,138 +1007,138 @@ $is_controleur = isset($_SESSION['user_profil']) && $_SESSION['user_profil'] ===
         $hide_militaire_info = $show_statut && ($vivant_checked || $decede_checked);
     ?>
 
-        <!-- Info militaire -->
-        <div class="militaire-info" <?= $hide_militaire_info ? 'style="display:none;"' : '' ?>>
-            <div class="d-flex align-items-center gap-3 mb-2">
-                <i class="fas fa-user-shield"></i>
-                <span class="fw-bold">MILITAIRE CONCERNÉ</span>
-                <span class="badge-statut <?= $badge_class ?>">
-                    <i class="fas <?= $badge_icon ?>"></i> <?= $type_label ?>
-                </span>
+    <!-- Info militaire -->
+    <div class="militaire-info" <?= $hide_militaire_info ? 'style="display:none;"' : '' ?>>
+        <div class="d-flex align-items-center gap-3 mb-2">
+            <i class="fas fa-user-shield"></i>
+            <span class="fw-bold">MILITAIRE CONCERNÉ</span>
+            <span class="badge-statut <?= $badge_class ?>">
+                <i class="fas <?= $badge_icon ?>"></i> <?= $type_label ?>
+            </span>
+        </div>
+        <div class="info-grid">
+            <div class="info-item"><span class="info-label">Grade :</span> <span
+                    class="info-value"><?= htmlspecialchars($militaire['grade'] ?? 'N/A') ?></span></div>
+            <span class="separator"></span>
+            <div class="info-item"><span class="info-label">Noms :</span> <span
+                    class="info-value"><?= $nom_militaire ?></span></div>
+            <span class="separator"></span>
+            <div class="info-item"><span class="info-label">Matricule :</span> <span
+                    class="info-value"><?= htmlspecialchars($militaire['matricule']) ?></span></div>
+            <span class="separator"></span>
+            <div class="info-item"><span class="info-label">Âge :</span> <span
+                    class="info-value"><?= isset($age) && $age ? $age . ' ans' : 'N/A' ?></span></div>
+            <span class="separator"></span>
+            <div class="info-item"><span class="info-label">Unité :</span> <span
+                    class="info-value"><?= htmlspecialchars($militaire['unite'] ?? 'N/A') ?></span></div>
+            <span class="separator"></span>
+            <div class="info-item"><span class="info-label">Garnison :</span> <span
+                    class="info-value"><?= htmlspecialchars($militaire['garnison'] ?? 'N/A') ?></span></div>
+            <span class="separator"></span>
+            <div class="info-item"><span class="info-label">Province :</span> <span
+                    class="info-value"><?= htmlspecialchars($militaire['province'] ?? 'N/A') ?></span></div>
+        </div>
+    </div>
+
+    <?php if ($show_statut): ?>
+    <!-- Statut temporaire - TOUJOURS affiché pour DCD_AP_BIO -->
+    <div class="statut-temp">
+        <div class="d-flex align-items-center flex-wrap gap-2">
+            <span class="fw-bold small"><i class="fas fa-info-circle"></i> Statut :</span>
+
+            <?php if (!$is_dcd_av_bio): ?>
+            <div class="form-check form-check-inline">
+                <input class="form-check-input statut-checkbox" type="checkbox" id="statut_vivant"
+                    <?= $vivant_checked ? 'checked' : '' ?> data-statut="vivant">
+                <label class="form-check-label small" for="statut_vivant">
+                    <span class="badge bg-success">Vivant</span>
+                </label>
             </div>
-            <div class="info-grid">
-                <div class="info-item"><span class="info-label">Grade :</span> <span
-                        class="info-value"><?= htmlspecialchars($militaire['grade'] ?? 'N/A') ?></span></div>
-                <span class="separator"></span>
-                <div class="info-item"><span class="info-label">Noms :</span> <span
-                        class="info-value"><?= $nom_militaire ?></span></div>
-                <span class="separator"></span>
-                <div class="info-item"><span class="info-label">Matricule :</span> <span
-                        class="info-value"><?= htmlspecialchars($militaire['matricule']) ?></span></div>
-                <span class="separator"></span>
-                <div class="info-item"><span class="info-label">Âge :</span> <span
-                        class="info-value"><?= isset($age) && $age ? $age . ' ans' : 'N/A' ?></span></div>
-                <span class="separator"></span>
-                <div class="info-item"><span class="info-label">Unité :</span> <span
-                        class="info-value"><?= htmlspecialchars($militaire['unite'] ?? 'N/A') ?></span></div>
-                <span class="separator"></span>
-                <div class="info-item"><span class="info-label">Garnison :</span> <span
-                        class="info-value"><?= htmlspecialchars($militaire['garnison'] ?? 'N/A') ?></span></div>
-                <span class="separator"></span>
-                <div class="info-item"><span class="info-label">Province :</span> <span
-                        class="info-value"><?= htmlspecialchars($militaire['province'] ?? 'N/A') ?></span></div>
+            <?php endif; ?>
+
+            <div class="form-check form-check-inline">
+                <input class="form-check-input statut-checkbox" type="checkbox" id="statut_decede"
+                    <?= $decede_checked ? 'checked' : '' ?> data-statut="decede"
+                    <?= $is_dcd_av_bio ? 'checked disabled' : '' ?>>
+                <label class="form-check-label small" for="statut_decede">
+                    <span class="badge bg-danger">Décédé</span>
+                </label>
             </div>
         </div>
+        <div class="alert alert-info mt-1 mb-0 py-1 small" id="info-message">
+            <i class="fas fa-info-circle"></i>
+            <?= $is_dcd_av_bio ? 'Catégorie DCD_AV_BIO : toujours considéré comme décédé' : ($cat === 'DCD_AP_BIO' ? 'Cochez "Vivant" pour contrôler le militaire ou "Décédé" pour enregistrer un bénéficiaire' : 'Sélectionnez un statut') ?>
+        </div>
+    </div>
+    <?php endif; ?>
 
-        <?php if ($show_statut): ?>
-            <!-- Statut temporaire - TOUJOURS affiché pour DCD_AP_BIO -->
-            <div class="statut-temp">
-                <div class="d-flex align-items-center flex-wrap gap-2">
-                    <span class="fw-bold small"><i class="fas fa-info-circle"></i> Statut :</span>
+    <!-- Contrôle avec titre dynamique (incluant le nom du militaire) -->
+    <div class="card-modern" id="controle-section"
+        style="<?= ($show_controle_vivant || $show_controle_decede) ? '' : 'display:none' ?>">
+        <div class="card-header">
+            <h3 id="titre-controle">
+                <i class="fas <?= $show_controle_vivant ? 'fa-user' : 'fa-users' ?>" id="titre-icon"></i>
+                <span id="titre-texte">
+                    <?= $show_controle_vivant ? 'Contrôle du militaire : ' . $nom_militaire : 'Bénéficiaire(s) du défunt : ' . $nom_militaire ?>
+                </span>
+            </h3>
+            <button class="btn-new-search" id="btn-new-search"><i class="fas fa-search"></i> Nouvelle recherche</button>
+        </div>
+        <div class="card-body" id="controle-content">
+            <?php if ($show_controle_vivant): ?>
+            <!-- Vivant -->
+            <div class="d-flex gap-2 justify-content-center">
+                <a href="?action=valider&matricule=<?= urlencode($militaire['matricule']) ?>&lien=Militaire lui-même&mention=Présent&q=<?= urlencode($q) ?><?= $statut_vivant ? '&statut_vivant=on' : '' ?>"
+                    class="btn-mention btn-present" id="btn-present">
+                    <i class="fas fa-check-circle"></i> Présent
+                </a>
+            </div>
 
-                    <?php if (!$is_dcd_av_bio): ?>
-                        <div class="form-check form-check-inline">
-                            <input class="form-check-input statut-checkbox" type="checkbox" id="statut_vivant"
-                                <?= $vivant_checked ? 'checked' : '' ?> data-statut="vivant">
-                            <label class="form-check-label small" for="statut_vivant">
-                                <span class="badge bg-success">Vivant</span>
-                            </label>
+            <?php elseif ($show_controle_decede): ?>
+            <!-- Défunt - VERSION COMPACTE AVEC DEUX COLONNES POUR BÉNÉFICIAIRES -->
+            <form method="get" id="form-controle" class="compact-form">
+                <input type="hidden" name="action" value="valider">
+                <input type="hidden" name="matricule" value="<?= htmlspecialchars($militaire['matricule']) ?>">
+                <input type="hidden" name="q" value="<?= htmlspecialchars($q) ?>">
+                <?php if ($decede_checked): ?>
+                <input type="hidden" name="statut_decede" value="on">
+                <?php endif; ?>
+
+                <!-- Section bénéficiaires en deux colonnes -->
+                <div class="row g-2 mb-2">
+                    <!-- Colonne Bénéficiaire existant -->
+                    <div class="col-md-6">
+                        <div class="beneficiaire-card compact h-100">
+                            <label class="fw-bold small"><i class="fas fa-user-tie"></i> Bénéficiaire existant</label>
+                            <?php if ($benef_nom): ?>
+                            <div class="fw-bold text-success mt-1" style="font-size:0.95rem;">
+                                <?= htmlspecialchars($benef_nom) ?></div>
+                            <input type="hidden" name="beneficiaire" value="<?= htmlspecialchars($benef_nom) ?>">
+                            <?php else: ?>
+                            <div class="text-muted mt-1" style="font-size:0.95rem;">Aucun bénéficiaire existant</div>
+                            <?php endif; ?>
                         </div>
-                    <?php endif; ?>
-
-                    <div class="form-check form-check-inline">
-                        <input class="form-check-input statut-checkbox" type="checkbox" id="statut_decede"
-                            <?= $decede_checked ? 'checked' : '' ?> data-statut="decede"
-                            <?= $is_dcd_av_bio ? 'checked disabled' : '' ?>>
-                        <label class="form-check-label small" for="statut_decede">
-                            <span class="badge bg-danger">Décédé</span>
-                        </label>
+                    </div>
+                    <!-- Colonne Nouveau bénéficiaire -->
+                    <div class="col-md-6">
+                        <div class="beneficiaire-card compact h-100">
+                            <label class="fw-bold mb-1 small"><i class="fas fa-user-plus"></i> Nouveau
+                                bénéficiaire</label>
+                            <input type="text" name="new_beneficiaire" class="form-control-modern"
+                                placeholder="Nom complet du nouveau bénéficiaire"
+                                value="<?= htmlspecialchars($_GET['new_beneficiaire'] ?? '') ?>">
+                            <small class="text-muted d-block mt-1"><i class="fas fa-info-circle"></i> Remplissez pour
+                                ajouter un nouveau.</small>
+                        </div>
                     </div>
                 </div>
-                <div class="alert alert-info mt-1 mb-0 py-1 small" id="info-message">
-                    <i class="fas fa-info-circle"></i>
-                    <?= $is_dcd_av_bio ? 'Catégorie DCD_AV_BIO : toujours considéré comme décédé' : ($cat === 'DCD_AP_BIO' ? 'Cochez "Vivant" pour contrôler le militaire ou "Décédé" pour enregistrer un bénéficiaire' : 'Sélectionnez un statut') ?>
-                </div>
-            </div>
-        <?php endif; ?>
 
-        <!-- Contrôle avec titre dynamique (incluant le nom du militaire) -->
-        <div class="card-modern" id="controle-section"
-            style="<?= ($show_controle_vivant || $show_controle_decede) ? '' : 'display:none' ?>">
-            <div class="card-header">
-                <h3 id="titre-controle">
-                    <i class="fas <?= $show_controle_vivant ? 'fa-user' : 'fa-users' ?>" id="titre-icon"></i>
-                    <span id="titre-texte">
-                        <?= $show_controle_vivant ? 'Contrôle du militaire : ' . $nom_militaire : 'Bénéficiaire(s) du défunt : ' . $nom_militaire ?>
-                    </span>
-                </h3>
-                <button class="btn-new-search" id="btn-new-search"><i class="fas fa-search"></i> Nouvelle recherche</button>
-            </div>
-            <div class="card-body" id="controle-content">
-                <?php if ($show_controle_vivant): ?>
-                    <!-- Vivant -->
-                    <div class="d-flex gap-2 justify-content-center">
-                        <a href="?action=valider&matricule=<?= urlencode($militaire['matricule']) ?>&lien=Militaire lui-même&mention=Présent&q=<?= urlencode($q) ?><?= $statut_vivant ? '&statut_vivant=on' : '' ?>"
-                            class="btn-mention btn-present" id="btn-present">
-                            <i class="fas fa-check-circle"></i> Présent
-                        </a>
-                    </div>
-
-                <?php elseif ($show_controle_decede): ?>
-                    <!-- Défunt - VERSION COMPACTE AVEC DEUX COLONNES POUR BÉNÉFICIAIRES -->
-                    <form method="get" id="form-controle" class="compact-form">
-                        <input type="hidden" name="action" value="valider">
-                        <input type="hidden" name="matricule" value="<?= htmlspecialchars($militaire['matricule']) ?>">
-                        <input type="hidden" name="q" value="<?= htmlspecialchars($q) ?>">
-                        <?php if ($decede_checked): ?>
-                            <input type="hidden" name="statut_decede" value="on">
-                        <?php endif; ?>
-
-                        <!-- Section bénéficiaires en deux colonnes -->
-                        <div class="row g-2 mb-2">
-                            <!-- Colonne Bénéficiaire existant -->
-                            <div class="col-md-6">
-                                <div class="beneficiaire-card compact h-100">
-                                    <label class="fw-bold small"><i class="fas fa-user-tie"></i> Bénéficiaire existant</label>
-                                    <?php if ($benef_nom): ?>
-                                        <div class="fw-bold text-success mt-1" style="font-size:0.95rem;">
-                                            <?= htmlspecialchars($benef_nom) ?></div>
-                                        <input type="hidden" name="beneficiaire" value="<?= htmlspecialchars($benef_nom) ?>">
-                                    <?php else: ?>
-                                        <div class="text-muted mt-1" style="font-size:0.95rem;">Aucun bénéficiaire existant</div>
-                                    <?php endif; ?>
-                                </div>
-                            </div>
-                            <!-- Colonne Nouveau bénéficiaire -->
-                            <div class="col-md-6">
-                                <div class="beneficiaire-card compact h-100">
-                                    <label class="fw-bold mb-1 small"><i class="fas fa-user-plus"></i> Nouveau
-                                        bénéficiaire</label>
-                                    <input type="text" name="new_beneficiaire" class="form-control-modern"
-                                        placeholder="Nom complet du nouveau bénéficiaire"
-                                        value="<?= htmlspecialchars($_GET['new_beneficiaire'] ?? '') ?>">
-                                    <small class="text-muted d-block mt-1"><i class="fas fa-info-circle"></i> Remplissez pour
-                                        ajouter un nouveau.</small>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Deux colonnes : liens (gauche) et observations (droite) -->
-                        <div class="row g-2">
-                            <!-- Colonne Liens de parenté (8/12) -->
-                            <div class="col-md-8">
-                                <div class="liens-grid">
-                                    <?php
+                <!-- Deux colonnes : liens (gauche) et observations (droite) -->
+                <div class="row g-2">
+                    <!-- Colonne Liens de parenté (8/12) -->
+                    <div class="col-md-8">
+                        <div class="liens-grid">
+                            <?php
                                     $groupes = [
                                         'Epouse/Epoux' => [
                                             'Epouse' => 'Veuve',
@@ -1159,55 +1159,55 @@ $is_controleur = isset($_SESSION['user_profil']) && $_SESSION['user_profil'] ===
                                     ];
 
                                     foreach ($groupes as $groupe => $liens): ?>
-                                        <div class="lien-groupe compact">
-                                            <label><?= $groupe ?></label>
-                                            <div class="d-flex flex-wrap gap-1">
-                                                <?php foreach ($liens as $lien => $transformation): ?>
-                                                    <div class="form-check form-check-inline" style="margin-right: 0;">
-                                                        <input class="form-check-input" type="checkbox" name="lien"
-                                                            id="lien_<?= $lien ?>" value="<?= $lien ?>">
-                                                        <label class="form-check-label" for="lien_<?= $lien ?>">
-                                                            <?= $lien ?> <small class="text-muted">(→ <?= $transformation ?>)</small>
-                                                        </label>
-                                                    </div>
-                                                <?php endforeach; ?>
-                                            </div>
-                                        </div>
+                            <div class="lien-groupe compact">
+                                <label><?= $groupe ?></label>
+                                <div class="d-flex flex-wrap gap-1">
+                                    <?php foreach ($liens as $lien => $transformation): ?>
+                                    <div class="form-check form-check-inline" style="margin-right: 0;">
+                                        <input class="form-check-input" type="checkbox" name="lien"
+                                            id="lien_<?= $lien ?>" value="<?= $lien ?>">
+                                        <label class="form-check-label" for="lien_<?= $lien ?>">
+                                            <?= $lien ?> <small class="text-muted">(→ <?= $transformation ?>)</small>
+                                        </label>
+                                    </div>
                                     <?php endforeach; ?>
                                 </div>
                             </div>
-
-                            <!-- Colonne Observations (4/12) -->
-                            <div class="col-md-4">
-                                <div class="observations-group compact">
-                                    <label class="fw-bold small"><i class="fas fa-pencil-alt"></i> Observations
-                                        (optionnel)</label>
-                                    <textarea name="observations" class="form-control-modern"
-                                        placeholder="Informations complémentaires..."><?= htmlspecialchars($observations) ?></textarea>
-                                </div>
-                            </div>
+                            <?php endforeach; ?>
                         </div>
+                    </div>
 
-                        <!-- Actions -->
-                        <div class="actions-container compact">
-                            <button type="submit" name="mention" value="Favorable" class="btn-mention btn-favorable">
-                                <i class="fas fa-thumbs-up"></i> Favorable
-                            </button>
-                            <button type="submit" name="mention" value="Défavorable" class="btn-mention btn-defavorable">
-                                <i class="fas fa-thumbs-down"></i> Défavorable
-                            </button>
+                    <!-- Colonne Observations (4/12) -->
+                    <div class="col-md-4">
+                        <div class="observations-group compact">
+                            <label class="fw-bold small"><i class="fas fa-pencil-alt"></i> Observations
+                                (optionnel)</label>
+                            <textarea name="observations" class="form-control-modern"
+                                placeholder="Informations complémentaires..."><?= htmlspecialchars($observations) ?></textarea>
                         </div>
-                    </form>
-                <?php endif; ?>
-            </div>
+                    </div>
+                </div>
+
+                <!-- Actions -->
+                <div class="actions-container compact">
+                    <button type="submit" name="mention" value="Favorable" class="btn-mention btn-favorable">
+                        <i class="fas fa-thumbs-up"></i> Favorable
+                    </button>
+                    <button type="submit" name="mention" value="Défavorable" class="btn-mention btn-defavorable">
+                        <i class="fas fa-thumbs-down"></i> Défavorable
+                    </button>
+                </div>
+            </form>
+            <?php endif; ?>
         </div>
+    </div>
 
     <?php elseif ($q !== ''): ?>
-        <div class="alert alert-warning text-center">Aucun militaire trouvé pour "<?= htmlspecialchars($q) ?>"</div>
+    <div class="alert alert-warning text-center">Aucun militaire trouvé pour "<?= htmlspecialchars($q) ?>"</div>
     <?php endif; ?>
 
     <?php if (isset($error)): ?>
-        <div class="alert alert-danger mt-3"><?= htmlspecialchars($error) ?></div>
+    <div class="alert alert-danger mt-3"><?= htmlspecialchars($error) ?></div>
     <?php endif; ?>
 </div>
 
@@ -1217,301 +1217,301 @@ $is_controleur = isset($_SESSION['user_profil']) && $_SESSION['user_profil'] ===
 <script src="../../assets/js/sweetalert2@11.js"></script>
 
 <script>
-    (function() {
-        'use strict';
-        let clickedMention = null;
+(function() {
+    'use strict';
+    let clickedMention = null;
 
-        $(document).ready(function() {
-            initEventHandlers();
-            showMessages();
-            // Détection tactile pour désactiver certains effets hover
-            if ('ontouchstart' in window) {
-                $('body').addClass('touch-device');
-            }
-            <?php if ($is_controleur): ?>
-                document.body.classList.add('controleur-mode');
-            <?php endif; ?>
-        });
+    $(document).ready(function() {
+        initEventHandlers();
+        showMessages();
+        // Détection tactile pour désactiver certains effets hover
+        if ('ontouchstart' in window) {
+            $('body').addClass('touch-device');
+        }
+        <?php if ($is_controleur): ?>
+        document.body.classList.add('controleur-mode');
+        <?php endif; ?>
+    });
 
-        function showToast(message, type = 'success') {
-            const toastContainer = document.getElementById('toastContainer');
-            if (!toastContainer) return;
+    function showToast(message, type = 'success') {
+        const toastContainer = document.getElementById('toastContainer');
+        if (!toastContainer) return;
 
-            const toast = document.createElement('div');
-            toast.className = `toast-message ${type}`;
-            toast.innerHTML = `
+        const toast = document.createElement('div');
+        toast.className = `toast-message ${type}`;
+        toast.innerHTML = `
             <i class="fas ${type === 'success' ? 'fa-check-circle' : type === 'error' ? 'fa-exclamation-circle' : 'fa-info-circle'}"></i>
             <span>${message}</span>
         `;
 
-            toastContainer.appendChild(toast);
+        toastContainer.appendChild(toast);
 
-            setTimeout(() => {
-                toast.remove();
-            }, 3000);
+        setTimeout(() => {
+            toast.remove();
+        }, 3000);
+    }
+
+    function initEventHandlers() {
+        $('.statut-checkbox').on('change', handleStatutChange);
+        $('#btn-new-search').on('click', (e) => {
+            e.preventDefault();
+            // Cacher tous les éléments liés au militaire
+            $('#search-section').show();
+            $('.militaire-info').hide();
+            $('.statut-temp').hide();
+            $('#controle-section').hide();
+
+            // Réinitialiser l'URL (enlever tous les paramètres)
+            window.history.pushState({}, '', window.location.pathname);
+
+            // Vider et focus sur la recherche
+            $('#search-input').val('').focus();
+        });
+        $('#btn-present').on('click', handlePresentClick);
+        $('#form-controle').on('submit', handleFormSubmit);
+        $('#form-controle button[type=submit]').on('click', function() {
+            clickedMention = $(this).val();
+        });
+        $(document).on('change', 'input[name="lien"]', function() {
+            $('input[name="lien"]').not(this).prop('checked', false);
+        });
+    }
+
+    function handleStatutChange() {
+        const $this = $(this);
+        const isChecked = $this.is(':checked');
+        const statutType = $this.data('statut');
+
+        if (isChecked) {
+            if (statutType === 'vivant') {
+                $('#statut_decede').prop('checked', false);
+            } else {
+                $('#statut_vivant').prop('checked', false);
+            }
         }
+        updateStatut();
+    }
 
-        function initEventHandlers() {
-            $('.statut-checkbox').on('change', handleStatutChange);
-            $('#btn-new-search').on('click', (e) => {
-                e.preventDefault();
-                // Cacher tous les éléments liés au militaire
-                $('#search-section').show();
-                $('.militaire-info').hide();
-                $('.statut-temp').hide();
-                $('#controle-section').hide();
+    function updateStatut() {
+        const vivantChecked = $('#statut_vivant').is(':checked');
+        const decedeChecked = $('#statut_decede').is(':checked');
+        const q = new URLSearchParams(window.location.search).get('q') || '<?= htmlspecialchars($q) ?>';
 
-                // Réinitialiser l'URL (enlever tous les paramètres)
-                window.history.pushState({}, '', window.location.pathname);
+        $('#loading-icon').removeClass('d-none');
+        $('#status-text').text('Mise à jour...');
+        $('#controle-section').addClass('loading');
 
-                // Vider et focus sur la recherche
-                $('#search-input').val('').focus();
-            });
-            $('#btn-present').on('click', handlePresentClick);
-            $('#form-controle').on('submit', handleFormSubmit);
-            $('#form-controle button[type=submit]').on('click', function() {
-                clickedMention = $(this).val();
-            });
-            $(document).on('change', 'input[name="lien"]', function() {
-                $('input[name="lien"]').not(this).prop('checked', false);
-            });
-        }
+        const params = new URLSearchParams({
+            q
+        });
+        if (vivantChecked) params.set('statut_vivant', 'on');
+        if (decedeChecked) params.set('statut_decede', 'on');
 
-        function handleStatutChange() {
-            const $this = $(this);
-            const isChecked = $this.is(':checked');
-            const statutType = $this.data('statut');
+        $.ajax({
+            url: window.location.pathname + '?' + params.toString(),
+            method: 'GET',
+            success: function(response) {
+                const doc = new DOMParser().parseFromString(response, 'text/html');
+                const newContent = doc.getElementById('controle-content');
+                const newInfo = doc.getElementById('info-message');
 
-            if (isChecked) {
-                if (statutType === 'vivant') {
-                    $('#statut_decede').prop('checked', false);
+                if (newContent) $('#controle-content').html(newContent.innerHTML);
+                if (newInfo) $('#info-message').html(newInfo.innerHTML);
+
+                // Récupérer le nom du militaire depuis l'élément HTML (même s'il est caché)
+                const nomMilitaire = $('.militaire-info .info-item:contains("Noms") .info-value').text()
+                    .trim();
+
+                // Mise à jour de l'affichage en fonction des cases cochées
+                if (vivantChecked && !decedeChecked) {
+                    $('#controle-section').show();
+
+                    // Mettre à jour le titre pour "Contrôle du militaire" avec le nom
+                    $('#titre-icon').removeClass('fa-users').addClass('fa-user');
+                    $('#titre-texte').text('Contrôle du militaire : ' + nomMilitaire);
+                } else if (decedeChecked && !vivantChecked) {
+                    $('#controle-section').show();
+
+                    // Mettre à jour le titre pour "Bénéficiaire(s) du défunt" avec le nom
+                    $('#titre-icon').removeClass('fa-user').addClass('fa-users');
+                    $('#titre-texte').text('Bénéficiaire(s) du défunt : ' + nomMilitaire);
                 } else {
-                    $('#statut_vivant').prop('checked', false);
+                    $('#controle-section').hide();
                 }
-            }
-            updateStatut();
-        }
 
-        function updateStatut() {
-            const vivantChecked = $('#statut_vivant').is(':checked');
-            const decedeChecked = $('#statut_decede').is(':checked');
-            const q = new URLSearchParams(window.location.search).get('q') || '<?= htmlspecialchars($q) ?>';
-
-            $('#loading-icon').removeClass('d-none');
-            $('#status-text').text('Mise à jour...');
-            $('#controle-section').addClass('loading');
-
-            const params = new URLSearchParams({
-                q
-            });
-            if (vivantChecked) params.set('statut_vivant', 'on');
-            if (decedeChecked) params.set('statut_decede', 'on');
-
-            $.ajax({
-                url: window.location.pathname + '?' + params.toString(),
-                method: 'GET',
-                success: function(response) {
-                    const doc = new DOMParser().parseFromString(response, 'text/html');
-                    const newContent = doc.getElementById('controle-content');
-                    const newInfo = doc.getElementById('info-message');
-
-                    if (newContent) $('#controle-content').html(newContent.innerHTML);
-                    if (newInfo) $('#info-message').html(newInfo.innerHTML);
-
-                    // Récupérer le nom du militaire depuis l'élément HTML (même s'il est caché)
-                    const nomMilitaire = $('.militaire-info .info-item:contains("Noms") .info-value').text()
-                        .trim();
-
-                    // Mise à jour de l'affichage en fonction des cases cochées
-                    if (vivantChecked && !decedeChecked) {
-                        $('#controle-section').show();
-
-                        // Mettre à jour le titre pour "Contrôle du militaire" avec le nom
-                        $('#titre-icon').removeClass('fa-users').addClass('fa-user');
-                        $('#titre-texte').text('Contrôle du militaire : ' + nomMilitaire);
-                    } else if (decedeChecked && !vivantChecked) {
-                        $('#controle-section').show();
-
-                        // Mettre à jour le titre pour "Bénéficiaire(s) du défunt" avec le nom
-                        $('#titre-icon').removeClass('fa-user').addClass('fa-users');
-                        $('#titre-texte').text('Bénéficiaire(s) du défunt : ' + nomMilitaire);
-                    } else {
-                        $('#controle-section').hide();
-                    }
-
-                    // Gestion de l'affichage de la carte info militaire
-                    if (vivantChecked || decedeChecked) {
-                        $('.militaire-info').hide();
-                    } else {
-                        $('.militaire-info').show();
-                    }
-
-                    window.history.pushState({}, '', window.location.pathname + '?' + params);
-                    $('#status-text').text('Modification temps réel');
-                    initEventHandlers();
-                },
-                error: () => {
-                    showToast('Échec de la mise à jour', 'error');
-                    $('#status-text').text('Erreur');
-                },
-                complete: () => {
-                    $('#loading-icon').addClass('d-none');
-                    $('#controle-section').removeClass('loading');
+                // Gestion de l'affichage de la carte info militaire
+                if (vivantChecked || decedeChecked) {
+                    $('.militaire-info').hide();
+                } else {
+                    $('.militaire-info').show();
                 }
-            });
+
+                window.history.pushState({}, '', window.location.pathname + '?' + params);
+                $('#status-text').text('Modification temps réel');
+                initEventHandlers();
+            },
+            error: () => {
+                showToast('Échec de la mise à jour', 'error');
+                $('#status-text').text('Erreur');
+            },
+            complete: () => {
+                $('#loading-icon').addClass('d-none');
+                $('#controle-section').removeClass('loading');
+            }
+        });
+    }
+
+    function handlePresentClick(e) {
+        e.preventDefault();
+        Swal.fire({
+            title: 'Confirmer',
+            text: 'Attribuer la mention "Présent" ?',
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonColor: '#28a745',
+            confirmButtonText: 'Oui'
+        }).then((result) => {
+            if (result.isConfirmed) window.location.href = $(this).attr('href');
+        });
+    }
+
+    function handleFormSubmit(e) {
+        e.preventDefault();
+        const $form = $(this);
+
+        if ($form.find('input[name="lien"]:checked').length === 0) {
+            return Swal.fire('Attention', 'Sélectionnez un lien de parenté', 'warning');
         }
 
-        function handlePresentClick(e) {
-            e.preventDefault();
-            Swal.fire({
-                title: 'Confirmer',
-                text: 'Attribuer la mention "Présent" ?',
-                icon: 'question',
-                showCancelButton: true,
-                confirmButtonColor: '#28a745',
-                confirmButtonText: 'Oui'
-            }).then((result) => {
-                if (result.isConfirmed) window.location.href = $(this).attr('href');
-            });
+        const benef = $form.find('input[name="beneficiaire"]').val(); // hidden field, may be undefined
+        const newBenef = $form.find('input[name="new_beneficiaire"]').val();
+
+        // Vérifier qu'au moins un bénéficiaire est renseigné
+        // (benef peut être présent via hidden, newBenef via input)
+        if ((!benef || benef.trim() === '') && (!newBenef || newBenef.trim() === '')) {
+            return Swal.fire('Attention', 'Veuillez renseigner un bénéficiaire (existant ou nouveau)', 'warning');
         }
 
-        function handleFormSubmit(e) {
-            e.preventDefault();
-            const $form = $(this);
-
-            if ($form.find('input[name="lien"]:checked').length === 0) {
-                return Swal.fire('Attention', 'Sélectionnez un lien de parenté', 'warning');
-            }
-
-            const benef = $form.find('input[name="beneficiaire"]').val(); // hidden field, may be undefined
-            const newBenef = $form.find('input[name="new_beneficiaire"]').val();
-
-            // Vérifier qu'au moins un bénéficiaire est renseigné
-            // (benef peut être présent via hidden, newBenef via input)
-            if ((!benef || benef.trim() === '') && (!newBenef || newBenef.trim() === '')) {
-                return Swal.fire('Attention', 'Veuillez renseigner un bénéficiaire (existant ou nouveau)', 'warning');
-            }
-
-            const lien = $form.find('input[name="lien"]:checked').val();
-            const message = `Attribuer la mention "${clickedMention === 'Favorable' ? 'Favorable' : 'Défavorable'}"${
+        const lien = $form.find('input[name="lien"]:checked').val();
+        const message = `Attribuer la mention "${clickedMention === 'Favorable' ? 'Favorable' : 'Défavorable'}"${
             ['Père','Mère','Frère','Sœur'].includes(lien) ? ' (→ Tuteur)' :
             lien === 'Epoux' ? ' (→ Veuf)' :
             lien === 'Epouse' ? ' (→ Veuve)' :
             ['Fils','Fille'].includes(lien) ? ' (→ Orphelin)' : ''
         } ?`;
 
-            Swal.fire({
-                title: 'Confirmation',
-                text: message,
-                icon: 'question',
-                showCancelButton: true,
-                confirmButtonColor: clickedMention === 'Favorable' ? '#ffc107' : '#dc3545',
-                confirmButtonText: 'Valider'
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    $form.append($('<input>', {
-                        type: 'hidden',
-                        name: 'mention',
-                        value: clickedMention
-                    }));
-                    $form.off('submit').submit();
-                }
-            });
-        }
+        Swal.fire({
+            title: 'Confirmation',
+            text: message,
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonColor: clickedMention === 'Favorable' ? '#ffc107' : '#dc3545',
+            confirmButtonText: 'Valider'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                $form.append($('<input>', {
+                    type: 'hidden',
+                    name: 'mention',
+                    value: clickedMention
+                }));
+                $form.off('submit').submit();
+            }
+        });
+    }
 
-        function showMessages() {
-            <?php if ($toast_message): ?>
-                showToast('<?= addslashes($toast_message) ?>', '<?= $toast_type ?>');
-            <?php endif; ?>
+    function showMessages() {
+        <?php if ($toast_message): ?>
+        showToast('<?= addslashes($toast_message) ?>', '<?= $toast_type ?>');
+        <?php endif; ?>
 
-            <?php if (isset($_SESSION['swal'])): ?>
-                Swal.fire({
-                    icon: '<?= $_SESSION['swal']['icon'] ?>',
-                    title: '<?= $_SESSION['swal']['title'] ?>',
-                    text: '<?= $_SESSION['swal']['text'] ?>',
-                    confirmButtonText: '<?= $_SESSION['swal']['confirmButtonText'] ?? "OK" ?>',
-                    cancelButtonText: '<?= $_SESSION['swal']['cancelButtonText'] ?? "Annuler" ?>'
-                }).then((result) => {
-                    if (result.isConfirmed && '<?= $_SESSION['swal']['confirmButtonText'] ?>' ===
-                        'Nouvelle recherche') {
-                        window.location.href = window.location.pathname;
-                    }
-                });
-                <?php unset($_SESSION['swal']); ?>
-            <?php endif; ?>
-        }
-    })();
+        <?php if (isset($_SESSION['swal'])): ?>
+        Swal.fire({
+            icon: '<?= $_SESSION['swal']['icon'] ?>',
+            title: '<?= $_SESSION['swal']['title'] ?>',
+            text: '<?= $_SESSION['swal']['text'] ?>',
+            confirmButtonText: '<?= $_SESSION['swal']['confirmButtonText'] ?? "OK" ?>',
+            cancelButtonText: '<?= $_SESSION['swal']['cancelButtonText'] ?? "Annuler" ?>'
+        }).then((result) => {
+            if (result.isConfirmed && '<?= $_SESSION['swal']['confirmButtonText'] ?>' ===
+                'Nouvelle recherche') {
+                window.location.href = window.location.pathname;
+            }
+        });
+        <?php unset($_SESSION['swal']); ?>
+        <?php endif; ?>
+    }
+})();
 </script>
 
 <!-- Script de recherche en temps réel -->
 <script>
-    (function() {
-        'use strict';
-        const searchInput = document.getElementById('search-input');
-        const searchResults = document.getElementById('search-results');
-        let searchTimeout = null;
-        let currentFocus = -1;
+(function() {
+    'use strict';
+    const searchInput = document.getElementById('search-input');
+    const searchResults = document.getElementById('search-results');
+    let searchTimeout = null;
+    let currentFocus = -1;
 
-        if (!searchInput) return;
+    if (!searchInput) return;
 
-        function fetchResults(query) {
-            if (query.length < 2) {
-                searchResults.style.display = 'none';
-                return;
-            }
-            fetch(`?ajax=search&q=${encodeURIComponent(query)}`)
-                .then(response => response.json())
-                .then(data => displayResults(data))
-                .catch(() => searchResults.style.display = 'none');
+    function fetchResults(query) {
+        if (query.length < 2) {
+            searchResults.style.display = 'none';
+            return;
+        }
+        fetch(`?ajax=search&q=${encodeURIComponent(query)}`)
+            .then(response => response.json())
+            .then(data => displayResults(data))
+            .catch(() => searchResults.style.display = 'none');
+    }
+
+    function displayResults(results) {
+        searchResults.innerHTML = '';
+        if (!results || results.length === 0) {
+            searchResults.style.display = 'none';
+            return;
         }
 
-        function displayResults(results) {
-            searchResults.innerHTML = '';
-            if (!results || results.length === 0) {
-                searchResults.style.display = 'none';
-                return;
+        results.forEach((militaire, index) => {
+            const item = document.createElement('a');
+            item.href = `?q=${encodeURIComponent(militaire.matricule)}`;
+            item.className = 'list-group-item list-group-item-action';
+            item.setAttribute('data-index', index);
+
+            // Déterminer la classe, l'icône et le texte du badge en fonction de la catégorie
+            let badgeClass = 'badge-actif-mini';
+            let badgeIcon = 'fa-user-check';
+            let badgeText = 'ACTIF';
+
+            switch (militaire.categorie) {
+                case 'DCD_AV_BIO':
+                    badgeClass = 'badge-decede-av-bio-mini';
+                    badgeIcon = 'fa-skull-crossbones';
+                    badgeText = 'DÉCÉDÉ AV. BIO';
+                    break;
+                case 'DCD_AP_BIO':
+                    badgeClass = 'badge-dcd-ap-bio-mini';
+                    badgeIcon = 'fa-skull';
+                    badgeText = 'DÉCÉDÉ AP. BIO';
+                    break;
+                case 'RETRAITES':
+                    badgeClass = 'badge-retraite-mini';
+                    badgeIcon = 'fa-user-clock';
+                    badgeText = 'RETRAITÉ';
+                    break;
+                case 'INTEGRES':
+                    badgeClass = 'badge-integre-mini';
+                    badgeIcon = 'fa-user-plus';
+                    badgeText = 'INTÉGRÉ';
+                    break;
+                default:
+                    // ACTIF ou autre (par défaut)
+                    badgeClass = 'badge-actif-mini';
+                    badgeIcon = 'fa-user-check';
+                    badgeText = 'ACTIF';
             }
 
-            results.forEach((militaire, index) => {
-                const item = document.createElement('a');
-                item.href = `?q=${encodeURIComponent(militaire.matricule)}`;
-                item.className = 'list-group-item list-group-item-action';
-                item.setAttribute('data-index', index);
-
-                // Déterminer la classe, l'icône et le texte du badge en fonction de la catégorie
-                let badgeClass = 'badge-actif-mini';
-                let badgeIcon = 'fa-user-check';
-                let badgeText = 'ACTIF';
-
-                switch (militaire.categorie) {
-                    case 'DCD_AV_BIO':
-                        badgeClass = 'badge-decede-av-bio-mini';
-                        badgeIcon = 'fa-skull-crossbones';
-                        badgeText = 'DÉCÉDÉ AV. BIO';
-                        break;
-                    case 'DCD_AP_BIO':
-                        badgeClass = 'badge-dcd-ap-bio-mini';
-                        badgeIcon = 'fa-skull';
-                        badgeText = 'DÉCÉDÉ AP. BIO';
-                        break;
-                    case 'RETRAITES':
-                        badgeClass = 'badge-retraite-mini';
-                        badgeIcon = 'fa-user-clock';
-                        badgeText = 'RETRAITÉ';
-                        break;
-                    case 'INTEGRES':
-                        badgeClass = 'badge-integre-mini';
-                        badgeIcon = 'fa-user-plus';
-                        badgeText = 'INTÉGRÉ';
-                        break;
-                    default:
-                        // ACTIF ou autre (par défaut)
-                        badgeClass = 'badge-actif-mini';
-                        badgeIcon = 'fa-user-check';
-                        badgeText = 'ACTIF';
-                }
-
-                item.innerHTML = `
+            item.innerHTML = `
                 <div class="d-flex justify-content-between align-items-center">
                     <strong>${escapeHtml(militaire.noms)}</strong>
                     <span class="badge-statut-mini ${badgeClass}"><i class="fas ${badgeIcon}"></i> ${badgeText}</span>
@@ -1522,86 +1522,86 @@ $is_controleur = isset($_SESSION['user_profil']) && $_SESSION['user_profil'] ===
                     <span><i class="fas fa-map-marker-alt"></i> ${escapeHtml(militaire.garnison || 'N/A')}</span>
                 </div>
             `;
-                searchResults.appendChild(item);
-            });
-
-            // Ajuster la hauteur maximale en fonction du nombre de résultats
-            const resultCount = results.length;
-            let maxHeight = 400; // hauteur maximale par défaut
-
-            if (resultCount <= 3) {
-                maxHeight = 200; // hauteur réduite pour peu de résultats
-            } else if (resultCount <= 5) {
-                maxHeight = 300; // hauteur moyenne
-            } else {
-                maxHeight = 450; // hauteur maximale pour beaucoup de résultats
-            }
-
-            searchResults.style.maxHeight = maxHeight + 'px';
-            searchResults.style.display = 'block';
-            currentFocus = -1;
-        }
-
-        searchInput.addEventListener('input', function() {
-            clearTimeout(searchTimeout);
-            const query = this.value.trim();
-            if (query.length < 2) {
-                searchResults.style.display = 'none';
-                return;
-            }
-            searchTimeout = setTimeout(() => fetchResults(query), 300);
+            searchResults.appendChild(item);
         });
 
-        searchInput.addEventListener('keydown', function(e) {
-            const items = searchResults.querySelectorAll('.list-group-item');
-            if (items.length === 0) return;
-            if (e.key === 'ArrowDown') {
-                e.preventDefault();
-                currentFocus = (currentFocus + 1) % items.length;
-                updateActiveItem(items);
-            } else if (e.key === 'ArrowUp') {
-                e.preventDefault();
-                currentFocus = (currentFocus - 1 + items.length) % items.length;
-                updateActiveItem(items);
-            } else if (e.key === 'Enter') {
-                e.preventDefault();
-                if (currentFocus > -1 && items[currentFocus]) {
-                    window.location.href = items[currentFocus].href;
-                }
-            }
-        });
+        // Ajuster la hauteur maximale en fonction du nombre de résultats
+        const resultCount = results.length;
+        let maxHeight = 400; // hauteur maximale par défaut
 
-        function updateActiveItem(items) {
-            items.forEach((item, idx) => {
-                if (idx === currentFocus) item.classList.add('active');
-                else item.classList.remove('active');
-            });
+        if (resultCount <= 3) {
+            maxHeight = 200; // hauteur réduite pour peu de résultats
+        } else if (resultCount <= 5) {
+            maxHeight = 300; // hauteur moyenne
+        } else {
+            maxHeight = 450; // hauteur maximale pour beaucoup de résultats
         }
 
-        document.addEventListener('click', function(e) {
-            if (!searchInput.contains(e.target) && !searchResults.contains(e.target)) {
-                searchResults.style.display = 'none';
-            }
-        });
+        searchResults.style.maxHeight = maxHeight + 'px';
+        searchResults.style.display = 'block';
+        currentFocus = -1;
+    }
 
-        function escapeHtml(text) {
-            if (!text) return '';
-            const map = {
-                '&': '&amp;',
-                '<': '&lt;',
-                '>': '&gt;',
-                '"': '&quot;',
-                "'": '&#039;'
-            };
-            return text.replace(/[&<>"']/g, m => map[m]);
+    searchInput.addEventListener('input', function() {
+        clearTimeout(searchTimeout);
+        const query = this.value.trim();
+        if (query.length < 2) {
+            searchResults.style.display = 'none';
+            return;
         }
-    })();
+        searchTimeout = setTimeout(() => fetchResults(query), 300);
+    });
+
+    searchInput.addEventListener('keydown', function(e) {
+        const items = searchResults.querySelectorAll('.list-group-item');
+        if (items.length === 0) return;
+        if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            currentFocus = (currentFocus + 1) % items.length;
+            updateActiveItem(items);
+        } else if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            currentFocus = (currentFocus - 1 + items.length) % items.length;
+            updateActiveItem(items);
+        } else if (e.key === 'Enter') {
+            e.preventDefault();
+            if (currentFocus > -1 && items[currentFocus]) {
+                window.location.href = items[currentFocus].href;
+            }
+        }
+    });
+
+    function updateActiveItem(items) {
+        items.forEach((item, idx) => {
+            if (idx === currentFocus) item.classList.add('active');
+            else item.classList.remove('active');
+        });
+    }
+
+    document.addEventListener('click', function(e) {
+        if (!searchInput.contains(e.target) && !searchResults.contains(e.target)) {
+            searchResults.style.display = 'none';
+        }
+    });
+
+    function escapeHtml(text) {
+        if (!text) return '';
+        const map = {
+            '&': '&amp;',
+            '<': '&lt;',
+            '>': '&gt;',
+            '"': '&quot;',
+            "'": '&#039;'
+        };
+        return text.replace(/[&<>"']/g, m => map[m]);
+    }
+})();
 </script>
 
 <style>
-    /* Désactiver certains effets hover sur les écrans tactiles */
-    body.touch-device .btn-mention:hover {
-        transform: none;
-        box-shadow: none;
-    }
+/* Désactiver certains effets hover sur les écrans tactiles */
+body.touch-device .btn-mention:hover {
+    transform: none;
+    box-shadow: none;
+}
 </style>

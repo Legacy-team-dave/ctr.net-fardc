@@ -22,22 +22,27 @@ if exist "C:\laragon\laragon.exe" (
     echo ================================================================================
     echo.
     
-    REM Afficher les listes
+    REM Afficher les informations de l'application
     echo ============================================
-    echo LISTE DES CATÉGORIES
+    echo PROFILS DISPONIBLES
     echo ============================================
-    echo 1. Actifs
-    echo 2. Retraités
-    echo 3. Intégrés
-    echo 4. Décédés Avant Bio
-    echo 5. Décédés Après Bio
+    echo - ADMIN_IG (gestion complète)
+    echo - OPERATEUR (opérations + rapports)
+    echo - CONTROLEUR (saisie contrôles uniquement)
     echo.
     echo ============================================
-    echo LISTE DES MENTIONS
+    echo MENTIONS DE CONTRÔLE
     echo ============================================
-    echo 1. Favorable
-    echo 2. Défavorable
-    echo 3. Présent
+    echo - Présent
+    echo - Favorable
+    echo - Défavorable
+    echo.
+    echo ============================================
+    echo FONCTIONNALITÉS V1.1.0+
+    echo ============================================
+    echo [✓] Chiffrement AES-256-CBC des fichiers sensibles
+    echo [✓] Sauvegardes incrémentales automatiques (8h)
+    echo [✓] Traçabilité complète des actions
     echo.
     
     REM Se placer dans le dossier www de Laragon

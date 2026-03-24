@@ -92,11 +92,29 @@ echo                       INSTALLATION TERMINEE
 echo ================================================================================
 echo.
 echo L'application démarre dans votre navigateur...
+echo.
 echo Identifiants de test:
 echo   - Admin: admin / admin123
 echo   - Opérateur: operateur / operateur123
-REM Le profil CONTROLEUR a été retiré ; utiliser OPERATEUR pour les contrôles
+echo   - Contrôleur: controleur / controleur123
 echo.
+echo Prochaines étapes recommandées:
+echo   1. Se connecter et tester les trois profils
+echo   2. Initialiser le chiffrement: double-cliquer encrypt_init.bat
+echo   3. Configurer la sauvegarde automatique: setup_backup_task.bat
+echo.
+echo Documentation: consultez README.md pour plus de détails
+echo.
+
+REM ================================================================================
+REM Installation de la tâche planifiée de sauvegarde incrémentale (toutes les 8h)
+REM ================================================================================
+if exist "%~dp0setup_backup_task.bat" (
+    echo Configuration de la sauvegarde automatique (8h)...
+    call "%~dp0setup_backup_task.bat"
+) else (
+    echo ATTENTION: setup_backup_task.bat introuvable. Configurez la tâche manuellement.
+)
 
 REM ================================================================================
 REM Création d'un vrai raccourci (.lnk) sur le bureau qui lance Laragon + l'application

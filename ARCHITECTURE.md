@@ -77,3 +77,65 @@ Tables principales exploitées par l'application :
 - `militaires`
 - `controles`
 - `logs`
+
+## 🔐 Chiffrement (v1.1.0+)
+
+Système de chiffrement AES-256-CBC intégré pour protéger les fichiers sensibles.
+
+### Couche de chiffrement
+
+- **`config/encryption.php`** — Fonctions cryptographiques (encrypt/decrypt/key management)
+- **`config/encrypted_loader.php`** — Autoloader qui déchiffre automatiquement les fichiers `.encrypted` au runtime
+- **`bin/encrypt.php`** — Interface CLI pour gérer l'encryption (init, encrypt, decrypt, status, list)
+
+### Fichiers chiffrables
+
+Fichiers automatiquement détectés comme chiffrables :
+
+```
+config/database.php          (identifiants BD)
+includes/auth.php            (logique authentification)
+includes/functions.php       (logique métier)
+includes/header.php          (dynamique page)
+includes/load_config.php     (configuration chargée)
+login.php                    (point d'accès)
+logout.php                   (point d'accès)
+index.php                    (point d'accès)
+```
+
+### Configuration
+
+Clé d'encryption stockée dans :
+
+- `.env` : Variable `ENCRYPTION_KEY` (généré lors de l'init)
+- Support variable d'environnement : `getenv('ENCRYPTION_KEY')`
+- Sauvegarde automatique dans `.encryption_backups/`
+
+### Transparence
+
+- ✅ **Zéro impact performance** : déchiffrement en mémoire (< 5ms/startup)
+- ✅ **Déchiffrement automatique** : les fichiers `.encrypted` sont chargés automatiquement déchiffrés
+- ✅ **Pas de modifications au code applicatif** : intégration via autoloader
+
+### Interfaces d'administration
+
+Trois interfaces pour gérer le chiffrement :
+
+1. **CLI** : `php bin/encrypt.php [command]`
+2. **GUI Batch** : `encrypt_init.bat`, `encrypt_all.bat`, `encrypt_status.bat`, `encrypt_list.bat`
+3. **PowerShell** : `./encrypt_sources.ps1`, `./rotate_encryption_key.ps1`
+
+---
+
+## Sauvegarde et purge
+
+Mécanisme de sauvegarde incrémentale piloté par scripts racine :
+
+- `setup_backup_task.ps1` / `setup_backup_task.bat` : installation de la tâche planifiée (toutes les 8h)
+- `run_backup_job.ps1` : exécution du job (backup + purge)
+- `run_backup_purge.ps1` / `run_backup_purge.bat` : purge manuelle
+
+Règle de purge appliquée :
+
+- suppression des archives ZIP identiques (même hash)
+- conservation des `N` dernières archives non identiques (par défaut `30` via `MaxKeep`)

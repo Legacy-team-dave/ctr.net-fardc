@@ -9,15 +9,17 @@
 // Désactiver la limite de temps d'exécution
 set_time_limit(0);
 
-// Inclusion des fichiers nécessaires (chemins relatifs à la racine du projet)
-require_once __DIR__ . '/functions.php';       // contient generate_backup()
-require_once __DIR__ . '/../config/database.php';  // contient $pdo
+// Inclusion des fichiers nécessaires
+require_once __DIR__ . '/functions.php';
+require_once __DIR__ . '/../config/database.php';
 
-// Créer le dossier de sauvegarde s'il n'existe pas (facultatif, déjà fait dans generate_backup)
-$backup_dir = dirname(__DIR__, 2) . '/backups/';
-if (!is_dir($backup_dir)) {
-    mkdir($backup_dir, 0755, true);
+$maxKeep = isset($argv[1]) ? (int)$argv[1] : 30;
+if ($maxKeep <= 0) {
+    $maxKeep = 30;
 }
+
+// Créer le dossier de sauvegarde si nécessaire
+get_backup_dir_path();
 
 // Verrou pour éviter les exécutions simultanées
 $lockFile = sys_get_temp_dir() . '/backup_cron.lock';
@@ -28,12 +30,29 @@ if (!flock($fp, LOCK_EX | LOCK_NB)) {
 }
 
 try {
-    $success = generate_backup(true);
-    if ($success) {
-        error_log("Sauvegarde automatique exécutée avec succès.");
+    $result = maybe_create_backup(false);
+
+    if (!empty($result['created'])) {
+        $counts = $result['counts'] ?? [];
+        error_log(
+            "Sauvegarde incrémentale exécutée: "
+                . ($result['file'] ?? 'archive inconnue')
+                . " | controles=" . ($counts['controles'] ?? 0)
+                . " | litiges=" . ($counts['litiges'] ?? 0)
+                . " | non_vus=" . ($counts['non_vus'] ?? 0)
+        );
     } else {
-        error_log("Échec de la sauvegarde automatique.");
+        error_log("Sauvegarde incrémentale non exécutée: " . ($result['reason'] ?? 'raison inconnue'));
     }
+
+    $purge = purge_backup_archives($maxKeep);
+    error_log(
+        "Purge archives (max_keep=" . $maxKeep . "): scanned=" . ($purge['scanned'] ?? 0)
+            . " | kept=" . ($purge['unique_kept'] ?? 0)
+            . " | deleted_total=" . ($purge['deleted_total'] ?? 0)
+            . " | duplicates=" . ($purge['deleted_duplicates'] ?? 0)
+            . " | overflow=" . ($purge['deleted_overflow'] ?? 0)
+    );
 } catch (Exception $e) {
     error_log("Exception lors de la sauvegarde : " . $e->getMessage());
 } finally {

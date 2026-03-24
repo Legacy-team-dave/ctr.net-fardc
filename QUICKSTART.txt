@@ -2,7 +2,10 @@ QUICK START - CTR.NET-FARDC
 
 1) Lancer Laragon
 2) Ouvrir le projet dans C:\laragon\www\ctr.net-fardc
-3) Ouvrir : http://localhost/ctr.net-fardc/login.php
+3) Initialiser le chiffrement (v1.1.0+):
+   - Double-cliquer: encrypt_init.bat
+   - Ou en CLI: php bin/encrypt.php init
+4) Ouvrir : http://localhost/ctr.net-fardc/login.php
 
 Scripts de lancement disponibles:
 - START.bat
@@ -10,6 +13,19 @@ Scripts de lancement disponibles:
 - launch.bat
 - launch.ps1
 - lanceur.ps1
+
+Outils de chiffrement:
+- encrypt_init.bat       (Initialiser la clé secrète)
+- encrypt_all.bat        (Chiffrer tous les fichiers sensibles)
+- encrypt_status.bat     (Vérifier l'état du chiffrement)
+- encrypt_list.bat       (Lister les fichiers chiffrables)
+
+Sauvegarde automatique incrémentale (8h):
+- Exécuter: setup_backup_task.bat
+- Exécution autonome sans visiter les pages
+- Archive ZIP avec CSV + XLSX des nouveaux éléments uniquement
+- Purge auto: conserver seulement 30 dernières archives non identiques
+- Purge manuelle: powershell -File run_backup_purge.ps1 -MaxKeep 30
 
 Profils réels:
 - ADMIN_IG
@@ -20,3 +36,9 @@ Mentions réelles (module contrôles):
 - Présent
 - Favorable
 - Défavorable
+
+Documentation recommandée:
+- README.md
+- FAQ.md
+- FONCTIONNEMENT_APPLICATION.md
+- USER_GUIDE.md

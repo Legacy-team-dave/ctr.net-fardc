@@ -1,0 +1,19 @@
+# Fichiers de chiffrement
+# À ajouter à .gitignore lors du déploiement
+
+# Clé de chiffrement (JAMAIS commiter!)
+ENCRYPTION_KEY=*
+.env
+.env.local
+.env.*.php
+
+# Fichiers chiffrés (sauf si vous les versionez)
+*.encrypted
+
+# Sauvegarde des clés
+.encryption_key.backup
+.encryption_key.bak
+
+# State files
+.encryption_state.json
+encryption_state.json

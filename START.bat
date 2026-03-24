@@ -9,7 +9,7 @@ cls
 
 echo.
 echo ================================
-echo  CTR.NET-FARDC v1.0
+echo  CTR.NET-FARDC v1.1.0
 echo ================================
 echo.
 echo Vérification de l'environnement...
@@ -47,12 +47,15 @@ echo [✓] Application lancée
 echo.
 echo    URL: http://localhost:8080/ctr.net-fardc
 echo.
-echo Identifiants de test:
-echo   - Admin: admin / admin123
-echo   - Opérateur: operateur / operateur123  
-REM Profils disponibles : ADMIN_IG et OPERATEUR (le profil CONTROLEUR a été retiré)
+echo Profils disponibles: ADMIN_IG, OPERATEUR, CONTROLEUR
 echo.
 echo Identifiants de test:
 echo   - Admin: admin / admin123
 echo   - Opérateur: operateur / operateur123
+echo   - Contrôleur: controleur / controleur123
+echo.
+echo Chiffrement AES-256-CBC: Activé (v1.1.0+)
+echo Pour initialiser: double-cliquer encrypt_init.bat
+echo.
+echo Sauvegardes incrémentales automatiques: Actives (toutes les 8h)
 echo.

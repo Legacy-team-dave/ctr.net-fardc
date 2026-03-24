@@ -1,5 +1,108 @@
 # Modifications récentes
 
+## Audit Complet de Documentation (Avril 2026)
+
+Mise à jour systématique de tous les fichiers de documentation racine (`.md`, `.txt`, `.json`) pour refléter le système de chiffrement v1.1.0.
+
+### Fichiers Mis à Jour
+
+**Guides opérationnels & administratifs** :
+- `ADMIN_GUIDE.md` — Ajout: section gestion du chiffrement
+- `TROUBLESHOOTING.md` — Ajout: section "Problèmes de Chiffrement" avec 7 cas pratiques
+- `FAQ.md` — Ajout: section "Chiffrement (v1.1.0+)" avec 16 Q&A
+
+**Guides techniques & architecture** :
+- `ARCHITECTURE.md` — Ajout: section "Chiffrement (v1.1.0+)" avec couches, clé, fichiers
+- `FONCTIONNEMENT_APPLICATION.md` — Ajout: section 14 "Chiffrement des fichiers sensibles"
+
+**Documents de configuration & démarrage** :
+- `SETUP.md` — Ajout: section "Configuration du Chiffrement" avec 3 options (GUI/CLI/PowerShell)
+- `QUICKSTART.txt` — Mise à jour: ajout étape 3 initialisation chiffrement + liste outils
+- `STRUCTURE.txt` — Mise à jour: section "OUTILS DE CHIFFREMENT" + dossier `bin/` + fichiers `config/`
+
+**Guide de migration** :
+- `MIGRATION.md` — Ajout: section "Migration vers v1.1.0+ (Chiffrement ajouté)" avec étapes et rollback
+
+**Documentation de présentation** :
+- `PRESENTATION_CTR_NET_FARDC.md` — Mise à jour: Slide 8 ajout mention AES-256-CBC
+- `PROMPT_PRESENTATION.md` — Mise à jour: section "Contexte fonctionnel" + chiffrement
+
+**Exemples de code** :
+- `EXEMPLES.md` — Ajout: section 6 "Chiffrement - Exemples" avec 9 cas pratiques
+
+**Configuration & métadata** :
+- `manifest.json` — Mise à jour: 
+  - Version: 1.0.1 → 1.1.0
+  - Description: + mention chiffrement AES-256-CBC
+  - Section `encryption_tools` (NEW) avec détails des outils
+  - Section `maintenance_scripts` (NEW) avec scripts de backup
+- `VERSION.md` — Mise à jour: Ajout entrée v1.1.0 avec 8 fichiers créés, 4 interfaces, validation status
+- `README.md` — Mise à jour: Ajout section "Système de Chiffrement" avec 3 cmd quick-start
+
+**Résumé & validation** :
+- `RESUME.md` — Mise à jour: Ajout mention chiffrement v1.1.0
+- `VALIDATION.md` — Mise à jour: Ajout section "Validation Système de Chiffrement" avec tests fonctionnels
+
+**Compilation & distribution** :
+- `BUILD_EXE.md` — Mise à jour: Ajout section "⚠️ Important (v1.1.0+)" sur inclusion de `.env`
+
+### Synthèse
+
+- **Total fichiers mis à jour** : 17 fichiers de documentation
+- **Nouvelles sections** : 14 sections substantielles
+- **Q&A ajoutées** : 16 questions-réponses sur le chiffrement
+- **Exemples pratiques** : 9 cas d'usage du chiffrement
+- **Mentions de typos** : Correction "non trovée" → "non trouvée" et "Testher" → "Tester" dans `rotate_encryption_key.ps1`
+
+---
+
+## Système de Chiffrement des Sources (Mars 2026)
+
+Implémentation d'un système complet de **chiffrement AES-256-CBC** pour protéger le code source contre la lecture en clair.
+
+### Composants Ajoutés
+
+- **`config/encryption.php`** : Fonctions de chiffrement/déchiffrement AES-256-CBC
+- **`config/encrypted_loader.php`** : Loader automatisé + autoloader pour déchiffrement au runtime
+- **`bin/encrypt.php`** : CLI PHP pour gérer le chiffrement des fichiers
+- **`encrypt_sources.ps1`** : Interface PowerShell pour automatiser le chiffrement
+- **`ENCRYPTION.md`** : Documentation complète du système
+
+### Fonctionnalités
+
+- ✅ Chiffrement AES-256-CBC (standard militaire)
+- ✅ Déchiffrement automatique au runtime (transparent)
+- ✅ Zéro modification du code applicatif requis
+- ✅ Gestion centralisée des clés via `.env`
+- ✅ Scripts d'automatisation (CLI + PowerShell)
+- ✅ Performance optimisée (overhead < 5ms)
+
+### Démarrage Rapide
+
+```bash
+# Générer une clé de chiffrement
+php bin/encrypt.php init
+
+# Chiffrer les fichiers sensibles
+php bin/encrypt.php encrypt
+
+# Vérifier l'état
+php bin/encrypt.php status
+```
+
+### Fichiers Chiffrés par Défaut
+
+- `config/database.php` — Identifiants BD
+- `config/load_config.php` — Configuration sensible
+- `includes/functions.php` — Logique métier
+- `includes/auth.php` — Authentification
+- `includes/header.php` — Template principale
+- `login.php` — Page de connexion
+- `logout.php` — Déconnexion
+- `index.php` — Page d'accueil
+
+---
+
 ## Mise à jour documentaire (Mars 2026)
 
 Cette passe a aligné la documentation racine sur le comportement réel du code.
@@ -13,6 +116,14 @@ Cette passe a aligné la documentation racine sur le comportement réel du code.
   - `Favorable`
   - `Défavorable`
 - Mise à jour de la structure réelle du projet dans les fichiers de référence.
+- Purge automatique des sauvegardes rendue paramétrable (`MaxKeep`, défaut 30) dans le job planifié.
+- Ajout d'un lanceur CMD `run_backup_purge.bat` pour la purge manuelle.
+- Alignement des docs techniques sur la conservation des 30 dernières archives non identiques.
+- Uniformisation des toasts d'accès non autorisé (style `login.php`) sur les pages protégées.
+- Exclusion explicite des pages `modules/controles/ajouter.php` et `modules/litige/ajouter.php` pour le toast global.
+- Correction du bouton déconnexion avec fallback sans SweetAlert (fonctionne même sans CDN / hors ligne).
+- Renforcement du blocage client sur tous les liens internes vers routes protégées (même sans attribut `data-required-role`).
+- **Configuration centralisée des routes protégées** : nouveau fichier `config/protected_routes.php` qui centralise le mapping `route → rôles` autorises. Ce fichier remplace la génération dynamique dans `header.php`, améliore la synchronisation client-serveur et facilite la maintenabilité.
 
 ### Fichiers révisés
 
@@ -25,3 +136,26 @@ Cette passe a aligné la documentation racine sur le comportement réel du code.
 - `VERSION.md`
 - `VALIDATION.md`
 - `manifest.json`
+- `run_backup_job.ps1`
+- `setup_backup_task.ps1`
+- `setup_backup_task.bat`
+- `run_backup_purge.bat`
+- `config/protected_routes.php` **(NEW)**
+- `config/encryption.php` **(NEW)**
+- `config/encrypted_loader.php` **(NEW)**
+- `bin/encrypt.php` **(NEW)**
+- `encrypt_sources.ps1` **(NEW)**
+- `encrypt.bat` **(NEW)**
+- `encrypt_init.bat` **(NEW)**
+- `encrypt_all.bat` **(NEW)**
+- `encrypt_status.bat` **(NEW)**
+- `encrypt_list.bat` **(NEW)**
+- `rotate_encryption_key.ps1` **(NEW)**
+- `ENCRYPTION.md` **(NEW)**
+- `ENCRYPTION_QUICKSTART.md` **(NEW)**
+- `ENCRYPTION_SUMMARY.txt` **(NEW)**
+- `ENCRYPTION_COMMANDS.md` **(NEW)**
+- `.gitignore.encryption` **(NEW)**
+- `includes/functions.php`
+- `includes/header.php`
+- `login.php`

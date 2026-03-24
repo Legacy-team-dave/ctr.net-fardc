@@ -14,7 +14,7 @@ Trois profils sont utilisés : `ADMIN_IG`, `OPERATEUR`, `CONTROLEUR` (mobile uni
 Le profil `CONTROLEUR` est désormais réservé exclusivement à l'application mobile CTR.NET Mobile. La connexion web est bloquée.
 
 ### Où va un `OPERATEUR` juste après connexion ?
-- vers `preferences.php` si aucune préférence n'est enregistrée,
+- vers `preferences.php` → `equipes.php` → `index.php` si aucune préférence n'est enregistrée,
 - vers `modules/controles/ajouter.php` si les préférences existent.
 
 ### Où va un `ADMIN_IG` juste après connexion ?
@@ -322,7 +322,7 @@ Minimal : < 5ms par démarrage. Le déchiffrement se fait en mémoire (pas I/O d
 ### Comment dépanner un problème de chiffrement ?
 Voir [TROUBLESHOOTING.md](TROUBLESHOOTING.md) section "Problèmes de Chiffrement".
 
-## 12) Bonnes pratiques d'exploitation
+## 13) Bonnes pratiques d'exploitation
 
 ### Recommandation pour les profils
 Réserver `ADMIN_IG` à l'administration; utiliser `OPERATEUR` pour la production web quotidienne et `CONTROLEUR` pour l'app mobile.

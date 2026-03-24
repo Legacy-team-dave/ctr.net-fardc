@@ -9,7 +9,6 @@ Application PHP de contrôle des effectifs militaires.
   - Gestion des militaires
   - Supervision des contrôles et rapports
 - `OPERATEUR`
-  - Gestion des militaires
   - Saisie de contrôles
   - Accès au tableau de bord opérateur
 - `CONTROLEUR`

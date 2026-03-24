@@ -269,7 +269,7 @@ if ($step === 'reset') {
             padding: 10px 10px 10px 32px;
             /* espace pour icône */
             border: 1.5px solid #e0e0e0;
-            border-radius: 5px;
+            border-radius: 8px;
             font-size: 0.85rem;
             transition: all 0.2s;
             font-family: 'Barlow', sans-serif;
@@ -351,7 +351,7 @@ if ($step === 'reset') {
             justify-content: center;
             gap: 6px;
             border: none;
-            border-radius: 5px;
+            border-radius: 8px;
             padding: 10px 12px;
             font-weight: 600;
             color: white;
@@ -394,7 +394,7 @@ if ($step === 'reset') {
         }
 
         .alert-modern {
-            border-radius: 5px;
+            border-radius: 8px;
             padding: 8px 12px;
             margin-bottom: 12px;
             font-size: 0.8rem;

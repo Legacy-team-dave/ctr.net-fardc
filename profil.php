@@ -368,7 +368,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             width: 100%;
             padding: 8px 8px 8px 28px;
             border: 1.5px solid #e0e0e0;
-            border-radius: 5px;
+            border-radius: 8px;
             font-size: 0.8rem;
             transition: all 0.2s;
             font-family: 'Barlow', sans-serif;
@@ -462,7 +462,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             justify-content: center;
             gap: 6px;
             border: none;
-            border-radius: 5px;
+            border-radius: 8px;
             padding: 10px 12px;
             font-weight: 600;
             color: white;
@@ -505,7 +505,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
         .alert-modern {
-            border-radius: 5px;
+            border-radius: 8px;
             padding: 6px 10px;
             margin-bottom: 8px;
             font-size: 0.75rem;

@@ -2,7 +2,6 @@
 
 ## Périmètre OPERATEUR
 
-- Gérer les militaires
 - Effectuer des contrôles
 - Consulter les écrans opérationnels autorisés
 
@@ -12,7 +11,7 @@
 - Préférences : `preferences.php` (configuration initiale)
 - Équipe : `equipes.php` (enregistrement membres d'équipe)
 - Dashboard : `index.php`
-- Contrôles : `modules/controles/ajouter.php`
+- Contrôles : `modules/controles/ajouter.php` (redirection post-login si préférences configurées)
 
 ## Flux de configuration (premier accès)
 

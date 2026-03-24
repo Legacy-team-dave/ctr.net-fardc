@@ -37,8 +37,8 @@ Profils effectivement utilisés :
   - Passage par `preferences.php` si filtres non définis
 
 - `CONTROLEUR`
-  - Redirigé vers la saisie de contrôle (`modules/controles/ajouter.php`)
-  - Interface top-nav spécifique dans le header
+  - Profil réservé à l'application mobile CTR.NET Mobile
+  - Connexion web bloquée (v1.4.0)
 
 ## 3. Authentification et session
 
@@ -128,7 +128,7 @@ Après la validation des préférences, l'opérateur est redirigé vers `equipes
 
 ## 6.1 Saisie d'un contrôle (`modules/controles/ajouter.php`)
 
-Accès prévu : `ADMIN_IG`, `OPERATEUR`.
+Accès prévu : `OPERATEUR`.
 
 ### Recherche militaire
 

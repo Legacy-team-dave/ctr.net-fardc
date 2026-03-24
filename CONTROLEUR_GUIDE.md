@@ -337,7 +337,7 @@ Vous pouvez modifier :
 
 ### Q5 : L'application me déconnecte automatiquement. Pourquoi
 
-**R :** Les sessions expirent après **30 minutes d'inactivité** pour des raisons de sécurité. Reconnectez-vous si cela se produit. Pensez à enregistrer chaque contrôle avant de faire une pause.
+**R :** Les sessions expirent après **1 heure d'inactivité** pour des raisons de sécurité. Reconnectez-vous si cela se produit. Pensez à enregistrer chaque contrôle avant de faire une pause.
 
 ### Q6 : L'interface s'affiche mal sur mon téléphone
 
@@ -370,8 +370,7 @@ Toutes vos actions dans l'application sont **journalisées** dans le log d'audit
 ### En Cas de Problème
 
 1. **Problème technique** : Contactez votre administrateur (ADMIN_IG)
-2. **Compte bloqué** (5 tentatives échouées) : Attendez 15 minutes ou contactez ADMIN_IG
-3. **Mot de passe oublié** : Cliquez sur "Mot de passe oublié" sur la page de connexion
+2. **Mot de passe oublié** : Contactez l'ADMIN_IG pour réinitialiser votre mot de passe
 
 ---
 

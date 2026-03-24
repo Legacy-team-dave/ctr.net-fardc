@@ -465,7 +465,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             justify-content: center;
             gap: 8px;
             border: none;
-            border-radius: 6px;
+            border-radius: 8px;
             font-weight: 600;
             width: 100%;
             cursor: pointer;
@@ -473,6 +473,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             font-family: inherit;
             text-decoration: none;
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            padding: 10px;
+            font-size: 0.9rem;
         }
 
         .btn-login {

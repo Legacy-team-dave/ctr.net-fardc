@@ -21,7 +21,7 @@ return [
 
     // Contrôles Module
     '/ctr.net-fardc/modules/controles/liste.php' => ['ADMIN_IG', 'OPERATEUR'],
-    '/ctr.net-fardc/modules/controles/ajouter.php' => ['ADMIN_IG', 'OPERATEUR'],
+    '/ctr.net-fardc/modules/controles/ajouter.php' => ['OPERATEUR'],
     '/ctr.net-fardc/modules/controles/modifier.php' => ['ADMIN_IG', 'OPERATEUR'],
     '/ctr.net-fardc/modules/controles/supprimer.php' => ['ADMIN_IG'],
     '/ctr.net-fardc/modules/controles/consulter.php' => ['ADMIN_IG', 'OPERATEUR'],

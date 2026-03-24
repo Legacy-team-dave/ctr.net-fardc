@@ -66,10 +66,13 @@ Consulter [ENCRYPTION.md](ENCRYPTION.md) pour :
 ## Lancement via scripts
 
 - `START.bat`
+- `INSTALLER.bat`
 - `INSTALL.bat`
 - `launch.bat`
 - `launch.ps1`
 - `lanceur.ps1`
+
+`INSTALLER.bat` appelle `INSTALL.bat` et crée le raccourci bureau `.lnk` pointant vers `launch.bat` (icône personnalisée si disponible).
 
 ## Profils applicatifs
 
@@ -97,6 +100,18 @@ Dans `modules/controles/ajouter.php` :
 - Si page inaccessible : vérifier Apache/MySQL dans Laragon
 - Si erreur BD : vérifier `config/database.php`
 - Si problème de droits : vérifier le profil dans la table `utilisateurs`
+
+## Nettoyage des caches (v1.5.0+)
+
+Le nettoyage des caches s’exécute automatiquement toutes les 8 heures (intégré au job de sauvegarde planifié). Pour un nettoyage manuel :
+
+```powershell
+# PowerShell
+./run_cache_cleanup.ps1 -JoursLogs 90
+
+# Batch
+run_cache_cleanup.bat 90
+```
 
 ## Sauvegarde incrémentale et purge automatique
 

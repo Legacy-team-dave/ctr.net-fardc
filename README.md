@@ -42,10 +42,13 @@ Le flux utilise aussi les statuts :
 ## Lancement
 
 - `START.bat`
+- `INSTALLER.bat`
 - `INSTALL.bat`
 - `launch.bat`
 - `launch.ps1`
 - `lanceur.ps1`
+
+`INSTALLER.bat`/`INSTALL.bat` créent un raccourci bureau `.lnk` vers `launch.bat` (avec icône `assets/img/ig_fardc.ico` si disponible) pour garantir le démarrage Laragon + ouverture navigateur via le lanceur applicatif.
 
 ## Sauvegarde automatique incrémentale
 
@@ -102,6 +105,12 @@ Pour une documentation complète et des exemples pratiques:
 - Purge auto : suppression des doublons + conservation des 30 dernières archives non identiques
 - Purge auto paramétrable : `setup_backup_task.ps1 -MaxKeep 30` (ou `setup_backup_task.bat 30`)
 - Script de purge manuelle : `run_backup_purge.ps1 -MaxKeep 30` ou `run_backup_purge.bat 30`
+
+**🧹 Nettoyage automatique des caches :**
+
+- Exécution automatique : intégré au job planifié (toutes les 8h après backup + purge)
+- Cibles : fichiers temporaires XLSX, verrous obsolètes, tokens expirés, anciens logs (> 90 jours)
+- Script de nettoyage manuel : `run_cache_cleanup.ps1 -JoursLogs 90` ou `run_cache_cleanup.bat 90`
 
 ## URL
 

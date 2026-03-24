@@ -20,12 +20,25 @@ Outils de chiffrement:
 - encrypt_status.bat     (Vérifier l'état du chiffrement)
 - encrypt_list.bat       (Lister les fichiers chiffrables)
 
+API REST mobile (v1.2.0+):
+- api/auth.php           (Authentification token Bearer)
+- api/controles.php      (Recherche + validation contrôle)
+- api/profil.php         (Profil utilisateur)
+- api/controles_poll.php (Polling temps réel contrôles mobiles)
+
 Sauvegarde automatique incrémentale (8h):
 - Exécuter: setup_backup_task.bat
 - Exécution autonome sans visiter les pages
 - Archive ZIP avec CSV + XLSX des nouveaux éléments uniquement
+- Purge auto: supprimer les archives de plus de 60 jours
 - Purge auto: conserver seulement 30 dernières archives non identiques
 - Purge manuelle: powershell -File run_backup_purge.ps1 -MaxKeep 30
+
+Application mobile CTR.NET:
+- Projet séparé: ctr-net-mobile/ (Ionic 8 + Angular 20 + Capacitor 8)
+- Profil CONTROLEUR uniquement
+- Build APK automatique via GitHub Actions
+- Repository: https://github.com/Legacy-team-dave/ctr-net-mobile
 
 Profils réels:
 - ADMIN_IG

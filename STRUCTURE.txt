@@ -12,11 +12,19 @@ RACINE
 - reset_password.php
 - splash_screen.php
 - test.php
+- manifest.json
 - run_backup_job.ps1
 - run_backup_purge.ps1
 - run_backup_purge.bat
 - setup_backup_task.ps1
 - setup_backup_task.bat
+
+API REST MOBILE (v1.2.0+)
+- api/auth.php                 (Authentification token Bearer : login, logout, check)
+- api/controles.php            (Recherche militaire, validation, historique)
+- api/profil.php               (Lecture/mise à jour profil utilisateur)
+- api/controles_poll.php       (Polling temps réel pour détection contrôles mobiles)
+- api/.htaccess                (Configuration CORS + sécurité)
 
 OUTILS DE CHIFFREMENT (v1.1.0+)
 - bin/encrypt.php              (CLI principale)

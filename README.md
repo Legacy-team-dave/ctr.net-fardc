@@ -35,7 +35,8 @@ Le flux utilise aussi les statuts :
 - `includes/` : auth, fonctions globales, header/footer
 - `modules/` : `administration`, `militaires`, `controles`, `litige`, `rapports`
 - `ajax/` : endpoints AJAX
-- `config/` : configuration base de données
+- `api/` : API REST pour application mobile (auth, contrôles, profil, polling)
+- `config/` : configuration base de données, chiffrement
 - `assets/` : css, js, images, polices, données géographiques
 - `backups/`
 

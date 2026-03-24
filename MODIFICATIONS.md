@@ -1,5 +1,38 @@
 # Modifications récentes
 
+## API Mobile et Notifications Temps Réel (Mars 2026 - v1.2.0)
+
+Intégration complète de l'application mobile CTR.NET avec le système web.
+
+### API REST créée
+
+- **`api/auth.php`** : Authentification par token Bearer (login, logout, check session)
+- **`api/controles.php`** : Recherche militaire, validation contrôle avec GPS, historique
+- **`api/profil.php`** : Lecture et mise à jour du profil utilisateur
+- **`api/controles_poll.php`** : Endpoint de polling pour détection automatique des contrôles mobiles
+- **`api/.htaccess`** : Configuration CORS pour accès mobile
+
+### Auto-refresh Web
+
+- `modules/controles/liste.php` interroge `api/controles_poll.php` toutes les 10 secondes
+- Affichage d'un toast notification (même design que mobile) lorsqu’un contrôle mobile est détecté
+- Rechargement automatique du DataTable après détection
+
+### Toast Unifié Web/Mobile
+
+- Design identique : gradient coloré, border-radius 12px, animation slideIn/fadeOut
+- Variantes : vert (Présent), jaune (Favorable), rouge (Défavorable)
+- Durée affichage : 3 secondes
+
+### Purge Archives 60 Jours
+
+- `purge_backup_archives()` supprime désormais les archives de plus de **60 jours** automatiquement
+- Nouveau paramètre `$max_days = 60` ajouté à la fonction
+- Compteur `deleted_expired` ajouté au rapport de purge
+- Conservation des 30 dernières archives non identiques maintenue
+
+---
+
 ## Audit Complet de Documentation (Avril 2026)
 
 Mise à jour systématique de tous les fichiers de documentation racine (`.md`, `.txt`, `.json`) pour refléter le système de chiffrement v1.1.0.

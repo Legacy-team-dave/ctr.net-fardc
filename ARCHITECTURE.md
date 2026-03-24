@@ -64,6 +64,26 @@ Statuts de contexte utilisés :
 - JS : `assets/js/`
 - Images/avatars : `assets/img/`, `assets/uploads/avatars/`
 
+## API REST Mobile (v1.2.0+)
+
+Endpoints dédiés à l'application mobile CTR.NET (Ionic/Angular) :
+
+```text
+api/
+├── auth.php            ← Authentification token Bearer (login, logout, check)
+├── controles.php       ← Recherche militaire, validation contrôle + GPS, historique
+├── profil.php          ← Lecture et mise à jour du profil utilisateur
+├── controles_poll.php  ← Polling temps réel (détection nouveaux contrôles)
+└── .htaccess           ← CORS + sécurité
+```
+
+### Auto-refresh et Notifications
+
+- `modules/controles/liste.php` interroge `api/controles_poll.php` toutes les 10 secondes
+- Détection automatique des contrôles effectués depuis l'app mobile
+- Toast notification unifié (même design web/mobile : gradient, slideIn animation)
+- Rechargement DataTable automatique après détection
+
 ## Base de données
 
 Configuration via :
@@ -137,5 +157,6 @@ Mécanisme de sauvegarde incrémentale piloté par scripts racine :
 
 Règle de purge appliquée :
 
+- suppression des archives ZIP de plus de **60 jours**
 - suppression des archives ZIP identiques (même hash)
 - conservation des `N` dernières archives non identiques (par défaut `30` via `MaxKeep`)

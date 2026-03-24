@@ -1,5 +1,32 @@
 # Versioning - CTR.NET-FARDC
 
+## 1.2.0 (2026-03-24)
+
+### 📱 API REST pour Application Mobile
+
+Nouvelle API REST pour l'application mobile CTR.NET :
+
+- `api/auth.php` — Authentification par token Bearer (login, logout, check session)
+- `api/controles.php` — Recherche militaire, validation contrôle, historique
+- `api/profil.php` — Lecture et mise à jour du profil utilisateur
+- `api/controles_poll.php` — Endpoint de polling pour détection temps réel des contrôles mobiles
+- `api/.htaccess` — Configuration CORS + sécurité
+
+### 🔄 Auto-refresh et Notifications Temps Réel
+
+- Polling automatique dans `modules/controles/liste.php` (toutes les 10 secondes)
+- Toast notification côté web lorsqu’un contrôle est effectué depuis le mobile
+- Design toast unifié web/mobile : gradient coloré, border-radius 12px, slideIn animation
+- Rechargement automatique du DataTable après détection d'un nouveau contrôle
+
+### 🗑️ Purge Automatique 60 Jours
+
+- `purge_backup_archives()` supprime désormais les archives de plus de **60 jours**
+- Nouveau paramètre `$max_days` (défaut: 60) en plus de `$max_unique_keep` (défaut: 30)
+- Compteur `deleted_expired` dans le rapport de purge
+
+---
+
 ## 1.1.0 (2026-03-23)
 
 ### 🔐 Système de Chiffrement AES-256-CBC Implémenté

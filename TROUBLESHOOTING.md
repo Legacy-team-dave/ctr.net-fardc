@@ -36,6 +36,7 @@ Si une doc ou un écran affiche d'autres mentions, la référence est obsolète.
 **Cause** : `.env` manquant ou `ENCRYPTION_KEY` non défini.
 
 **Solution** :
+
 ```bash
 php bin/encrypt.php init
 ```
@@ -47,11 +48,14 @@ Cela génère une nouvelle clé dans `.env`.
 **Cause** : Clé changée après chiffrement, ou fichier corrompu.
 
 **Solutions** :
+
 1. Vérifier que `.env` contient la bonne `ENCRYPTION_KEY`
 2. Déchiffrer manuellement le fichier affecté :
+
    ```bash
    php bin/encrypt.php decrypt config/database.php
    ```
+
 3. Vérifier l'intégrité du fichier `.encrypted`
 
 ### 6.3) Fichiers partiellement chiffrés
@@ -59,6 +63,7 @@ Cela génère une nouvelle clé dans `.env`.
 **Cause** : L'encryption a échoué à mi-chemin (interruption réseau, etc.).
 
 **Solution** :
+
 ```bash
 # Vérifier l'état
 php bin/encrypt.php status
@@ -72,6 +77,7 @@ php bin/encrypt.php encrypt
 **Cause** : < 5ms/startup attendu. Problème sinon.
 
 **Solutions** :
+
 - Vérifier que Laragon a assez de RAM
 - Vérifier les logs PHP pour les erreurs de déchiffrement
 - Consulter `logs/` pour les traces d'erreur
@@ -81,9 +87,10 @@ php bin/encrypt.php encrypt
 **Cas critique** : Sans clé, impossible de déchiffrer.
 
 **Options** :
+
 1. **Récupérer depuis backup** : si vous aviez sauvegardé `.env`
 2. **Rotation de clé** : Ne marche QUE si l'ancienne clé est disponible
-3. **Reconstruction** : 
+3. **Reconstruction** :
    - Restaurer les fichiers `.encrypted` depuis Git
    - Restaurer `.env` depuis backup
    - Redémarrer l'app
@@ -97,7 +104,8 @@ php bin/encrypt.php status
 ```
 
 Résultat attendu :
-```
+
+```text
 [✓ Encrypté]   config/database.php
 [✓ Encrypté]   includes/auth.php
 ...
@@ -112,6 +120,7 @@ Si vous suspectez une compromission :
 ```
 
 Cela :
+
 1. Sauvegarde ancienne clé → `.encryption_backups/`
 2. Génère nouvelle clé → `.env`
 3. Déchiffre tous les fichiers avec ancienne

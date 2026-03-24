@@ -88,9 +88,12 @@ Pour une documentation complète et des exemples pratiques:
 ### Fichiers Clés
 
 **Configuration & Crypto:**
+
 - `config/encryption.php` — Fonctions AES-256-CBC
 - `config/encrypted_loader.php` — Déchiffrement automatique
 - `.env` — Clé secrète (à générer une fois)
+
+**Sauvegardes Automatiques :**
 
 - Fréquence : toutes les 8 heures (tâche planifiée Windows)
 - Format : CSV (Excel compatible) + XLSX
@@ -103,9 +106,10 @@ Pour une documentation complète et des exemples pratiques:
 
 ## URL
 
-- `http://localhost/ctr.net-fardc/login.php`
+- Écran d'accueil : `http://127.0.0.1/ctr.net-fardc/splash_screen.php`
+- Connexion directe : `http://127.0.0.1/ctr.net-fardc/login.php`
 
-Selon la configuration Laragon, l'URL peut utiliser `127.0.0.1` et/ou un port spécifique.
+Selon la configuration Laragon, l'URL peut utiliser `localhost` et/ou un port spécifique.
 
 ## Base de données
 
@@ -127,3 +131,13 @@ Tables principales utilisées :
 - `OPERATEUR_GUIDE.md`
 - `CONTROLEUR_GUIDE.md`
 - `TROUBLESHOOTING.md`
+- `PRESENTATION_CTR_NET_FARDC.md`
+- `PROMPT_PRESENTATION.md`
+
+## Application mobile associée
+
+- Projet : `ctr-net-mobile/` (Ionic 8.0.0 + Angular 20.0.0 + Capacitor 8.2.0)
+- Profil unique : CONTROLEUR
+- Build APK automatique via GitHub Actions
+- Documentation : `ctr-net-mobile/README.md`
+- Fonctionnement combiné : `ctr-net-mobile/FONCTIONNEMENT_COMPLET_WEB_MOBILE.md`

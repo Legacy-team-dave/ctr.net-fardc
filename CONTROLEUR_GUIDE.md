@@ -1,4 +1,5 @@
 # Guide Contrôleur FARDC
+
 ## Saisie de Contrôles sur le Terrain
 
 ---
@@ -57,7 +58,7 @@ L'interface CONTROLEUR est spécialement conçue pour **tablettes et smartphones
 
 ### Compte de Test
 
-```
+```text
 Login :       controleur
 Mot de passe: controleur123
 Profil :      CONTROLEUR
@@ -69,7 +70,7 @@ Profil :      CONTROLEUR
 
 L'interface CONTROLEUR utilise une **barre de navigation en haut** :
 
-```
+```text
 ┌──────────────────────────────────────────────────────┐
 │  CTL.NET-FARDC  │  Contrôles  │  Profil  │  Quitter  │
 └──────────────────────────────────────────────────────┘
@@ -91,7 +92,7 @@ Après connexion, vous arrivez directement sur la page : **"Effectuer un contrô
 
 Le formulaire comprend plusieurs étapes :
 
-```
+```text
 ÉTAPE 1 : Rechercher le militaire
           ↓
 ÉTAPE 2 : Sélectionner la mention
@@ -109,7 +110,7 @@ Le formulaire comprend plusieurs étapes :
 
 La barre de recherche est en haut du formulaire :
 
-```
+```text
 ┌────────────────────────────────────────────────────┐
 │  Rechercher un militaire                           │
 │  [Matricule ou nom...              🔍 Rechercher]  │
@@ -124,7 +125,7 @@ La barre de recherche est en haut du formulaire :
 
 **Exemple de recherche :**
 
-```
+```text
 Taper : "1234"
 │
 └─ Résultats :
@@ -133,7 +134,7 @@ Taper : "1234"
    └─ (2 résultats)
 ```
 
-```
+```text
 Taper : "dupont"
 │
 └─ Résultats :
@@ -145,7 +146,7 @@ Taper : "dupont"
 
 Une fois le militaire sélectionné, ses informations apparaissent :
 
-```
+```text
 ┌──────────────────────────────────────────┐
 │  MILITAIRE SÉLECTIONNÉ                  │
 ├──────────────────────────────────────────┤
@@ -178,7 +179,7 @@ Si le militaire ne s'affiche pas dans les résultats :
 
 Après sélection du militaire, la mention dépend du contexte de contrôle :
 
-```
+```text
 ┌────────────────────────────────────────────────────────────┐
 │ Cas 1 : militaire vivant                                  │
 │   [✅ PRÉSENT]                                             │
@@ -193,7 +194,7 @@ Après sélection du militaire, la mention dépend du contexte de contrôle :
 **Description des mentions :**
 
 | Mention | Signification |
-|---------|---------------|
+| ------- | ------------- |
 | **PRÉSENT** | Contrôle du militaire lui-même (statut vivant) |
 | **FAVORABLE** | Contrôle bénéficiaire conforme |
 | **DÉFAVORABLE** | Contrôle bénéficiaire non conforme |
@@ -207,7 +208,7 @@ Le formulaire inclut aussi le choix de **statut** selon la catégorie du militai
 
 Le champ **"Observations"** vous permet d'ajouter des précisions :
 
-```
+```text
 ┌──────────────────────────────────────────────────────────┐
 │  Observations                                            │
 │ ┌──────────────────────────────────────────────────────┐│
@@ -218,6 +219,7 @@ Le champ **"Observations"** vous permet d'ajouter des précisions :
 ```
 
 **Quand remplir les observations :**
+
 - PRÉSENT → signaler tout élément utile du contrôle
 - FAVORABLE / DÉFAVORABLE → indiquer les justificatifs et anomalies constatées
 
@@ -225,7 +227,7 @@ Le champ **"Observations"** vous permet d'ajouter des précisions :
 
 En mode bénéficiaire (statut décédé), vous pouvez renseigner ou compléter le bénéficiaire :
 
-```
+```text
 ┌──────────────────────────────────────────────────────────┐
 │  Bénéficiaires                                           │
 │                                                          │
@@ -255,20 +257,20 @@ Une fois toutes les informations remplies :
    - **"👍 Favorable"** ou **"👎 Défavorable"** (mode bénéficiaire)
 3. Un message de confirmation s'affiche :
 
-```
+```text
 ✅ Contrôle enregistré avec succès !
    Matricule : 12345 - DUPONT Jean
    Mention   : PRÉSENT
    Date      : 23/03/2026 à 10:35
 ```
 
-4. Le formulaire se réinitialise pour un **nouveau contrôle**
+1. Le formulaire se réinitialise pour un **nouveau contrôle**
 
 ### Si le Militaire a Déjà Été Contrôlé
 
 Si le militaire a déjà un contrôle enregistré pour la session en cours :
 
-```
+```text
 ⚠️ Ce militaire a déjà été contrôlé.
    Mention précédente : PRÉSENT (enregistrée le 23/03/2026)
    
@@ -288,6 +290,7 @@ Si le militaire a déjà un contrôle enregistré pour la session en cours :
 ### Modifier Votre Profil
 
 Vous pouvez modifier :
+
 - ✅ Votre **nom complet**
 - ✅ Votre **adresse e-mail**
 - ✅ Votre **avatar** (photo de profil)
@@ -307,34 +310,44 @@ Vous pouvez modifier :
 
 ## FAQ Contrôleur
 
-### Q1 : Je ne vois pas le tableau de bord. Est-ce normal ?
+### Q1 : Je ne vois pas le tableau de bord. Est-ce normal
+
 **R :** Oui, c'est tout à fait normal. Le profil **CONTROLEUR** n'a accès qu'au formulaire de saisie de contrôles. Le tableau de bord est réservé aux profils ADMIN_IG et OPERATEUR.
 
-### Q2 : Puis-je consulter les contrôles que j'ai déjà effectués ?
+### Q2 : Puis-je consulter les contrôles que j'ai déjà effectués
+
 **R :** Non, la consultation de l'historique des contrôles est réservée aux profils ADMIN_IG et OPERATEUR. Pour vérifier un contrôle que vous avez fait, contactez un OPERATEUR ou l'ADMIN_IG.
 
-### Q3 : L'application ne trouve pas le militaire que je cherche.
+### Q3 : L'application ne trouve pas le militaire que je cherche
+
 **R :** Plusieurs causes possibles :
+
 1. Le militaire n'est pas encore enregistré dans le système → contactez votre OPERATEUR
 2. Le nom est orthographié différemment → essayez avec le matricule
 3. Le militaire est marqué inactif → contactez ADMIN_IG
 
-### Q4 : Puis-je corriger un contrôle que j'ai mal saisi ?
+### Q4 : Puis-je corriger un contrôle que j'ai mal saisi
+
 **R :** Non, la correction des contrôles est réservée à ADMIN_IG et OPERATEUR. Signalez immédiatement l'erreur à votre OPERATEUR avec le matricule et la date du contrôle.
 
-### Q5 : L'application me déconnecte automatiquement. Pourquoi ?
+### Q5 : L'application me déconnecte automatiquement. Pourquoi
+
 **R :** Les sessions expirent après **30 minutes d'inactivité** pour des raisons de sécurité. Reconnectez-vous si cela se produit. Pensez à enregistrer chaque contrôle avant de faire une pause.
 
-### Q6 : L'interface s'affiche mal sur mon téléphone.
+### Q6 : L'interface s'affiche mal sur mon téléphone
+
 **R :** Utilisez **Chrome ou Firefox** en version récente. Désactivez le zoom automatique si l'affichage est trop petit. L'application est optimisée pour les résolutions mobiles (360px et plus).
 
-### Q7 : Le GPS ne fonctionne pas.
+### Q7 : Le GPS ne fonctionne pas
+
 **R :** Vérifiez que :
+
 1. La **géolocalisation** est activée sur votre appareil
 2. Vous avez **autorisé** le navigateur à accéder à votre position
 3. Vous êtes dans une zone avec signal GPS suffisant
 
-### Q8 : Comment voir les militaires de mon unité ?
+### Q8 : Comment voir les militaires de mon unité
+
 **R :** La consultation des militaires n'est pas accessible avec le profil CONTROLEUR. Demandez à votre OPERATEUR de vous fournir une liste imprimée si nécessaire.
 
 ---
@@ -344,6 +357,7 @@ Vous pouvez modifier :
 ### Vos Actions Sont Enregistrées
 
 Toutes vos actions dans l'application sont **journalisées** dans le log d'audit :
+
 - Connexion / Déconnexion
 - Chaque contrôle enregistré (date, heure, militaire, mention)
 - Modifications de profil
@@ -359,11 +373,11 @@ Toutes vos actions dans l'application sont **journalisées** dans le log d'audit
 ## Liens Rapides
 
 | Document | Description |
-|----------|-------------|
+| -------- | ----------- |
 | [USER_GUIDE.md](USER_GUIDE.md) | Guide général (tous profils) |
 | [FAQ.md](FAQ.md) | Questions fréquentes |
 | [TROUBLESHOOTING.md](TROUBLESHOOTING.md) | Résolution de problèmes |
 
 ---
 
-*Guide CONTROLEUR - CTR.NET-FARDC v1.1.0 - Mars 2026*
+Guide CONTROLEUR - CTR.NET-FARDC v1.2.0 - Mars 2026

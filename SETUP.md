@@ -1,4 +1,4 @@
-# Setup - CTR.NET-FARDC
+﻿# Setup - CTR.NET-FARDC
 
 ## Prérequis
 
@@ -71,7 +71,7 @@ Consulter [ENCRYPTION.md](ENCRYPTION.md) pour :
 - `launch.ps1`
 - `lanceur.ps1`
 
-`INSTALLER.bat` crée directement le raccourci bureau `.lnk` pointant vers `launch.bat` (icône personnalisée si disponible). Ce raccourci permet de démarrer Laragon, d'attendre Apache/MySQL, puis d'ouvrir l'application dans le navigateur.
+`INSTALLER.bat` crée directement le raccourci bureau `.lnk` pointant en priorité vers `launch.ps1` (fallback `launch.bat`, icône personnalisée si disponible). Ce raccourci permet de démarrer Laragon, d'attendre Apache/MySQL, puis d'ouvrir l'application dans le navigateur.
 
 ## Profils applicatifs
 
@@ -112,7 +112,7 @@ Le nettoyage des caches s’exécute automatiquement toutes les 8 heures (intég
 run_cache_cleanup.bat 90
 ```
 
-## Sauvegarde incrémentale et purge automatique
+## Sauvegarde consolidée et purge automatique
 
 - Installer/mettre à jour la tâche planifiée (8h) :
 	- PowerShell : `./setup_backup_task.ps1 -MaxKeep 30`
@@ -123,4 +123,17 @@ run_cache_cleanup.bat 90
 	- PowerShell : `./run_backup_purge.ps1 -MaxKeep 30`
 	- CMD : `run_backup_purge.bat 30`
 
+Comportement de sauvegarde : mise à jour de l'archive consolidée `backups/backup_consolide_latest.zip` avec les données complètes (`controles`, `litiges`, `non_vus`).
+
 Comportement de purge : suppression des archives ZIP identiques, puis conservation des 30 dernières archives non identiques (valeur ajustable via `MaxKeep`).
+
+### Envoi e-mail des sauvegardes (optionnel)
+
+Le script `run_backup_job.ps1` peut envoyer automatiquement l'archive consolidée par e-mail après chaque exécution.
+
+Configurer `config/backup_mail.json` :
+
+- `from` : adresse expéditeur
+- `to` : adresse destinataire (ou plusieurs adresses séparées par `;`)
+- `smtpHost`, `smtpPort`, `smtpUser`, `smtpPassword`, `useSsl`
+- `enabled: true` pour activer l'envoi

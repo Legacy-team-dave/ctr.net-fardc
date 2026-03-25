@@ -1,5 +1,5 @@
 # ================================================================================
-# Installation de la tâche planifiée de sauvegarde incrémentale (toutes les 8h)
+# Installation de la tâche planifiée de sauvegarde consolidée (toutes les 8h)
 # ================================================================================
 param(
     [string]$TaskName = 'CTR.NET-FARDC-Backup-8H',

@@ -153,18 +153,20 @@ Trois interfaces pour gérer le chiffrement :
 
 ## Sauvegarde et purge
 
-Mécanisme de sauvegarde incrémentale piloté par scripts racine :
+Mécanisme de sauvegarde consolidée piloté par scripts racine :
 
 - `setup_backup_task.ps1` / `setup_backup_task.bat` : installation de la tâche planifiée (toutes les 8h)
 - `run_backup_job.ps1` : exécution du job (backup + purge + nettoyage caches)
 - `run_backup_purge.ps1` / `run_backup_purge.bat` : purge manuelle
 - `run_cache_cleanup.ps1` / `run_cache_cleanup.bat` : nettoyage caches manuel
+- `config/backup_mail.json` : configuration e-mail expéditeur/destinataire (optionnel)
 
 Règle de purge appliquée :
 
 - suppression des archives ZIP de plus de **60 jours**
 - suppression des archives ZIP identiques (même hash)
 - conservation des `N` dernières archives non identiques (par défaut `30` via `MaxKeep`)
+- archive consolidée principale mise à jour : `backups/backup_consolide_latest.zip`
 
 ## 🧹 Nettoyage automatique des caches (v1.5.0+)
 
@@ -186,9 +188,12 @@ Système de nettoyage intégré au job planifié (toutes les 8h) et exécutable 
 Job planifié Windows (toutes les 8h)
     ↓
 backup_cron.php
-    ├── maybe_create_backup()    ← Sauvegarde incrémentale
+    ├── maybe_create_backup()    ← Sauvegarde consolidée (ZIP unique mis à jour)
     ├── purge_backup_archives()  ← Purge archives
     └── nettoyer_caches()        ← Nettoyage caches (v1.5.0)
+
+run_backup_job.ps1
+  └── Send-BackupMail()        ← Envoi optionnel de backup_consolide_latest.zip par SMTP
 ```
 
 ### Interfaces

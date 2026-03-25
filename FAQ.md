@@ -203,13 +203,13 @@ Oui.
 Toutes les 8 heures via une tâche planifiée Windows.
 
 ### Que contient une sauvegarde ZIP ?
-Exports incrémentaux (nouveaux éléments uniquement) de `controles`, `litiges` et `non_vus` en CSV et XLSX.
+Une archive consolidée (`backup_consolide_latest.zip`) contenant l'état complet de `controles`, `litiges` et `non_vus` en CSV et XLSX.
 
 ### La sauvegarde se lance-t-elle sans visiter les pages ?
 Oui. Elle est exécutée par tâche planifiée (`run_backup_job.ps1` via `setup_backup_task.ps1/.bat`).
 
 ### Est-ce que chaque sauvegarde contient toutes les données historiques ?
-Non. Chaque archive contient uniquement les nouveaux éléments détectés depuis la dernière sauvegarde réussie.
+Oui. L'archive consolidée est réécrite à chaque cycle avec les données complètes à jour.
 
 ### La purge des anciennes sauvegardes est-elle automatique ?
 Oui. Le job applique une purge intelligente : suppression des archives identiques puis conservation des 30 dernières archives non identiques.
@@ -225,6 +225,9 @@ Oui, via `run_backup_purge.ps1 -MaxKeep 30` ou `run_backup_purge.bat 30` (valeur
 
 ### Où sont stockées les sauvegardes ?
 Dans le dossier `backups/`.
+
+### Peut-on envoyer les sauvegardes par e-mail ?
+Oui (optionnel). Configurez `config/backup_mail.json` avec une adresse expéditeur (`from`) et destinataire (`to`), puis activez `enabled: true`.
 
 ## 10) Base de données et configuration
 

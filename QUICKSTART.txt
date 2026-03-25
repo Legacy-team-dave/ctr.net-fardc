@@ -26,10 +26,11 @@ API REST mobile (v1.2.0+):
 - api/profil.php         (Profil utilisateur)
 - api/controles_poll.php (Polling temps réel contrôles mobiles)
 
-Sauvegarde automatique incrémentale (8h):
+Sauvegarde automatique consolidée (8h):
 - Exécuter: setup_backup_task.bat
 - Exécution autonome sans visiter les pages
-- Archive ZIP avec CSV + XLSX des nouveaux éléments uniquement
+- Archive ZIP consolidée mise à jour: backups/backup_consolide_latest.zip
+- Contenu: CSV + XLSX complets (anciennes + nouvelles données)
 - Purge auto: supprimer les archives de plus de 60 jours
 - Purge auto: conserver seulement 30 dernières archives non identiques
 - Purge manuelle: powershell -File run_backup_purge.ps1 -MaxKeep 30

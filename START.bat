@@ -64,6 +64,6 @@ echo.
 echo Chiffrement AES-256-CBC: Activé (v1.1.0+)
 echo Pour initialiser: double-cliquer encrypt_init.bat
 echo.
-echo Sauvegardes incrémentales automatiques: Actives (toutes les 8h)
+echo Sauvegarde consolidée automatique: Active (toutes les 8h)
 echo Nettoyage automatique des caches: Actif (v1.5.0+)
 echo.

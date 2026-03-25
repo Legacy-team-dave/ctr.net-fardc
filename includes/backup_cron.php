@@ -35,14 +35,14 @@ try {
     if (!empty($result['created'])) {
         $counts = $result['counts'] ?? [];
         error_log(
-            "Sauvegarde incrémentale exécutée: "
+            "Sauvegarde consolidée exécutée: "
                 . ($result['file'] ?? 'archive inconnue')
                 . " | controles=" . ($counts['controles'] ?? 0)
                 . " | litiges=" . ($counts['litiges'] ?? 0)
                 . " | non_vus=" . ($counts['non_vus'] ?? 0)
         );
     } else {
-        error_log("Sauvegarde incrémentale non exécutée: " . ($result['reason'] ?? 'raison inconnue'));
+        error_log("Sauvegarde consolidée non exécutée: " . ($result['reason'] ?? 'raison inconnue'));
     }
 
     $purge = purge_backup_archives($maxKeep);

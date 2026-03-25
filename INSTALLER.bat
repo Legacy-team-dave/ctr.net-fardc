@@ -5,6 +5,8 @@ REM ============================================================================
 REM Ce script configure et installe l'application CTR.NET-FARDC
 
 setlocal enabledelayedexpansion
+chcp 65001 > nul
+for /f "delims=" %%I in ('powershell -NoProfile -Command "[Console]::OutputEncoding = [System.Text.UTF8Encoding]::new($false); [Console]::InputEncoding = [System.Text.UTF8Encoding]::new($false); 'UTF8_OK'"') do set "_UTF8_READY=%%I"
 
 cls
 color 0A
@@ -97,7 +99,7 @@ echo   - Opérateur: operateur / operateur123
 echo   - Contrôleur: controleur / controleur123
 echo.
 echo Chiffrement AES-256-CBC: Activé (v1.1.0+)
-echo Sauvegardes incrémentales automatiques: Actives (toutes les 8h)
+echo Sauvegarde consolidée automatique: Active (toutes les 8h)
 echo Nettoyage automatique des caches: Actif (v1.5.0+)
 echo.
 
@@ -116,9 +118,14 @@ set "shortcut_target=%launch_target%"
 set "shortcut_args="
 set "url_fallback=%desktop_path%\CTL EFF MIL_IG FARDC.url"
 
-if not exist "%launch_target%" if exist "%launch_ps1%" (
+if exist "%launch_ps1%" (
     set "shortcut_target=%SystemRoot%\System32\WindowsPowerShell\v1.0\powershell.exe"
-    set "shortcut_args=-NoProfile -ExecutionPolicy Bypass -File ""%launch_ps1%"""
+    set "shortcut_args=-NoProfile -ExecutionPolicy Bypass -File ""%launch_ps1%"" -NoWait"
+)
+
+if not exist "%shortcut_target%" if exist "%launch_target%" (
+    set "shortcut_target=%launch_target%"
+    set "shortcut_args="
 )
 
 if not exist "%desktop_path%" (

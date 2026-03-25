@@ -43,7 +43,7 @@ if exist "C:\laragon\laragon.exe" (
     echo FONCTIONNALITÉS V1.1.0+
     echo ============================================
     echo [✓] Chiffrement AES-256-CBC des fichiers sensibles
-    echo [✓] Sauvegardes incrémentales automatiques (8h)
+    echo [✓] Sauvegarde consolidée automatique (8h)
     echo [✓] Traçabilité complète des actions
     echo.
 

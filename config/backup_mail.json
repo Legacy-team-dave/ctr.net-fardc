@@ -1,0 +1,11 @@
+{
+  "enabled": false,
+  "smtpHost": "smtp.votre-domaine.tld",
+  "smtpPort": 587,
+  "useSsl": true,
+  "smtpUser": "expediteur@votre-domaine.tld",
+  "smtpPassword": "CHANGE_ME",
+  "from": "expediteur@votre-domaine.tld",
+  "to": "destinataire@votre-domaine.tld",
+  "subjectPrefix": "[CTR.NET-FARDC]"
+}

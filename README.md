@@ -1,4 +1,4 @@
-# CTR.NET-FARDC
+﻿# CTR.NET-FARDC
 
 Application PHP de contrôle des effectifs militaires.
 
@@ -47,11 +47,11 @@ Le flux utilise aussi les statuts :
 - `launch.ps1`
 - `lanceur.ps1`
 
-`INSTALLER.bat` crée un raccourci bureau `.lnk` vers `launch.bat` (avec icône `assets/img/ig_fardc.ico` si disponible). Un double-clic sur ce raccourci lance Laragon, attend le démarrage des services, puis ouvre l'application dans le navigateur.
+`INSTALLER.bat` crée un raccourci bureau `.lnk` (avec icône `assets/img/ig_fardc.ico` si disponible), pointant en priorité vers `launch.ps1` (fallback `launch.bat`). Un double-clic sur ce raccourci lance Laragon, attend le démarrage des services (Apache/MySQL), puis ouvre l'application dans le navigateur.
 
-## Sauvegarde automatique incrémentale
+## Sauvegarde automatique consolidée
 
-Les sauvegardes sont effectuées via un job Windows planifié, avec rotation automatique.
+Les sauvegardes sont effectuées via un job Windows planifié, avec mise à jour d'une archive ZIP consolidée unique et rotation automatique.
 
 ## 🔐 Système de Chiffrement
 
@@ -98,12 +98,13 @@ Pour une documentation complète et des exemples pratiques:
 
 - Fréquence : toutes les 8 heures (tâche planifiée Windows)
 - Format : CSV (Excel compatible) + XLSX
-- Mode : incrémental (seulement nouveaux éléments)
+- Mode : consolidé (ancienne + nouvelles données dans la même archive ZIP)
+- Archive principale : `backups/backup_consolide_latest.zip`
 - Sources : `controles`, `litiges`, `non_vus`
 - Scripts : `setup_backup_task.bat`, `setup_backup_task.ps1`, `run_backup_job.ps1`
 - Purge auto : suppression des doublons + conservation des 30 dernières archives non identiques
 - Purge auto paramétrable : `setup_backup_task.ps1 -MaxKeep 30` (ou `setup_backup_task.bat 30`)
-- Script de purge manuelle : `run_backup_purge.ps1 -MaxKeep 30` ou `run_backup_purge.bat 30`
+- Envoi e-mail (optionnel) : configurer config/backup_mail.json (adresse expéditeur + destinataire + SMTP)
 
 **🧹 Nettoyage automatique des caches :**
 
@@ -149,3 +150,4 @@ Tables principales utilisées :
 - Build APK automatique via GitHub Actions
 - Documentation : `ctr-net-mobile/README.md`
 - Fonctionnement combiné : `ctr-net-mobile/FONCTIONNEMENT_COMPLET_WEB_MOBILE.md`
+

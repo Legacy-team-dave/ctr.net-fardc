@@ -247,18 +247,20 @@ Actions courantes tracées :
 
 Fonctions de sauvegarde dans `includes/functions.php` :
 
-- `maybe_create_backup()` : calcule et crée une sauvegarde incrémentale
-- `create_incremental_backup_archive()` : fabrique l'archive ZIP avec CSV + XLSX
+- `maybe_create_backup()` : calcule et met à jour une sauvegarde consolidée
+- `create_incremental_backup_archive()` : fabrique l'archive ZIP consolidée avec CSV + XLSX
 
 Comportement réel :
 
 - exécution autonome par tâche planifiée Windows toutes les 8 heures
 - fichiers produits dans `backups/`
-- contenu : nouveaux éléments uniquement (`controles`, `litiges`, `non_vus`)
+- archive principale : `backup_consolide_latest.zip`
+- contenu : jeux de données complets à jour (`controles`, `litiges`, `non_vus`) avec anciennes + nouvelles données
 - formats : CSV compatible Excel et XLSX
 - état persistant : `backups/backup_state.json` (curseurs et snapshot non-vus)
 - purge automatique : suppression des archives identiques, puis conservation des 30 dernières archives non identiques
 - script manuel de purge : `run_backup_purge.ps1 -MaxKeep 30`
+- envoi e-mail optionnel : `run_backup_job.ps1` lit `config/backup_mail.json` pour envoyer l'archive (`from` → `to`)
 
 ## 11bis. Nettoyage automatique des caches (v1.5.0+)
 

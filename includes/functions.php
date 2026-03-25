@@ -1155,6 +1155,25 @@ function fetch_incremental_rows_for_table($table, $id_field, $field_order, $last
     return $normalized;
 }
 
+function fetch_full_rows_for_table($table, $field_order)
+{
+    global $pdo;
+
+    $stmt = $pdo->query("SELECT * FROM {$table} ORDER BY id ASC");
+    $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+    $normalized = [];
+    foreach ($rows as $row) {
+        $line = [];
+        foreach ($field_order as $field) {
+            $line[] = $row[$field] ?? '';
+        }
+        $normalized[] = $line;
+    }
+
+    return $normalized;
+}
+
 function get_non_vus_rows_for_backup()
 {
     global $pdo;
@@ -1367,33 +1386,29 @@ function build_xlsx_content($headers, $rows, $sheet_name = 'Donnees')
 function create_incremental_backup_archive($datasets)
 {
     $backup_dir = get_backup_dir_path();
-    $timestamp = date('Y-m-d_H-i-s');
-    $zip_file = $backup_dir . 'backup_incremental_' . $timestamp . '.zip';
+    $zip_file = $backup_dir . 'backup_consolide_latest.zip';
 
     $zip = new ZipArchive();
     if ($zip->open($zip_file, ZipArchive::CREATE | ZipArchive::OVERWRITE) !== true) {
-        error_log("Impossible de créer l'archive de sauvegarde incrémentale.");
+        error_log("Impossible de créer l'archive de sauvegarde consolidée.");
         return false;
     }
 
     $manifest = [
-        'created_at' => date('c'),
+        'updated_at' => date('c'),
+        'mode' => 'consolidated_latest',
         'datasets' => []
     ];
 
     foreach ($datasets as $dataset_key => $dataset) {
         $headers = $dataset['headers'];
         $rows = $dataset['rows'];
-        if (empty($rows)) {
-            continue;
-        }
-
         $csv = build_csv_content($headers, $rows, ';');
         $xlsx = build_xlsx_content($headers, $rows, $dataset['sheet_name'] ?? ucfirst($dataset_key));
 
-        $zip->addFromString($dataset_key . '_' . $timestamp . '.csv', $csv);
+        $zip->addFromString($dataset_key . '.csv', $csv);
         if ($xlsx !== false) {
-            $zip->addFromString($dataset_key . '_' . $timestamp . '.xlsx', $xlsx);
+            $zip->addFromString($dataset_key . '.xlsx', $xlsx);
         }
 
         $manifest['datasets'][$dataset_key] = [
@@ -1488,10 +1503,9 @@ function purge_backup_archives($max_unique_keep = 30, $max_days = 60)
 }
 
 /**
- * Exécute la sauvegarde incrémentale (8h) :
+ * Exécute la sauvegarde consolidée (8h) :
  * - seulement si intervalle atteint (sauf force=true)
- * - seulement si nouveaux éléments détectés
- * - archive uniquement les nouveaux éléments
+ * - met à jour un ZIP unique contenant l'ensemble des données à jour
  */
 function maybe_create_backup($force = false)
 {
@@ -1513,37 +1527,25 @@ function maybe_create_backup($force = false)
     $litige_fields = ['id', 'matricule', 'noms', 'grade', 'type_controle', 'nom_beneficiaire', 'lien_parente', 'garnison', 'province', 'date_controle', 'observations', 'cree_le'];
     $non_vus_fields = ['SERIE', 'MATRICULE', 'NOMS', 'GRADE', 'UNITE', 'BENEFICIAIRE', 'GARNISON', 'PROVINCE', 'CATEGORIE', 'ZDEF'];
 
-    $new_controles = fetch_incremental_rows_for_table('controles', 'id', $control_fields, (int)$state['last_control_id']);
-    $new_litiges = fetch_incremental_rows_for_table('litiges', 'id', $litige_fields, (int)$state['last_litige_id']);
-
+    $all_controles = fetch_full_rows_for_table('controles', $control_fields);
+    $all_litiges = fetch_full_rows_for_table('litiges', $litige_fields);
     $current_non_vus = get_non_vus_rows_for_backup();
-    $new_non_vus = filter_new_non_vus_rows($current_non_vus, $state['non_vus_snapshot']);
     $current_non_vus_snapshot = get_non_vus_matricule_snapshot($current_non_vus);
 
-    if (empty($new_controles) && empty($new_litiges) && empty($new_non_vus)) {
-        $state['last_run_at'] = $now;
-        $state['non_vus_snapshot'] = $current_non_vus_snapshot;
-        write_backup_state($state);
-        return [
-            'created' => false,
-            'reason' => 'no_new_data'
-        ];
-    }
-
     $datasets = [
-        'controles_incremental' => [
+        'controles' => [
             'headers' => $control_fields,
-            'rows' => $new_controles,
+            'rows' => $all_controles,
             'sheet_name' => 'Controles'
         ],
-        'litiges_incremental' => [
+        'litiges' => [
             'headers' => $litige_fields,
-            'rows' => $new_litiges,
+            'rows' => $all_litiges,
             'sheet_name' => 'Litiges'
         ],
-        'non_vus_incremental' => [
+        'non_vus' => [
             'headers' => $non_vus_fields,
-            'rows' => $new_non_vus,
+            'rows' => $current_non_vus,
             'sheet_name' => 'NonVus'
         ]
     ];
@@ -1568,12 +1570,12 @@ function maybe_create_backup($force = false)
 
     return [
         'created' => true,
-        'reason' => 'backup_created',
+        'reason' => 'backup_updated',
         'file' => $zip_file,
         'counts' => [
-            'controles' => count($new_controles),
-            'litiges' => count($new_litiges),
-            'non_vus' => count($new_non_vus)
+            'controles' => count($all_controles),
+            'litiges' => count($all_litiges),
+            'non_vus' => count($current_non_vus)
         ]
     ];
 }

@@ -36,7 +36,7 @@ ctr.net-fardc/
 │   ├── 📄 MODIFICATIONS.md                ← [MODIFIÉ] Docs mises à jour
 │   └── 📋 ENCRYPTION_SUMMARY.txt          ← [NOUVEAU] Résumé visuel
 │
-├── 🔓 FICHIERS CHIFFRABLES (défaut)
+├── 🔓 CIBLES CHIFFRABLES (par défaut)
 │   ├── 🔓 config/database.php             ← [PEUT ÊTRE CHIFFRÉ]
 │   ├── 🔓 config/load_config.php          ← [PEUT ÊTRE CHIFFRÉ]
 │   ├── 🔓 includes/functions.php          ← [PEUT ÊTRE CHIFFRÉ]
@@ -112,7 +112,7 @@ Ligne de commande:
              ▼ Runtime
     ┌──────────────────────┐
     │ Déchiffrement Auto   │
-    │ (transparent pour app)
+    │ (si fichiers .encrypted présents)
     └────────┬─────────────┘
              │
              ▼

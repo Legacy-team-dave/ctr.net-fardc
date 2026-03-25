@@ -54,7 +54,7 @@ encrypt_all.bat
 php bin/encrypt.php encrypt
 ```
 
-**✓ Résultat:** Les fichiers `.encrypted` sont créés
+**✓ Résultat:** Les versions `.encrypted` des cibles par défaut sont créées
 
 ---
 
@@ -149,8 +149,8 @@ php bin/encrypt.php init
 # 2. Chiffrer fichiers
 php bin/encrypt.php encrypt
 
-# 3. Déployer SANS les originaux
-# Copier uniquement:
+# 3. Déployer selon votre mode d'exploitation
+# Si vous retenez le mode chiffré en production, copier notamment:
 #   - config/database.php.encrypted
 #   - includes/functions.php.encrypted
 #   - ... (tous les .encrypted)

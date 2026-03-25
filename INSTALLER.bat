@@ -105,18 +105,28 @@ REM ============================================================================
 REM Création du raccourci sur le bureau
 REM ================================================================================
 echo Création du raccourci sur le bureau...
-set "desktop_path=%USERPROFILE%\Desktop"
+set "desktop_path="
+for /f "usebackq delims=" %%I in (`powershell -NoProfile -Command "[Environment]::GetFolderPath('Desktop')"`) do set "desktop_path=%%I"
+if not defined desktop_path set "desktop_path=%USERPROFILE%\Desktop"
 set "shortcut_name=CTL EFF MIL_IG FARDC.lnk"
 set "shortcut_file=%desktop_path%\%shortcut_name%"
 set "launch_target=%~dp0launch.bat"
+set "launch_ps1=%~dp0launch.ps1"
+set "shortcut_target=%launch_target%"
+set "shortcut_args="
 set "url_fallback=%desktop_path%\CTL EFF MIL_IG FARDC.url"
+
+if not exist "%launch_target%" if exist "%launch_ps1%" (
+    set "shortcut_target=%SystemRoot%\System32\WindowsPowerShell\v1.0\powershell.exe"
+    set "shortcut_args=-NoProfile -ExecutionPolicy Bypass -File ""%launch_ps1%"""
+)
 
 if not exist "%desktop_path%" (
     echo ATTENTION: Bureau introuvable, tentative de création...
     mkdir "%desktop_path%" >nul 2>&1
 )
 
-if not exist "%launch_target%" (
+if not exist "%launch_target%" if not exist "%launch_ps1%" (
     echo ATTENTION: launch.bat introuvable, création d'un raccourci web de secours
     > "%url_fallback%" (
         echo [InternetShortcut]
@@ -130,9 +140,12 @@ if not exist "%launch_target%" (
       "$ErrorActionPreference = 'Stop';" ^
       "try {" ^
       "  $WshShell = New-Object -ComObject WScript.Shell;" ^
-      "  $Shortcut = $WshShell.CreateShortcut('%shortcut_file%');" ^
-      "  $Shortcut.TargetPath = '%launch_target%';" ^
+    "  $Shortcut = $WshShell.CreateShortcut('%shortcut_file%');" ^
+    "  $Shortcut.TargetPath = '%shortcut_target%';" ^
+    "  if ('%shortcut_args%' -ne '') { $Shortcut.Arguments = '%shortcut_args%' };" ^
       "  $Shortcut.WorkingDirectory = '%~dp0';" ^
+    "  $Shortcut.Description = 'Lance Laragon puis ouvre CTR.NET-FARDC dans le navigateur';" ^
+    "  $Shortcut.WindowStyle = 1;" ^
       "  if (Test-Path '%APP_ICON%') { $Shortcut.IconLocation = '%APP_ICON%,0' };" ^
       "  $Shortcut.Save();" ^
       "  if (Test-Path '%shortcut_file%') { exit 0 } else { exit 2 }" ^
@@ -142,7 +155,7 @@ if not exist "%launch_target%" (
 
     if %errorlevel% equ 0 (
         echo OK - Raccourci .lnk créé: %shortcut_file%
-        echo Ce raccourci lance Laragon, attend les services, puis ouvre l'application.
+        echo Ce raccourci lance Laragon, attend Apache/MySQL puis ouvre l'application dans le navigateur.
         if exist "%APP_ICON%" (
             echo OK - Icône personnalisée appliquée
         ) else (

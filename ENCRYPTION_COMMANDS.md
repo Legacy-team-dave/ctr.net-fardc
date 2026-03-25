@@ -64,7 +64,7 @@ php bin\encrypt.php encrypt config/database.php
 ### 🔑 ROTATION DE CLÉ (Maintenance avancée)
 
 ```bash
-# Automatisé (déchiffre → nouveau clé → re-chiffre)
+# Script dédié de rotation (à déclencher manuellement)
 .\rotate_encryption_key.ps1
 
 # Backups créés: .encryption_backups\encryption_key_YYYY-MM-DD_HHMMSS.bak
@@ -156,13 +156,13 @@ php bin\encrypt.php encrypt config/database.php
 # 1. Chiffrer localement (dev)
 php bin\encrypt.php encrypt
 
-# 2. Envoyer UNIQUEMENT les .encrypted (+ autres fichiers)
-# Ignorer: les .php originaux, la vraie clé
+# 2. Envoyer les `.encrypted` requis par votre mode de déploiement
+# Éviter d'exposer les originaux sensibles et ne jamais livrer la vraie clé
 
 # 3. Sur serveur, créer .env avec la clé
 ENCRYPTION_KEY=febe69f5888ca2472ce75b0b8928afa0d80d82be25d88e20b15a832834499ae9
 
-# 4. Application démarre → déchiffrement auto
+# 4. Application démarre → déchiffrement auto des fichiers `.encrypted` présents
 ```
 
 ### Cas 4: Changer la clé de chiffrement
@@ -223,7 +223,7 @@ encrypt_all.bat
 # Vérifier:
 encrypt_status.bat
 
-# Et voilà! Votre code est protégé. 🔒
+# Et voilà! Les cibles configurées sont chiffrées. 🔒
 ```
 
 ---

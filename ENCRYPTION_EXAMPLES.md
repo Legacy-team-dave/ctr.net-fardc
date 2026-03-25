@@ -51,7 +51,7 @@ $ php bin/encrypt.php status
     - logout.php
     - index.php
 
-# ✅ Prêt pour le commit & déploiement!
+# ✅ Prêt pour le commit et le déploiement du mode chiffré choisi
 $ git add config/*.encrypted includes/*.encrypted *.encrypted
 $ git commit -m "Chiffrement des sources sensibles"
 ```
@@ -122,8 +122,8 @@ $ git commit -m "Ready for production deployment"
 #### Côté Production (Serveur)
 
 ```bash
-# 1. Déployer les fichiers (sans les originaux .php sensibles!)
-#    Seuls copier:
+# 1. Déployer les fichiers retenus pour le mode chiffré
+#    En pratique, copier notamment:
 #    - ✓ config/database.php.encrypted
 #    - ✓ config/load_config.php.encrypted
 #    - ✓ includes/functions.php.encrypted
@@ -150,7 +150,7 @@ $ ls -la /var/www/ctr.net-fardc/config/*.encrypted
   load_config.php.encrypted
   # ...
 
-# ✅ Production sécurisée!
+# ✅ Production configurée pour utiliser les fichiers chiffrés!
 ```
 
 ---
@@ -211,7 +211,7 @@ Fichiers chiffrables:
 # Étape 1: Faire une sauvegarde
 $ copy .env .env.backup.2026.03
 
-# Étape 2: Lancer la rotation automatisée
+# Étape 2: Lancer la rotation via le script dédié
 $ .\rotate_encryption_key.ps1
 
 ╔═════════════════════════════════════════════╗

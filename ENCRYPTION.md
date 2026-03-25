@@ -29,7 +29,7 @@ CTR.NET-FARDC/
   └── encrypt_sources.ps1         ← Interface PowerShell
 ```
 
-**Fichiers sensibles à chiffrer par défaut:**
+**Cibles par défaut de la commande `php bin/encrypt.php encrypt`:**
 - `config/database.php` — Identifiants de base de données
 - `config/load_config.php` — Configuration sensible
 - `includes/functions.php` — Logique métier
@@ -38,6 +38,8 @@ CTR.NET-FARDC/
 - `login.php` — Page de connexion
 - `logout.php` — Déconnexion
 - `index.php` — Page d'accueil
+
+Ces fichiers ne sont pas chiffrés automatiquement à l'installation : le chiffrement doit être lancé explicitement.
 
 ---
 
@@ -126,7 +128,7 @@ Résultat:
 
 1. **Générer la clé AVANT le déploiement** (sur votre machine locale)
 2. **Chiffrer les fichiers sensibles** localement
-3. **Déployer uniquement les fichiers .encrypted** (pas les originaux!)
+3. **Déployer les fichiers `.encrypted` utilisés par votre environnement** et éviter d'exposer les originaux sensibles si vous retenez ce mode de déploiement
 4. **Copier la clé via variable d'environnement** sur le serveur:
 
 ```bash
@@ -138,7 +140,7 @@ ENCRYPTION_KEY=votre_clé_secrète
 
 Le système est **entièrement transparent** - aucune modification du code n'est nécessaire!
 
-Les fichiers `.encrypted` sont automatiquement détectés et déchiffrés au runtime par `encrypted_loader.php`.
+Les fichiers `.encrypted` présents sont détectés et déchiffrés au runtime par `encrypted_loader.php`.
 
 #### Intégration facultative:
 ```php

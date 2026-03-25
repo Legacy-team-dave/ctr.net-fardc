@@ -55,7 +55,7 @@ Status: ✓ OPÉRATIONNEL
    ▼ PowerShell:       .\encrypt_sources.ps1 -Action encrypt
    ▼ PHP CLI:          php bin/encrypt.php encrypt
    
-   Résultat: 8 fichiers chiffrés (.encrypted créés)
+  Résultat: versions .encrypted créées pour les cibles par défaut
 
 ───────────────────────────────────────────────────────
 
@@ -125,7 +125,7 @@ ROTATION DE CLÉ (Maintenance Avancée)
   ✓ Re-chiffre avec nouvelle clé
 
 ═══════════════════════════════════════════════════════
-📦 FICHIERS CHIFFRABLES (par défaut)
+📦 CIBLES CHIFFRABLES PAR DÉFAUT
 ═══════════════════════════════════════════════════════
 
 SENSIBILITÉ             FICHIER                      RAISON
@@ -139,9 +139,9 @@ MOYENNE                 login.php                    Page connexion
 MOYENNE                 logout.php                   Déconnexion
 MOYENNE                 index.php                    Accueil
 
-CHIFFREMENT TRANSPARENT:
+UTILISATION TRANSPARENTE APRÈS ACTIVATION:
   ✓ Aucune modification code requise
-  ✓ Fichiers .encrypted détectés & déchiffrés automatiquement
+  ✓ Fichiers .encrypted présents détectés et déchiffrés automatiquement
   ✓ Performance minimale (< 5ms/démarrage)
 
 ═══════════════════════════════════════════════════════
@@ -157,7 +157,7 @@ DÉVELOPPEMENT (Local)
 
 DÉPLOIEMENT (Production)
 ────────────────────────
-  1. Télécharger fichiers .encrypted    → Copier à distance
+  1. Déployer les fichiers .encrypted retenus
   2. Configurer ENCRYPTION_KEY          → Variable d'env serveur
   3. Application démarre               → Déchiffrage auto au runtime
   4. Tests fonctionnels                → Vérifier opérabilité

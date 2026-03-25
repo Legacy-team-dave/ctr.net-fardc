@@ -22,10 +22,10 @@ $username = 'admin_prod';
 $password = 'super-secret-password';
 ```
 
-**Après:** Les fichiers sensibles sont chiffrés en AES-256-CBC
+**Après:** Les fichiers sensibles choisis peuvent être chiffrés en AES-256-CBC
 ```
 Impossible à lire sans la clé!
-(Même pour un administrateur système)
+(hors possession de la clé de chiffrement)
 ```
 
 ---
@@ -56,7 +56,7 @@ ENCRYPTION_KEY=aabbccdd...zzz
 **Bénéfices:**
 - ✓ Secrets chiffrés en transit + au repos
 - ✓ Double couche: chiffrement AES-256 + permission fichiers
-- ✓ Logs traceable de qui accède aux fichiers
+- ✓ Peut compléter une politique de traçabilité déjà mise en place ailleurs
 
 ### 3. Sécurisation des Développeurs Tiers
 
@@ -144,7 +144,7 @@ php bin/encrypt.php encrypt
 ```
 
 **Résultat:**
-- ✓ 8 fichiers `.encrypted` créés
+- ✓ Les fichiers `.encrypted` sont créés pour les cibles par défaut configurées
 - ✓ Fichiers originaux restent intacts (modifiables)
 - ✓ Prêt pour déploiement/commit
 
@@ -259,7 +259,7 @@ Préparation
 
 Déploiement
 ☐ Fichiers .encrypted envoyés
-☐ Fichiers originaux .php sensibles NOT envoyés
+☐ Originaux sensibles gérés selon la politique de déploiement retenue
 ☐ ENCRYPTION_KEY configurée sur serveur
 ☐ Tests fonctionnels sur staging
 ☐ Tests de déchiffrement automatique

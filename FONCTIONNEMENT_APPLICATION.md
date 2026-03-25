@@ -258,6 +258,22 @@ Comportement réel :
 - purge automatique : suppression des archives identiques, puis conservation des 30 dernières archives non identiques
 - script manuel de purge : `run_backup_purge.ps1 -MaxKeep 30`
 
+## 11bis. Nettoyage automatique des caches (v1.5.0+)
+
+Fonction `nettoyer_caches()` dans `includes/functions.php`.
+
+Comportement réel :
+
+- exécution automatique intégrée au job planifié (après backup + purge, toutes les 8h)
+- nettoyage des fichiers temporaires XLSX orphelins (> 1h) dans `sys_get_temp_dir()`
+- suppression du fichier verrou `backup_cron.lock` obsolète (> 1h)
+- purge des tokens `remember_token` expirés en base (table `utilisateurs`)
+- purge des tokens `reset_token` expirés en base (table `utilisateurs`)
+- nettoyage des logs anciens (> 90 jours, paramétrable)
+- rapport JSON détaillé retourné à chaque exécution
+- script standalone : `includes/cache_cleanup.php` (CLI ou cron)
+- scripts manuels : `run_cache_cleanup.ps1` / `run_cache_cleanup.bat`
+
 ## 12. Schéma simplifié du cycle utilisateur
 
 1. Connexion
@@ -275,6 +291,7 @@ Comportement réel :
 - Contrôler la cohérence des profils affectés aux comptes.
 - Uniformiser les mentions utilisées dans les procédures métier (`Présent`, `Favorable`, `Défavorable`).
 - Revoir périodiquement les protections de pages pour aligner menu et contrôle serveur.
+- Le nettoyage des caches s’exécute automatiquement (intégré au job planifié). Pour un nettoyage manuel : `run_cache_cleanup.bat 90`.
 
 ## 14. 🔐 Chiffrement des fichiers sensibles (v1.1.0+)
 

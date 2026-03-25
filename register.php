@@ -91,7 +91,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         'type' => 'success',
                         'text' => 'Inscription réussie. Votre compte est en attente d\'activation par un administrateur. Vous pourrez vous connecter une fois activé.'
                     ];
-                    header('Location: login.php');
+                    header('Location: ' . app_url('login.php'));
                     exit;
                 }
             } catch (PDOException $e) {

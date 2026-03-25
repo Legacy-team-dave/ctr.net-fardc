@@ -8,6 +8,8 @@ REM Déterminer le répertoire racine de l'application
 set APP_ROOT=%~dp0
 set APP_NAME=CTR.NET-FARDC
 set SPLASH_URL=http://127.0.0.1/ctr.net-fardc/splash_screen.php
+set LAUNCH_PS1=%~dp0launch.ps1
+set LAUNCHED_VIA_PS1=0
 
 REM Set the path to the desktop shortcut file
 set "desktop_shortcut_path=%USERPROFILE%\Desktop\CTL EFF MIL_IG FARDC.lnk"
@@ -44,39 +46,48 @@ if exist "C:\laragon\laragon.exe" (
     echo [✓] Sauvegardes incrémentales automatiques (8h)
     echo [✓] Traçabilité complète des actions
     echo.
-    
-    REM Se placer dans le dossier www de Laragon
-    cd /d "C:\laragon\www"
-    
-    REM Créer un lien symbolique vers le projet s'il n'existe pas déjà
-    if not exist "ctr.net-fardc" (
-        echo Création du lien symbolique...
-        mklink /d ctr.net-fardc "%APP_ROOT%"
-    ) else (
-        echo Le lien symbolique existe déjà.
+
+    if exist "%LAUNCH_PS1%" (
+        powershell -NoProfile -ExecutionPolicy Bypass -File "%LAUNCH_PS1%" -NoWait
+        if "%ERRORLEVEL%"=="0" (
+            set LAUNCHED_VIA_PS1=1
+        ) else (
+            echo Le script PowerShell a échoué. Fallback BAT en cours...
+            set LAUNCHED_VIA_PS1=0
+        )
     )
-    
-    REM Lancer Laragon (à chaque exécution)
-    echo Démarrage de Laragon...
-    start C:\laragon\laragon.exe
-    
-    REM Laisser le temps à Laragon de démarrer complètement
-    echo Attente du démarrage des services...
-    timeout /t 5 /nobreak
-    
-    REM Ouvrir le navigateur sur l'écran de bienvenue
-    echo Ouverture de l'application dans le navigateur...
-    start %SPLASH_URL%
+
+    if "%LAUNCHED_VIA_PS1%"=="0" (
+        REM Se placer dans le dossier www de Laragon
+        cd /d "C:\laragon\www"
+
+        REM Créer un lien symbolique vers le projet s'il n'existe pas déjà
+        if not exist "ctr.net-fardc" (
+            echo Création du lien symbolique...
+            mklink /d ctr.net-fardc "%APP_ROOT%"
+        ) else (
+            echo Le lien symbolique existe déjà.
+        )
+
+        REM Lancer Laragon (à chaque exécution)
+        echo Démarrage de Laragon...
+        start C:\laragon\laragon.exe
+
+        REM Laisser le temps à Laragon de démarrer complètement
+        echo Attente du démarrage des services...
+        timeout /t 5 /nobreak
+
+        REM Ouvrir le navigateur sur l'écran de bienvenue
+        echo Ouverture de l'application dans le navigateur...
+        start %SPLASH_URL%
+    )
     
     echo.
     echo L'application a été lancée avec succès.
     echo.
     pause > nul
     
-    REM Arrêter Laragon
-    echo Arrêt de Laragon...
-    taskkill /f /im laragon.exe > nul 2>&1
-    echo Laragon a été fermé.
+    REM Laragon reste actif après fermeture de cette fenêtre
     
 ) else (
     echo.

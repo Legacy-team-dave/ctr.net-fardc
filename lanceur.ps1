@@ -6,7 +6,7 @@ $laragonExe    = "C:\laragon\laragon.exe"
 $laragonWww    = "C:\laragon\www"
 $appRoot       = $PSScriptRoot                     # répertoire du script
 $appName       = "ctr.net-fardc"
-$appUrl        = "http://127.0.0.1/ctr.net-fardc/login.php"
+$appUrl        = "http://127.0.0.1/ctr.net-fardc/splash_screen.php"
 
 # Vérifier que Laragon est installé
 if (-not (Test-Path $laragonExe)) {

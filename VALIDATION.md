@@ -51,6 +51,33 @@
 
 ---
 
+## ✅ Validation Nettoyage Caches (v1.5.0)
+
+### Fichiers Créés & Validés
+
+- [x] `includes/functions.php` — Fonction `nettoyer_caches()` ajoutée
+- [x] `includes/cache_cleanup.php` — Script standalone CLI
+- [x] `run_cache_cleanup.ps1` — Wrapper PowerShell
+- [x] `run_cache_cleanup.bat` — Wrapper Batch
+- [x] `includes/backup_cron.php` — Intégration au job planifié
+
+### Cibles Nettoyées
+
+- [x] Fichiers temporaires XLSX orphelins (sys_get_temp_dir())
+- [x] Fichier verrou `backup_cron.lock` obsolète (> 1h)
+- [x] Tokens `remember_token` expirés (table `utilisateurs`)
+- [x] Tokens `reset_token` expirés (table `utilisateurs`)
+- [x] Logs anciens > 90 jours (table `logs`)
+
+### Tests Fonctionnels
+
+- [x] Exécution via CLI : `php includes/cache_cleanup.php 90`
+- [x] Intégration au job planifié : `backup_cron.php` appelle `nettoyer_caches()` après purge
+- [x] Rapport JSON détaillé retourné avec compteurs par catégorie
+- [x] Gestion des erreurs PDO et filesystem
+
+---
+
 ## Mentions validées
 
 - `Présent`

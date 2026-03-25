@@ -35,6 +35,33 @@ Exemple : `check_profil(['ADMIN_IG'])`.
 - Vérifier les journaux (`logs`) en cas d'incident
 - La table `equipes` est gérée par l'opérateur (standalone, aucune relation)
 
+## 🧹 Nettoyage des caches (v1.5.0+)
+
+### Exécution automatique
+
+Le nettoyage des caches s’exécute automatiquement toutes les 8 heures (intégré au job de sauvegarde planifié).
+
+Cibles nettoyées automatiquement :
+- Fichiers temporaires XLSX orphelins
+- Fichier verrou de sauvegarde obsolète
+- Tokens "remember me" et "reset password" expirés
+- Logs de plus de 90 jours
+
+### Exécution manuelle
+
+```powershell
+# Via PowerShell (défaut: 90 jours de logs conservés)
+./run_cache_cleanup.ps1 -JoursLogs 90
+
+# Via Batch
+run_cache_cleanup.bat 90
+
+# Via CLI PHP
+php includes/cache_cleanup.php 90
+```
+
+Le rapport JSON retourné détaille chaque catégorie nettoyée.
+
 ## 🔐 Gestion du Chiffrement (v1.1.0+)
 
 ### Initialisation Unique

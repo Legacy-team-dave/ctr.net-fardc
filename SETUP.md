@@ -67,12 +67,11 @@ Consulter [ENCRYPTION.md](ENCRYPTION.md) pour :
 
 - `START.bat`
 - `INSTALLER.bat`
-- `INSTALL.bat`
 - `launch.bat`
 - `launch.ps1`
 - `lanceur.ps1`
 
-`INSTALLER.bat` appelle `INSTALL.bat` et crée le raccourci bureau `.lnk` pointant vers `launch.bat` (icône personnalisée si disponible).
+`INSTALLER.bat` crée directement le raccourci bureau `.lnk` pointant vers `launch.bat` (icône personnalisée si disponible). Ce raccourci permet de démarrer Laragon, d'attendre Apache/MySQL, puis d'ouvrir l'application dans le navigateur.
 
 ## Profils applicatifs
 

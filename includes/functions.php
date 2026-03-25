@@ -17,6 +17,38 @@ mb_internal_encoding('UTF-8');
 mb_http_output('UTF-8');
 
 /**
+ * Retourne le chemin de base web de l'application.
+ * Exemple: /ctr.net-fardc
+ *
+ * @return string
+ */
+function app_base_path()
+{
+    static $base_path = null;
+
+    if ($base_path !== null) {
+        return $base_path;
+    }
+
+    $base_path = '/' . basename(dirname(__DIR__));
+    return $base_path;
+}
+
+/**
+ * Construit une URL relative à la racine web de l'application.
+ *
+ * @param string $path
+ * @return string
+ */
+function app_url($path = '')
+{
+    $base_path = app_base_path();
+    $path = ltrim((string) $path, '/');
+
+    return $path === '' ? $base_path : $base_path . '/' . $path;
+}
+
+/**
  * ============================================
  * FONCTIONS DE FLASH MESSAGES
  * ============================================
@@ -413,13 +445,13 @@ function check_profil($profils_autorises)
     $profils_autorises = array_map('strtoupper', $profils_autorises);
 
     if (!isset($_SESSION['user_profil'])) {
-        redirect_with_flash('/ctr.net-fardc/login.php', 'danger', 'Session invalide. Veuillez vous reconnecter.');
+        redirect_with_flash(app_url('login.php'), 'danger', 'Session invalide. Veuillez vous reconnecter.');
     }
 
     $user_profil = trim(strtoupper($_SESSION['user_profil']));
 
     if (!in_array($user_profil, $profils_autorises)) {
-        redirect_with_flash('/ctr.net-fardc/index.php', 'danger', 'Accès non autorisé : vous n\'avez pas les droits nécessaires pour cette page.');
+        redirect_with_flash(app_url('index.php'), 'danger', 'Accès non autorisé : vous n\'avez pas les droits nécessaires pour cette page.');
     }
 }
 
@@ -431,7 +463,7 @@ function check_profil($profils_autorises)
 function require_login()
 {
     if (!isset($_SESSION['user_id'])) {
-        redirect_with_flash('/ctr.net-fardc/login.php', 'danger', 'Accès non autorisé. Veuillez vous connecter pour continuer.');
+        redirect_with_flash(app_url('login.php'), 'danger', 'Accès non autorisé. Veuillez vous connecter pour continuer.');
     }
 }
 
@@ -484,7 +516,7 @@ function check_session_timeout()
         // Session expirée
         session_unset();
         session_destroy();
-        header('Location: login.php?timeout=1');
+        header('Location: ' . app_url('login.php?timeout=1'));
         exit;
     }
 
@@ -1555,8 +1587,109 @@ function generate_backup($include_non_vus = true)
     return (bool)($result['created'] ?? false);
 }
 
-// Programme de nettoyage automatique (1% de chance à chaque chargement)
-// Décommentez si vous voulez activer le nettoyage aléatoire
-// if (rand(1, 100) == 1 && is_admin()) { 
-//     nettoyer_anciens_logs(90); 
-// }
+/**
+ * Nettoie les caches et données temporaires de l'application.
+ * Exécutable via cron (includes/cache_cleanup.php) ou manuellement.
+ *
+ * Cibles nettoyées :
+ * - Fichiers temporaires XLSX orphelins (sys_get_temp_dir())
+ * - Fichier verrou de sauvegarde obsolète (> 1h)
+ * - Tokens "remember me" expirés (table utilisateurs)
+ * - Tokens de reset de mot de passe expirés (table utilisateurs)
+ * - Logs anciens (> $jours_logs jours)
+ *
+ * @param int $jours_logs Nombre de jours de logs à conserver (défaut: 90)
+ * @return array Rapport détaillé du nettoyage
+ */
+function nettoyer_caches($jours_logs = 90)
+{
+    global $pdo;
+
+    $rapport = [
+        'timestamp' => date('c'),
+        'temp_xlsx_supprimes' => 0,
+        'lock_files_supprimes' => 0,
+        'remember_tokens_expires' => 0,
+        'reset_tokens_expires' => 0,
+        'logs_supprimes' => 0,
+        'erreurs' => []
+    ];
+
+    // 1. Nettoyer les fichiers temporaires XLSX orphelins (> 1h)
+    try {
+        $tempDir = sys_get_temp_dir();
+        $cutoff = time() - 3600;
+        $pattern = $tempDir . DIRECTORY_SEPARATOR . 'xlsx_*';
+        $tempFiles = glob($pattern) ?: [];
+        foreach ($tempFiles as $file) {
+            if (is_file($file) && filemtime($file) < $cutoff) {
+                if (@unlink($file)) {
+                    $rapport['temp_xlsx_supprimes']++;
+                }
+            }
+        }
+    } catch (\Exception $e) {
+        $rapport['erreurs'][] = 'temp_xlsx: ' . $e->getMessage();
+    }
+
+    // 2. Supprimer le fichier verrou de sauvegarde obsolète (> 1h)
+    try {
+        $lockFile = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'backup_cron.lock';
+        if (is_file($lockFile) && filemtime($lockFile) < (time() - 3600)) {
+            if (@unlink($lockFile)) {
+                $rapport['lock_files_supprimes']++;
+            }
+        }
+    } catch (\Exception $e) {
+        $rapport['erreurs'][] = 'lock_file: ' . $e->getMessage();
+    }
+
+    // 3. Purger les remember_tokens expirés
+    try {
+        $stmt = $pdo->prepare(
+            "UPDATE utilisateurs SET remember_token = NULL, remember_token_expires = NULL 
+             WHERE remember_token IS NOT NULL AND remember_token_expires < NOW()"
+        );
+        $stmt->execute();
+        $rapport['remember_tokens_expires'] = $stmt->rowCount();
+    } catch (\PDOException $e) {
+        $rapport['erreurs'][] = 'remember_tokens: ' . $e->getMessage();
+    }
+
+    // 4. Purger les reset_tokens expirés
+    try {
+        $stmt = $pdo->prepare(
+            "UPDATE utilisateurs SET reset_token = NULL, reset_expires = NULL 
+             WHERE reset_token IS NOT NULL AND reset_expires < NOW()"
+        );
+        $stmt->execute();
+        $rapport['reset_tokens_expires'] = $stmt->rowCount();
+    } catch (\PDOException $e) {
+        $rapport['erreurs'][] = 'reset_tokens: ' . $e->getMessage();
+    }
+
+    // 5. Nettoyer les anciens logs
+    try {
+        $rapport['logs_supprimes'] = nettoyer_anciens_logs($jours_logs);
+    } catch (\Exception $e) {
+        $rapport['erreurs'][] = 'logs: ' . $e->getMessage();
+    }
+
+    $total = $rapport['temp_xlsx_supprimes']
+        + $rapport['lock_files_supprimes']
+        + $rapport['remember_tokens_expires']
+        + $rapport['reset_tokens_expires']
+        + $rapport['logs_supprimes'];
+
+    if ($total > 0) {
+        error_log(
+            "Nettoyage caches: temp_xlsx=" . $rapport['temp_xlsx_supprimes']
+                . " | lock=" . $rapport['lock_files_supprimes']
+                . " | remember_tokens=" . $rapport['remember_tokens_expires']
+                . " | reset_tokens=" . $rapport['reset_tokens_expires']
+                . " | logs=" . $rapport['logs_supprimes']
+        );
+    }
+
+    return $rapport;
+}

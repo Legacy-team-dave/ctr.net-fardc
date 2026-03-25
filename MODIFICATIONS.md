@@ -1,5 +1,34 @@
 # Modifications récentes
 
+## Nettoyage automatique des caches (Mars 2026 - v1.5.0)
+
+### Nouvelle fonction
+
+- **`includes/functions.php`** : Ajout de `nettoyer_caches($jours_logs = 90)` qui nettoie :
+  - Fichiers temporaires XLSX orphelins (> 1h dans `sys_get_temp_dir()`)
+  - Fichier verrou de sauvegarde obsolète (`backup_cron.lock` > 1h)
+  - Tokens `remember_token` expirés (table `utilisateurs`)
+  - Tokens `reset_token` expirés (table `utilisateurs`)
+  - Logs anciens (> 90 jours via `nettoyer_anciens_logs()`)
+
+### Nouveaux fichiers
+
+- **`includes/cache_cleanup.php`** : Script standalone pour exécution cron ou manuelle
+- **`run_cache_cleanup.ps1`** : Wrapper PowerShell pour nettoyage manuel
+- **`run_cache_cleanup.bat`** : Wrapper Batch pour nettoyage manuel
+
+### Intégration au job planifié
+
+- **`includes/backup_cron.php`** : Le nettoyage des caches s’exécute automatiquement après chaque cycle backup + purge (toutes les 8h)
+- Aucune configuration supplémentaire nécessaire
+
+### Impact
+
+- Les fichiers temporaires ne s’accumulent plus
+- Les tokens expirés sont purgés automatiquement de la base
+- Les logs anciens sont nettoyés sans intervention manuelle
+- Rapport JSON détaillé à chaque exécution
+
 ## Profil CONTROLEUR réservé au mobile (Mars 2026 - v1.4.0)
 
 ### Fichiers modifiés

@@ -1,10 +1,10 @@
 {
   "application": {
     "name": "CTR.NET-FARDC",
-    "version": "1.1.0",
+    "version": "1.5.0",
     "status": "stable",
-    "updated_at": "2026-04-15",
-    "description": "Application PHP de contrôle des effectifs militaires avec chiffrement AES-256-CBC"
+    "updated_at": "2026-03-24",
+    "description": "Application PHP de contr\u00f4le des effectifs militaires avec chiffrement AES-256-CBC et nettoyage automatique des caches"
   },
   "profiles": [
     "ADMIN_IG",
@@ -87,11 +87,13 @@
         "setup_backup_task.bat",
         "setup_backup_task.ps1",
         "run_backup_job.ps1",
-        "run_backup_purge.ps1"
+        "run_backup_purge.ps1",
+        "run_cache_cleanup.ps1",
+        "run_cache_cleanup.bat"
       ]
     }
   ],
   "urls": {
-    "login": "http://localhost/ctr.net-fardc/login.php"
+    "login": "http://127.0.0.1/ctr.net-fardc/splash_screen.php"
   }
 }

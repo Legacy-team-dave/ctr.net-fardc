@@ -189,7 +189,7 @@ Principalement `logs`.
 Elle est créée automatiquement, avec compatibilité vers `logs_actions`.
 
 ### Les anciens logs peuvent-ils être nettoyés ?
-Oui, une fonction de nettoyage existe (par défaut 90 jours), à déclencher selon votre politique.
+Oui, le système de nettoyage automatique des caches (v1.5.0+) supprime les logs de plus de 90 jours toutes les 8 heures. Un nettoyage manuel est aussi possible via `run_cache_cleanup.bat 90`.
 
 ### Quelles actions sont typiquement tracées ?
 Connexion, échec connexion, déconnexion, ajout, export, mise à jour profil, reset mot de passe, préférences, etc.
@@ -213,6 +213,12 @@ Non. Chaque archive contient uniquement les nouveaux éléments détectés depui
 
 ### La purge des anciennes sauvegardes est-elle automatique ?
 Oui. Le job applique une purge intelligente : suppression des archives identiques puis conservation des 30 dernières archives non identiques.
+
+### Le nettoyage des caches est-il automatique ?
+Oui (v1.5.0+). Le nettoyage des caches s’exécute automatiquement après chaque cycle backup + purge (toutes les 8h). Il nettoie les fichiers temporaires XLSX, les verrous obsolètes, les tokens expirés et les logs anciens.
+
+### Peut-on lancer le nettoyage des caches manuellement ?
+Oui, via `run_cache_cleanup.ps1 -JoursLogs 90` ou `run_cache_cleanup.bat 90`.
 
 ### Peut-on lancer une purge manuelle ?
 Oui, via `run_backup_purge.ps1 -MaxKeep 30` ou `run_backup_purge.bat 30` (valeur ajustable).

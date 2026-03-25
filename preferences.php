@@ -2,7 +2,7 @@
 require_once 'includes/functions.php';
 
 if (!isset($_SESSION['user_id'])) {
-    header('Location: login.php');
+    header('Location: ' . app_url('login.php'));
     exit;
 }
 
@@ -13,7 +13,7 @@ try {
 
     if ($preferences) {
         $_SESSION['filtres'] = json_decode($preferences, true);
-        header('Location: index.php');
+        header('Location: ' . app_url('index.php'));
         exit;
     }
 } catch (PDOException $e) {
@@ -59,7 +59,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             log_action('PREFERENCES', 'utilisateurs', $_SESSION['user_id'], 'Définition des filtres');
             // --- FIN REMPLACEMENT ---
 
-            header('Location: equipes.php');
+            header('Location: ' . app_url('equipes.php'));
             exit;
         } catch (PDOException $e) {
             error_log("Erreur sauvegarde préférences: " . $e->getMessage());

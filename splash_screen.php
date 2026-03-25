@@ -157,10 +157,10 @@
     </div>
 
     <script>
-    // Redirection vers login.php après 10 secondes (10000 ms)
+    // Redirection vers login.php après 5 secondes (5000 ms)
     setTimeout(function() {
         window.location.href = 'login.php';
-    }, 10000);
+    }, 5000);
     </script>
 </body>
 

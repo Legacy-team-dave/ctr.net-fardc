@@ -53,6 +53,23 @@ try {
             . " | duplicates=" . ($purge['deleted_duplicates'] ?? 0)
             . " | overflow=" . ($purge['deleted_overflow'] ?? 0)
     );
+
+    // Nettoyage automatique des caches
+    $cache = nettoyer_caches(90);
+    $cache_total = ($cache['temp_xlsx_supprimes'] ?? 0)
+        + ($cache['lock_files_supprimes'] ?? 0)
+        + ($cache['remember_tokens_expires'] ?? 0)
+        + ($cache['reset_tokens_expires'] ?? 0)
+        + ($cache['logs_supprimes'] ?? 0);
+    if ($cache_total > 0) {
+        error_log(
+            "Nettoyage caches: temp_xlsx=" . ($cache['temp_xlsx_supprimes'] ?? 0)
+                . " | lock=" . ($cache['lock_files_supprimes'] ?? 0)
+                . " | remember_tokens=" . ($cache['remember_tokens_expires'] ?? 0)
+                . " | reset_tokens=" . ($cache['reset_tokens_expires'] ?? 0)
+                . " | logs=" . ($cache['logs_supprimes'] ?? 0)
+        );
+    }
 } catch (Exception $e) {
     error_log("Exception lors de la sauvegarde : " . $e->getMessage());
 } finally {

@@ -5,11 +5,11 @@ QUICK START - CTR.NET-FARDC
 3) Initialiser le chiffrement (v1.1.0+):
    - Double-cliquer: encrypt_init.bat
    - Ou en CLI: php bin/encrypt.php init
-4) Ouvrir : http://localhost/ctr.net-fardc/login.php
+4) Ouvrir : http://127.0.0.1/ctr.net-fardc/splash_screen.php
 
 Scripts de lancement disponibles:
 - START.bat
-- INSTALL.bat
+- INSTALLER.bat
 - launch.bat
 - launch.ps1
 - lanceur.ps1
@@ -33,6 +33,11 @@ Sauvegarde automatique incrémentale (8h):
 - Purge auto: supprimer les archives de plus de 60 jours
 - Purge auto: conserver seulement 30 dernières archives non identiques
 - Purge manuelle: powershell -File run_backup_purge.ps1 -MaxKeep 30
+
+Nettoyage automatique des caches (v1.5.0+):
+- Exécution automatique: intégré au job planifié (toutes les 8h)
+- Cibles: fichiers temp XLSX, verrous, tokens expirés, logs > 90 jours
+- Nettoyage manuel: run_cache_cleanup.bat 90
 
 Application mobile CTR.NET:
 - Projet séparé: ctr-net-mobile/ (Ionic 8 + Angular 20 + Capacitor 8)

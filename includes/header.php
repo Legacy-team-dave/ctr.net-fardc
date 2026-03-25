@@ -12,8 +12,10 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
+$appBasePath = function_exists('app_base_path') ? app_base_path() : '/ctr.net-fardc';
+
 if (!isset($_SESSION['user_id'])) {
-    header('Location: login.php');
+    header('Location: ' . $appBasePath . '/login.php');
     exit;
 }
 
@@ -22,18 +24,18 @@ $user_profil = $_SESSION['user_profil'] ?? '';
 $user_avatar = $_SESSION['user_avatar'] ?? null;
 $current_script_path = str_replace('\\', '/', $_SERVER['SCRIPT_NAME'] ?? '');
 $global_toast_excluded_pages = [
-    '/ctr.net-fardc/modules/controles/ajouter.php',
-    '/ctr.net-fardc/modules/litige/ajouter.php'
+    $appBasePath . '/modules/controles/ajouter.php',
+    $appBasePath . '/modules/litige/ajouter.php'
 ];
 $disable_global_access_toast = in_array($current_script_path, $global_toast_excluded_pages, true);
 
 // Construction de l'URL de l'avatar
-$avatarUrl = '/ctr.net-fardc/assets/uploads/avatars/default-avatar.jpg';
+$avatarUrl = $appBasePath . '/assets/uploads/avatars/default-avatar.jpg';
 if (!empty($user_avatar)) {
     if (strpos($user_avatar, '/') === 0) {
         $avatarUrl = $user_avatar;
     } else {
-        $avatarUrl = '/ctr.net-fardc/' . ltrim($user_avatar, '/');
+        $avatarUrl = $appBasePath . '/' . ltrim($user_avatar, '/');
     }
 }
 
@@ -52,7 +54,7 @@ if (!empty($user_avatar)) {
  */
 function verifier_acces($roles_requis, $message_erreur = null)
 {
-    global $user_profil;
+    global $user_profil, $appBasePath;
     if (!is_array($roles_requis)) {
         $roles_requis = [$roles_requis];
     }
@@ -61,7 +63,7 @@ function verifier_acces($roles_requis, $message_erreur = null)
             'type' => 'danger',
             'text' => $message_erreur ?? 'Accès non autorisé : vous n\'avez pas les droits nécessaires pour cette page.'
         ];
-        $referer = $_SERVER['HTTP_REFERER'] ?? '/ctr.net-fardc/index.php';
+        $referer = $_SERVER['HTTP_REFERER'] ?? ($appBasePath . '/index.php');
         header('Location: ' . $referer);
         exit;
     }
@@ -155,7 +157,11 @@ if (!is_array($protectedRouteRoles)) {
 // DÉTERMINATION DES CLASSES DU BODY
 // ------------------------------------------------------------
 $bodyClass = 'hold-transition';
-$bodyClass .= ' sidebar-mini layout-fixed';
+if ($user_profil === 'CONTROLEUR') {
+    $bodyClass .= ' layout-top-nav';
+} else {
+    $bodyClass .= ' sidebar-mini layout-fixed';
+}
 if (isset($_SESSION['user_id'])) {
     $bodyClass .= ' user-logged-in';
 }
@@ -178,11 +184,11 @@ if (isset($_SESSION['user_id'])) {
     <!-- DataTables -->
     <link rel="stylesheet" href="https://cdn.datatables.net/1.11.5/css/dataTables.bootstrap5.min.css">
     <!-- Import local font bundle -->
-    <link rel="stylesheet" href="assets/css/fonts.css">
+    <link rel="stylesheet" href="<?= htmlspecialchars($appBasePath) ?>/assets/css/fonts.css">
 
     <!-- Styles personnalisés -->
-    <link rel="stylesheet" href="/assets/css/styles.css">
-    <link rel="stylesheet" href="/assets/css/custom.css">
+    <link rel="stylesheet" href="<?= htmlspecialchars($appBasePath) ?>/assets/css/styles.css">
+    <link rel="stylesheet" href="<?= htmlspecialchars($appBasePath) ?>/assets/css/custom.css">
     <!-- SweetAlert2 -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
@@ -885,6 +891,7 @@ if (isset($_SESSION['user_id'])) {
         <!-- Navbar (HEADER) -->
         <nav class="main-header navbar navbar-expand navbar-white navbar-light">
             <ul class="navbar-nav">
+                <?php if ($user_profil !== 'CONTROLEUR'): ?>
                     <li class="nav-item">
                         <a class="nav-link" data-widget="pushmenu" href="#" role="button"><i class="fas fa-bars"></i></a>
                     </li>
@@ -906,6 +913,7 @@ if (isset($_SESSION['user_id'])) {
                         <a href="/ctr.net-fardc/modules/controles/ajouter.php" class="nav-link"><i class="fas fa-plus"></i>
                             Nouveau</a>
                     </li>
+                <?php endif; ?>
             </ul>
 
             <ul class="navbar-nav ml-auto">
@@ -925,7 +933,9 @@ if (isset($_SESSION['user_id'])) {
             </ul>
         </nav>
 
-        <!-- Sidebar -->\n            <aside class=\"main-sidebar sidebar-dark-primary elevation-4\">", "oldString": "        <!-- Sidebar -->\n        <?php if ($user_profil !== 'CONTROLEUR'): ?>\n            <aside class=\"main-sidebar sidebar-dark-primary elevation-4\">"
+        <!-- Sidebar -->
+        <?php if ($user_profil !== 'CONTROLEUR'): ?>
+            <aside class="main-sidebar sidebar-dark-primary elevation-4">
                 <a href="/ctr.net-fardc/index.php" class="brand-link">
                     <img src="/ctr.net-fardc/assets/img/logo-fardc.png" alt="FARDC Logo"
                         class="brand-image img-circle elevation-3" style="opacity: .8">
@@ -979,6 +989,7 @@ if (isset($_SESSION['user_id'])) {
                     </nav>
                 </div>
             </aside>
+        <?php endif; ?>
 
         <!-- Content Wrapper -->
         <div class="content-wrapper">

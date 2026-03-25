@@ -113,3 +113,20 @@ Mettre à jour toute documentation après chaque changement validé.
 - Documenter la localisation du backup de clé
 - Former le personnel d'administration à la gestion de la clé
 - Tester la rotation de clé annuellement
+
+## Migration vers v1.5.0+ (Nettoyage caches ajouté)
+
+### Nouveaux fichiers
+
+- `includes/cache_cleanup.php` — Script standalone de nettoyage
+- `run_cache_cleanup.ps1` — Wrapper PowerShell
+- `run_cache_cleanup.bat` — Wrapper Batch
+
+### Changements
+
+- `includes/functions.php` — Nouvelle fonction `nettoyer_caches()`
+- `includes/backup_cron.php` — Appel automatique de `nettoyer_caches()` après purge
+
+### Aucune action requise
+
+Le nettoyage des caches est automatiquement intégré au job planifié existant. Si la tâche planifiée est déjà installée, le nettoyage s'exécutera au prochain cycle (toutes les 8h).

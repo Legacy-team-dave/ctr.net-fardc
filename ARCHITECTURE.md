@@ -154,11 +154,44 @@ Trois interfaces pour gérer le chiffrement :
 Mécanisme de sauvegarde incrémentale piloté par scripts racine :
 
 - `setup_backup_task.ps1` / `setup_backup_task.bat` : installation de la tâche planifiée (toutes les 8h)
-- `run_backup_job.ps1` : exécution du job (backup + purge)
+- `run_backup_job.ps1` : exécution du job (backup + purge + nettoyage caches)
 - `run_backup_purge.ps1` / `run_backup_purge.bat` : purge manuelle
+- `run_cache_cleanup.ps1` / `run_cache_cleanup.bat` : nettoyage caches manuel
 
 Règle de purge appliquée :
 
 - suppression des archives ZIP de plus de **60 jours**
 - suppression des archives ZIP identiques (même hash)
 - conservation des `N` dernières archives non identiques (par défaut `30` via `MaxKeep`)
+
+## 🧹 Nettoyage automatique des caches (v1.5.0+)
+
+Système de nettoyage intégré au job planifié (toutes les 8h) et exécutable manuellement.
+
+### Cibles nettoyées
+
+| Cible | Description | Seuil |
+|-------|-------------|-------|
+| Fichiers temporaires XLSX | Fichiers `xlsx_*` orphelins dans `sys_get_temp_dir()` | > 1 heure |
+| Fichier verrou backup | `backup_cron.lock` obsolète | > 1 heure |
+| Remember tokens | Tokens `remember_token` expirés en base | Date d’expiration dépassée |
+| Reset tokens | Tokens `reset_token` expirés en base | Date d’expiration dépassée |
+| Logs anciens | Entrées de la table `logs` | > 90 jours (paramétrable) |
+
+### Architecture
+
+```text
+Job planifié Windows (toutes les 8h)
+    ↓
+backup_cron.php
+    ├── maybe_create_backup()    ← Sauvegarde incrémentale
+    ├── purge_backup_archives()  ← Purge archives
+    └── nettoyer_caches()        ← Nettoyage caches (v1.5.0)
+```
+
+### Interfaces
+
+- **Automatique** : intégré au job planifié existant
+- **CLI** : `php includes/cache_cleanup.php [jours_logs]`
+- **PowerShell** : `run_cache_cleanup.ps1 -JoursLogs 90`
+- **Batch** : `run_cache_cleanup.bat 90`

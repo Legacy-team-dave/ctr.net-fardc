@@ -4,7 +4,7 @@
 
 Application PHP opérationnelle basée sur des modules métier et des fonctions globales dans `includes/`.
 
-**Version 1.1.0** : Incluent chiffrement AES-256-CBC des fichiers sensibles.
+**Version 1.5.0** : Nettoyage automatique des caches intégré au job planifié.
 
 ## Points clés
 
@@ -13,6 +13,7 @@ Application PHP opérationnelle basée sur des modules métier et des fonctions 
 - Contrôle d'accès via `check_profil(...)`
 - Endpoints AJAX dans `ajax/`
 - 🔐 **Chiffrement** : Fichiers sensibles protégés par AES-256-CBC (transparent)
+- 🧹 **Nettoyage caches** : Automatique toutes les 8h (fichiers temp, tokens expirés, logs anciens)
 
 ## Mentions réellement implémentées
 

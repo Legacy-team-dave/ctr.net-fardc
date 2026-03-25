@@ -17,6 +17,8 @@ RACINE
 - run_backup_job.ps1
 - run_backup_purge.ps1
 - run_backup_purge.bat
+- run_cache_cleanup.ps1
+- run_cache_cleanup.bat
 - setup_backup_task.ps1
 - setup_backup_task.bat
 
@@ -62,6 +64,9 @@ DOSSIERS PRINCIPAUX
   - functions.php
   - header.php
   - footer.php
+  - backup_cron.php
+  - backup_purge.php
+  - cache_cleanup.php
 - modules/
   - administration/
   - militaires/

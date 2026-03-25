@@ -1,5 +1,22 @@
 # Versioning - CTR.NET-FARDC
 
+## 1.5.0 (2026-03-24)
+
+### 🧹 Nettoyage automatique des caches
+
+- Nouvelle fonction `nettoyer_caches()` dans `includes/functions.php`
+- Nettoyage intégré au job planifié (exécuté après backup + purge, toutes les 8h)
+- Nouveau script standalone `includes/cache_cleanup.php`
+- Scripts manuels : `run_cache_cleanup.ps1` / `run_cache_cleanup.bat`
+- Cibles nettoyées :
+  - Fichiers temporaires XLSX orphelins (> 1h)
+  - Fichier verrou de sauvegarde obsolète (> 1h)
+  - Tokens "remember me" expirés (table `utilisateurs`)
+  - Tokens de reset de mot de passe expirés (table `utilisateurs`)
+  - Logs anciens (> 90 jours par défaut)
+- Rapport détaillé en retour (JSON)
+- Documentation mise à jour (14 fichiers)
+
 ## 1.4.0 (2026-03-24)
 
 ### 🔒 Profil CONTROLEUR réservé au mobile

@@ -43,12 +43,11 @@ Le flux utilise aussi les statuts :
 
 - `START.bat`
 - `INSTALLER.bat`
-- `INSTALL.bat`
 - `launch.bat`
 - `launch.ps1`
 - `lanceur.ps1`
 
-`INSTALLER.bat`/`INSTALL.bat` créent un raccourci bureau `.lnk` vers `launch.bat` (avec icône `assets/img/ig_fardc.ico` si disponible) pour garantir le démarrage Laragon + ouverture navigateur via le lanceur applicatif.
+`INSTALLER.bat` crée un raccourci bureau `.lnk` vers `launch.bat` (avec icône `assets/img/ig_fardc.ico` si disponible). Un double-clic sur ce raccourci lance Laragon, attend le démarrage des services, puis ouvre l'application dans le navigateur.
 
 ## Sauvegarde automatique incrémentale
 

@@ -29,6 +29,33 @@ Mentions valides pour la saisie actuelle :
 
 Si une doc ou un écran affiche d'autres mentions, la référence est obsolète.
 
+## 5bis) Problèmes de nettoyage des caches (v1.5.0+)
+
+### Fichiers temporaires qui s'accumulent
+
+**Cause** : Le nettoyage automatique n’a pas été exécuté (job planifié arrêté).
+
+**Solution** : Lancer manuellement :
+```powershell
+./run_cache_cleanup.ps1 -JoursLogs 90
+```
+
+### Le nettoyage caches ne s'exécute pas automatiquement
+
+**Cause** : Le job planifié de sauvegarde n'est pas installé.
+
+**Solution** : Réinstaller la tâche planifiée :
+```powershell
+./setup_backup_task.ps1 -MaxKeep 30
+```
+Le nettoyage des caches est intégré au job de sauvegarde.
+
+### Tokens expirés non purgés
+
+**Cause** : Erreur de connexion BD lors du nettoyage.
+
+**Solution** : Vérifier `config/database.php` et les logs PHP pour les erreurs PDO.
+
 ## 6) 🔐 Problèmes de Chiffrement (v1.1.0+)
 
 ### 6.1) Erreur : "Clé de chiffrement non trouvée"

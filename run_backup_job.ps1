@@ -11,6 +11,7 @@ $ErrorActionPreference = 'Stop'
 $projectRoot = $PSScriptRoot
 $cronScript = Join-Path $projectRoot 'includes\backup_cron.php'
 $defaultMailConfigPath = Join-Path $projectRoot 'config\backup_mail.json'
+$backupResultPath = Join-Path $projectRoot 'backups\last_backup_result.json'
 
 if ([string]::IsNullOrWhiteSpace($MailConfigPath)) {
     $MailConfigPath = $defaultMailConfigPath
@@ -148,7 +149,25 @@ if ($phpExitCode -ne 0) {
 }
 
 $mailSettings = Get-BackupMailSettings -ConfigPath $MailConfigPath
-$backupZip = Join-Path $projectRoot 'backups\backup_consolide_latest.zip'
-Send-BackupMail -AttachmentPath $backupZip -MailSettings $mailSettings
+$shouldSend = $false
+$backupZip = $null
+
+if (Test-Path $backupResultPath) {
+    try {
+        $result = Get-Content -Path $backupResultPath -Raw -Encoding UTF8 | ConvertFrom-Json
+        if ($result.created -eq $true -and -not [string]::IsNullOrWhiteSpace($result.file)) {
+            $backupZip = [string]$result.file
+            $shouldSend = $true
+        }
+    } catch {
+        Write-Warning "Résultat backup illisible: $($_.Exception.Message)"
+    }
+}
+
+if ($shouldSend -and $backupZip) {
+    Send-BackupMail -AttachmentPath $backupZip -MailSettings $mailSettings
+} else {
+    Write-Host "E-mail backup non envoyé: aucune nouvelle archive générée sur ce cycle."
+}
 
 exit 0

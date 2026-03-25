@@ -13,7 +13,8 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'search' && isset($_GET['q'])) {
         echo json_encode([]);
         exit;
     }
-    $stmt = $pdo->prepare("SELECT matricule, noms, grade, unite, garnison, province, statut, categorie 
+    $stmt = $pdo->prepare("SELECT matricule, noms, grade, unite, garnison, province, statut, categorie,
+                                  EXISTS(SELECT 1 FROM controles c WHERE c.matricule = militaires.matricule) AS deja_controle
                            FROM militaires 
                            WHERE matricule LIKE ? OR noms LIKE ? 
                            ORDER BY 
@@ -599,6 +600,16 @@ include '../../includes/header.php';
         padding: 10px 15px;
         transition: background 0.2s;
         font-size: 0.9rem;
+    }
+
+    #search-results .list-group-item.disabled-result {
+        cursor: not-allowed;
+        opacity: 0.75;
+    }
+
+    #search-results .badge-deja-controle-mini {
+        background: linear-gradient(135deg, #e65100, #bf360c);
+        color: #fff;
     }
 
     #search-results .list-group-item small {
@@ -1287,9 +1298,14 @@ include '../../includes/header.php';
             }
 
             results.forEach((militaire, index) => {
-                const item = document.createElement('a');
-                item.href = `?q=${encodeURIComponent(militaire.matricule)}`;
-                item.className = 'list-group-item list-group-item-action';
+                const isAlreadyControlled = ['1', 'true', 'oui'].includes(String(militaire.deja_controle).toLowerCase());
+                const item = document.createElement(isAlreadyControlled ? 'div' : 'a');
+
+                if (!isAlreadyControlled) {
+                    item.href = `?q=${encodeURIComponent(militaire.matricule)}`;
+                }
+
+                item.className = `list-group-item ${isAlreadyControlled ? 'disabled-result' : 'list-group-item-action'}`;
                 item.setAttribute('data-index', index);
 
                 // Déterminer la classe, l'icône et le texte du badge en fonction de la catégorie
@@ -1328,7 +1344,10 @@ include '../../includes/header.php';
                 item.innerHTML = `
                 <div class="d-flex justify-content-between align-items-center">
                     <strong>${escapeHtml(militaire.noms)}</strong>
-                    <span class="badge-statut-mini ${badgeClass}"><i class="fas ${badgeIcon}"></i> ${badgeText}</span>
+                    <div class="d-inline-flex align-items-center" style="gap:6px;">
+                        <span class="badge-statut-mini ${badgeClass}"><i class="fas ${badgeIcon}"></i> ${badgeText}</span>
+                        ${isAlreadyControlled ? '<span class="badge-statut-mini badge-deja-controle-mini"><i class="fas fa-exclamation-circle"></i> Déjà contrôlé</span>' : ''}
+                    </div>
                 </div>
                 <div class="d-flex flex-wrap gap-2 small">
                     <span><i class="fas fa-id-card"></i> ${escapeHtml(militaire.matricule)}</span>
@@ -1367,7 +1386,7 @@ include '../../includes/header.php';
         });
 
         searchInput.addEventListener('keydown', function(e) {
-            const items = searchResults.querySelectorAll('.list-group-item');
+            const items = searchResults.querySelectorAll('.list-group-item-action');
             if (items.length === 0) return;
             if (e.key === 'ArrowDown') {
                 e.preventDefault();

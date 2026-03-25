@@ -179,6 +179,8 @@ if (isset($_SESSION['user_id'])) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CTL.NET - FARDC</title>
+    <link rel="icon" type="image/x-icon" href="<?= htmlspecialchars($appBasePath) ?>/assets/img/Icone_app.ico">
+    <link rel="apple-touch-icon" href="<?= htmlspecialchars($appBasePath) ?>/assets/img/Icone_app.ico">
     <!-- Bootstrap 5 -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- AdminLTE 3 -->

@@ -18,6 +18,8 @@ if ($maxKeep <= 0) {
     $maxKeep = 30;
 }
 
+$resultFile = dirname(__DIR__) . '/backups/last_backup_result.json';
+
 // Créer le dossier de sauvegarde si nécessaire
 get_backup_dir_path();
 
@@ -31,6 +33,17 @@ if (!flock($fp, LOCK_EX | LOCK_NB)) {
 
 try {
     $result = maybe_create_backup(false);
+
+    @file_put_contents(
+        $resultFile,
+        json_encode([
+            'generated_at' => date('c'),
+            'created' => (bool)($result['created'] ?? false),
+            'reason' => $result['reason'] ?? null,
+            'file' => $result['file'] ?? null,
+            'counts' => $result['counts'] ?? []
+        ], JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT)
+    );
 
     if (!empty($result['created'])) {
         $counts = $result['counts'] ?? [];

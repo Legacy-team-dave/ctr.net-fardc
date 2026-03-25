@@ -257,6 +257,9 @@ Vos préférences ne sont pas enregistrées ou non lisibles en base.
 ### Pourquoi l'avatar n'est pas pris en compte ?
 Type de fichier non supporté, taille dépassée, ou problème d'écriture dossier.
 
+### Pourquoi un raccourci `CTL EFF MIL_IG FARDC.Ink` ne fonctionne pas ?
+Parce que l'extension correcte d'un raccourci Windows est `.lnk` (lettre `l`), pas `.Ink` (lettre `I`). L'installeur crée un `.lnk` valide vers `launch.ps1` (fallback `launch.bat`). Si le `.lnk` échoue malgré tout, la cause vient généralement de l'environnement Windows (politiques de sécurité/WSH, droits profil, ou bureau redirigé).
+
 ## 12) 🔐 Chiffrement (v1.1.0+)
 
 ### Qu'est-ce que le chiffrement dans l'application ?

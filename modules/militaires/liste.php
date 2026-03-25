@@ -213,592 +213,592 @@ $timestamp = date('Y-m-d_H\hi');
 <link rel="stylesheet" href="../../assets/css/tables-unified.css">
 
 <style>
-/* Styles de base */
-body {
-    font-family: 'Barlow', sans-serif;
-    background-color: #f5f5f5;
-}
-
-.modern-card {
-    border: none;
-    border-radius: 15px;
-    box-shadow: 0 0 30px rgba(0, 0, 0, 0.1);
-    overflow: hidden;
-    margin-bottom: 30px;
-}
-
-.modern-card .card-header {
-    background: linear-gradient(135deg, #2e7d32 0%, #1b5e20 100%);
-    padding: 15px 25px;
-    border: none;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: 15px;
-}
-
-.modern-card .card-header h3 {
-    color: white;
-    margin: 0;
-    font-weight: 600;
-    font-size: 1.3rem;
-}
-
-.modern-card .card-header h3 i {
-    margin-right: 8px;
-}
-
-.modern-card .card-body {
-    padding: 25px;
-}
-
-/* Boutons d'action */
-.action-buttons {
-    display: flex;
-    gap: 10px;
-    align-items: center;
-    flex-shrink: 0;
-}
-
-.btn-modern {
-    border: none;
-    border-radius: 8px;
-    padding: 8px 16px;
-    font-size: 0.9rem;
-    cursor: pointer;
-    transition: all 0.3s;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 5px;
-    font-weight: 500;
-    text-decoration: none;
-    white-space: nowrap;
-}
-
-.btn-modern i {
-    font-size: 0.9rem;
-}
-
-.btn-modern:hover {
-    transform: translateY(-2px);
-    text-decoration: none;
-}
-
-/* Bouton Nouveau (Jaune) */
-.btn-primary-modern {
-    background: #ffc107;
-    color: #333;
-    box-shadow: 0 4px 10px rgba(255, 193, 7, 0.3);
-}
-
-.btn-primary-modern:hover {
-    background: #ffb300;
-    color: #333;
-    box-shadow: 0 6px 15px rgba(255, 193, 7, 0.4);
-}
-
-/* Bouton Importer (Rouge) */
-.btn-secondary-modern {
-    background: #dc3545;
-    color: white;
-    box-shadow: 0 4px 10px rgba(220, 53, 69, 0.3);
-}
-
-.btn-secondary-modern:hover {
-    background: #c82333;
-    color: white;
-    box-shadow: 0 6px 15px rgba(220, 53, 69, 0.4);
-}
-
-/* Bouton Réinitialiser */
-.btn-reset-modern {
-    border: none;
-    border-radius: 8px;
-    padding: 8px 16px;
-    font-size: 0.9rem;
-    cursor: pointer;
-    transition: all 0.3s;
-    width: 100%;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 5px;
-    background: #6c757d;
-    color: white;
-    font-weight: 500;
-}
-
-.btn-reset-modern:hover {
-    background: #5a6268;
-    transform: translateY(-2px);
-    box-shadow: 0 5px 15px rgba(108, 117, 125, 0.3);
-}
-
-/* Boutons d'export */
-.export-buttons {
-    display: flex;
-    gap: 8px;
-    flex-wrap: wrap;
-}
-
-.btn-export {
-    border-radius: 8px;
-    padding: 6px 12px;
-    font-weight: 500;
-    font-size: 0.8rem;
-    transition: all 0.3s;
-    border: none;
-    cursor: pointer;
-    display: inline-flex;
-    align-items: center;
-    gap: 5px;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-    color: white;
-}
-
-.btn-export i {
-    font-size: 0.9rem;
-}
-
-.btn-export.csv {
-    background: #28a745;
-}
-
-.btn-export.csv:hover {
-    background: #218838;
-    transform: translateY(-2px);
-}
-
-.btn-export.excel {
-    background: #1e7e34;
-}
-
-.btn-export.excel:hover {
-    background: #19692c;
-    transform: translateY(-2px);
-}
-
-.total-badge {
-    background: rgba(255, 255, 255, 0.2);
-    color: white;
-    padding: 5px 12px;
-    border-radius: 20px;
-    font-weight: 500;
-    font-size: 0.85rem;
-    display: inline-flex;
-    align-items: center;
-    gap: 5px;
-    backdrop-filter: blur(5px);
-}
-
-/* Styles des sections de statistiques */
-.stats-section {
-    margin-bottom: 30px;
-}
-
-.section-title {
-    color: #000000;
-    font-weight: 600;
-    font-size: 1.1rem;
-    margin-bottom: 15px;
-    padding-bottom: 5px;
-    border-bottom: 2px solid #e0e0e0;
-}
-
-.section-title i {
-    margin-right: 8px;
-    color: #2e7d32;
-}
-
-.stats-container {
-    display: flex;
-    gap: 15px;
-    flex-wrap: wrap;
-}
-
-/* Style pour les 5 cartes de la section détails */
-.stats-container.compact .stat-card {
-    padding: 12px 15px;
-    min-width: 150px;
-}
-
-.stats-container.compact .stat-icon {
-    width: 40px;
-    height: 40px;
-    font-size: 1.2rem;
-}
-
-.stats-container.compact .stat-info h4 {
-    font-size: 1.3rem;
-}
-
-.stats-container.compact .stat-info p {
-    font-size: 0.7rem;
-    text-transform: none;
-}
-
-.stat-card {
-    background: white;
-    border-radius: 15px;
-    padding: 20px 25px;
-    flex: 1;
-    min-width: 180px;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
-    display: flex;
-    align-items: center;
-    gap: 20px;
-    transition: all 0.3s;
-    border: 1px solid rgba(0, 0, 0, 0.05);
-}
-
-.stat-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 8px 25px rgba(46, 125, 50, 0.15);
-}
-
-.stat-icon {
-    width: 60px;
-    height: 60px;
-    border-radius: 12px;
-    background: linear-gradient(135deg, #2e7d32 0%, #1b5e20 100%);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: white;
-    font-size: 1.8rem;
-    box-shadow: 0 4px 10px rgba(46, 125, 50, 0.3);
-}
-
-.stat-icon.blue {
-    background: linear-gradient(135deg, #1e4b8c 0%, #0d2b4f 100%);
-}
-
-.stat-icon.orange {
-    background: linear-gradient(135deg, #b85e00 0%, #8a4700 100%);
-}
-
-.stat-icon.red {
-    background: linear-gradient(135deg, #8b1e1e 0%, #5e1414 100%);
-}
-
-.stat-icon.purple {
-    background: linear-gradient(135deg, #6f42c1 0%, #4e2a8a 100%);
-}
-
-.stat-icon.teal {
-    background: linear-gradient(135deg, #20c997 0%, #169b74 100%);
-}
-
-.stat-icon.green {
-    background: linear-gradient(135deg, #28a745 0%, #1e7e34 100%);
-}
-
-.stat-icon.gray {
-    background: linear-gradient(135deg, #6c757d 0%, #495057 100%);
-}
-
-.stat-icon.cyan {
-    background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
-}
-
-.stat-info h4 {
-    margin: 0;
-    font-size: 1.8rem;
-    font-weight: 700;
-    color: #2e7d32;
-    line-height: 1.2;
-}
-
-.stat-info p {
-    margin: 0;
-    font-size: 0.9rem;
-    color: #6c757d;
-    font-weight: 500;
-    text-transform: none;
-}
-
-.stat-info p::first-letter {
-    text-transform: uppercase;
-}
-
-/* Styles du tableau */
-.table-militaires {
-    width: 100%;
-    border-collapse: separate;
-    border-spacing: 0 10px;
-    min-width: 1300px;
-}
-
-.table-militaires thead th {
-    background: linear-gradient(135deg, #2e7d32 0%, #1b5e20 100%);
-    color: white;
-    font-weight: 700;
-    font-size: 0.9rem;
-    padding: 12px 15px;
-    border: none;
-    text-align: left;
-    vertical-align: middle;
-    text-transform: uppercase;
-}
-
-.table-militaires thead th:first-child {
-    border-radius: 10px 0 0 10px;
-    text-align: center;
-    width: 50px;
-}
-
-.table-militaires thead th:last-child {
-    border-radius: 0 10px 10px 0;
-}
-
-.table-militaires tbody tr {
-    background: white;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
-    border-radius: 10px;
-    transition: all 0.3s;
-}
-
-.table-militaires tbody tr:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 5px 20px rgba(46, 125, 50, 0.15);
-}
-
-.table-militaires tbody td {
-    padding: 15px;
-    border: none;
-    font-size: 0.9rem;
-    vertical-align: middle;
-    font-weight: 500;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-.table-militaires tbody td:first-child {
-    border-radius: 10px 0 0 10px;
-    text-align: center;
-}
-
-.table-militaires tbody td:last-child {
-    border-radius: 0 10px 10px 0;
-}
-
-.select-all-checkbox,
-.row-checkbox {
-    width: 18px;
-    height: 18px;
-    cursor: pointer;
-    accent-color: #2e7d32;
-}
-
-.categorie-badge {
-    display: inline-block;
-    padding: 4px 12px;
-    border-radius: 20px;
-    font-weight: 700;
-    font-size: 0.75rem;
-    background: #e9ecef;
-    color: #495057;
-    white-space: nowrap;
-}
-
-.zdef-badge {
-    display: inline-block;
-    padding: 4px 12px;
-    border-radius: 20px;
-    font-weight: 700;
-    font-size: 0.75rem;
-    background: #2e7d32;
-    color: white;
-    white-space: nowrap;
-}
-
-.zdef-badge-1 {
-    background: #1e4b8c;
-}
-
-.zdef-badge-2 {
-    background: #b85e00;
-}
-
-.zdef-badge-3 {
-    background: #8b1e1e;
-}
-
-.null-value {
-    color: #6c757d;
-    font-weight: 500;
-    font-style: italic;
-}
-
-.uppercase-text {
-    text-transform: uppercase;
-}
-
-/* DataTables - Styles pour l'alignement recherche/boutons */
-.dataTables_wrapper {
-    width: 100%;
-    padding: 0;
-    position: relative;
-    clear: both;
-}
-
-.dataTables_wrapper .dataTables_length {
-    float: left;
-    margin-bottom: 20px;
-}
-
-.dataTables_wrapper .dataTables_length select {
-    width: auto;
-    display: inline-block;
-    border-radius: 8px;
-    border: 1px solid #e0e0e0;
-    padding: 6px 12px;
-    margin: 0 5px;
-}
-
-/* Style modifié pour aligner recherche et boutons */
-.dataTables_wrapper .dataTables_filter {
-    float: right;
-    margin-bottom: 20px;
-    display: flex !important;
-    align-items: center;
-    gap: 10px;
-    width: auto;
-    max-width: 100%;
-}
-
-.dataTables_wrapper .dataTables_filter label {
-    font-weight: 500;
-    color: #2e7d32;
-    margin-bottom: 0;
-    display: flex;
-    align-items: center;
-    gap: 5px;
-    flex: 0 1 auto;
-}
-
-.dataTables_wrapper .dataTables_filter input {
-    border-radius: 8px;
-    border: 1px solid #e0e0e0;
-    padding: 6px 12px;
-    width: 250px;
-    min-width: 200px;
-}
-
-.dataTables_wrapper .dataTables_filter .action-buttons {
-    display: flex;
-    gap: 8px;
-    flex-shrink: 0;
-    margin-left: 5px;
-}
-
-.dataTables_wrapper .dataTables_info {
-    float: left;
-    margin-top: 20px;
-    font-size: 0.9rem;
-    color: #2e7d32;
-}
-
-.dataTables_wrapper .dataTables_paginate {
-    float: right;
-    margin-top: 20px;
-}
-
-.dataTables_wrapper .dataTables_paginate .paginate_button {
-    border-radius: 3px;
-    padding: 5px 10px;
-    margin: 0 2px;
-    border: 1px solid #ccc;
-    background: white;
-    color: #666;
-    font-size: 0.85rem;
-    cursor: pointer;
-}
-
-.dataTables_wrapper .dataTables_paginate .paginate_button.current {
-    background: #e0e0e0;
-    color: #333;
-    border-color: #aaa;
-    font-weight: 500;
-}
-
-.dataTables_wrapper .dataTables_paginate .paginate_button:hover {
-    background: #f0f0f0;
-    color: #333;
-    border-color: #999;
-}
-
-.dataTables_scrollBody {
-    overflow-x: auto !important;
-    overflow-y: auto !important;
-    border-radius: 10px;
-}
-
-/* Responsive pour les petits écrans */
-@media (max-width: 992px) {
-    .dataTables_wrapper .dataTables_filter {
-        flex-direction: column;
-        align-items: flex-start;
-        width: 100%;
+    /* Styles de base */
+    body {
+        font-family: 'Barlow', sans-serif;
+        background-color: #f5f5f5;
     }
 
-    .dataTables_wrapper .dataTables_filter label {
-        width: 100%;
+    .modern-card {
+        border: none;
+        border-radius: 15px;
+        box-shadow: 0 0 30px rgba(0, 0, 0, 0.1);
+        overflow: hidden;
+        margin-bottom: 30px;
     }
 
-    .dataTables_wrapper .dataTables_filter input {
-        width: 100%;
+    .modern-card .card-header {
+        background: linear-gradient(135deg, #2e7d32 0%, #1b5e20 100%);
+        padding: 15px 25px;
+        border: none;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 15px;
     }
 
-    .dataTables_wrapper .dataTables_filter .action-buttons {
-        width: 100%;
-        justify-content: flex-start;
-        margin-left: 0;
-        margin-top: 5px;
+    .modern-card .card-header h3 {
+        color: white;
+        margin: 0;
+        font-weight: 600;
+        font-size: 1.3rem;
     }
-}
 
-@media (max-width: 768px) {
-    .dataTables_wrapper .dataTables_filter .action-buttons {
-        flex-direction: column;
-        width: 100%;
+    .modern-card .card-header h3 i {
+        margin-right: 8px;
+    }
+
+    .modern-card .card-body {
+        padding: 25px;
+    }
+
+    /* Boutons d'action */
+    .action-buttons {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        flex-shrink: 0;
     }
 
     .btn-modern {
-        width: 100%;
+        border: none;
+        border-radius: 8px;
+        padding: 8px 16px;
+        font-size: 0.9rem;
+        cursor: pointer;
+        transition: all 0.3s;
+        display: inline-flex;
+        align-items: center;
         justify-content: center;
+        gap: 5px;
+        font-weight: 500;
+        text-decoration: none;
+        white-space: nowrap;
     }
-}
 
-/* Pour les 5 colonnes sur la même ligne */
-.col-lg-2-4 {
-    flex: 0 0 auto;
-    width: 20%;
-}
-
-@media (max-width: 1200px) {
-    .col-lg-2-4 {
-        width: 33.333%;
+    .btn-modern i {
+        font-size: 0.9rem;
     }
-}
 
-@media (max-width: 768px) {
-    .col-lg-2-4 {
+    .btn-modern:hover {
+        transform: translateY(-2px);
+        text-decoration: none;
+    }
+
+    /* Bouton Nouveau (Jaune) */
+    .btn-primary-modern {
+        background: #ffc107;
+        color: #333;
+        box-shadow: 0 4px 10px rgba(255, 193, 7, 0.3);
+    }
+
+    .btn-primary-modern:hover {
+        background: #ffb300;
+        color: #333;
+        box-shadow: 0 6px 15px rgba(255, 193, 7, 0.4);
+    }
+
+    /* Bouton Importer (Rouge) */
+    .btn-secondary-modern {
+        background: #dc3545;
+        color: white;
+        box-shadow: 0 4px 10px rgba(220, 53, 69, 0.3);
+    }
+
+    .btn-secondary-modern:hover {
+        background: #c82333;
+        color: white;
+        box-shadow: 0 6px 15px rgba(220, 53, 69, 0.4);
+    }
+
+    /* Bouton Réinitialiser */
+    .btn-reset-modern {
+        border: none;
+        border-radius: 8px;
+        padding: 8px 16px;
+        font-size: 0.9rem;
+        cursor: pointer;
+        transition: all 0.3s;
         width: 100%;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 5px;
+        background: #6c757d;
+        color: white;
+        font-weight: 500;
     }
-}
+
+    .btn-reset-modern:hover {
+        background: #5a6268;
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(108, 117, 125, 0.3);
+    }
+
+    /* Boutons d'export */
+    .export-buttons {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+    }
+
+    .btn-export {
+        border-radius: 8px;
+        padding: 6px 12px;
+        font-weight: 500;
+        font-size: 0.8rem;
+        transition: all 0.3s;
+        border: none;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        color: white;
+    }
+
+    .btn-export i {
+        font-size: 0.9rem;
+    }
+
+    .btn-export.csv {
+        background: #28a745;
+    }
+
+    .btn-export.csv:hover {
+        background: #218838;
+        transform: translateY(-2px);
+    }
+
+    .btn-export.excel {
+        background: #1e7e34;
+    }
+
+    .btn-export.excel:hover {
+        background: #19692c;
+        transform: translateY(-2px);
+    }
+
+    .total-badge {
+        background: rgba(255, 255, 255, 0.2);
+        color: white;
+        padding: 5px 12px;
+        border-radius: 20px;
+        font-weight: 500;
+        font-size: 0.85rem;
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        backdrop-filter: blur(5px);
+    }
+
+    /* Styles des sections de statistiques */
+    .stats-section {
+        margin-bottom: 30px;
+    }
+
+    .section-title {
+        color: #000000;
+        font-weight: 600;
+        font-size: 1.1rem;
+        margin-bottom: 15px;
+        padding-bottom: 5px;
+        border-bottom: 2px solid #e0e0e0;
+    }
+
+    .section-title i {
+        margin-right: 8px;
+        color: #2e7d32;
+    }
+
+    .stats-container {
+        display: flex;
+        gap: 15px;
+        flex-wrap: wrap;
+    }
+
+    /* Style pour les 5 cartes de la section détails */
+    .stats-container.compact .stat-card {
+        padding: 12px 15px;
+        min-width: 150px;
+    }
+
+    .stats-container.compact .stat-icon {
+        width: 40px;
+        height: 40px;
+        font-size: 1.2rem;
+    }
+
+    .stats-container.compact .stat-info h4 {
+        font-size: 1.3rem;
+    }
+
+    .stats-container.compact .stat-info p {
+        font-size: 0.7rem;
+        text-transform: none;
+    }
+
+    .stat-card {
+        background: white;
+        border-radius: 15px;
+        padding: 20px 25px;
+        flex: 1;
+        min-width: 180px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+        display: flex;
+        align-items: center;
+        gap: 20px;
+        transition: all 0.3s;
+        border: 1px solid rgba(0, 0, 0, 0.05);
+    }
+
+    .stat-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 25px rgba(46, 125, 50, 0.15);
+    }
+
+    .stat-icon {
+        width: 60px;
+        height: 60px;
+        border-radius: 12px;
+        background: linear-gradient(135deg, #2e7d32 0%, #1b5e20 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 1.8rem;
+        box-shadow: 0 4px 10px rgba(46, 125, 50, 0.3);
+    }
+
+    .stat-icon.blue {
+        background: linear-gradient(135deg, #1e4b8c 0%, #0d2b4f 100%);
+    }
+
+    .stat-icon.orange {
+        background: linear-gradient(135deg, #b85e00 0%, #8a4700 100%);
+    }
+
+    .stat-icon.red {
+        background: linear-gradient(135deg, #8b1e1e 0%, #5e1414 100%);
+    }
+
+    .stat-icon.purple {
+        background: linear-gradient(135deg, #6f42c1 0%, #4e2a8a 100%);
+    }
+
+    .stat-icon.teal {
+        background: linear-gradient(135deg, #20c997 0%, #169b74 100%);
+    }
+
+    .stat-icon.green {
+        background: linear-gradient(135deg, #28a745 0%, #1e7e34 100%);
+    }
+
+    .stat-icon.gray {
+        background: linear-gradient(135deg, #6c757d 0%, #495057 100%);
+    }
+
+    .stat-icon.cyan {
+        background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
+    }
+
+    .stat-info h4 {
+        margin: 0;
+        font-size: 1.8rem;
+        font-weight: 700;
+        color: #2e7d32;
+        line-height: 1.2;
+    }
+
+    .stat-info p {
+        margin: 0;
+        font-size: 0.9rem;
+        color: #6c757d;
+        font-weight: 500;
+        text-transform: none;
+    }
+
+    .stat-info p::first-letter {
+        text-transform: uppercase;
+    }
+
+    /* Styles du tableau */
+    .table-militaires {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0 10px;
+        min-width: 1300px;
+    }
+
+    .table-militaires thead th {
+        background: linear-gradient(135deg, #2e7d32 0%, #1b5e20 100%);
+        color: white;
+        font-weight: 700;
+        font-size: 0.9rem;
+        padding: 12px 15px;
+        border: none;
+        text-align: left;
+        vertical-align: middle;
+        text-transform: uppercase;
+    }
+
+    .table-militaires thead th:first-child {
+        border-radius: 10px 0 0 10px;
+        text-align: center;
+        width: 50px;
+    }
+
+    .table-militaires thead th:last-child {
+        border-radius: 0 10px 10px 0;
+    }
+
+    .table-militaires tbody tr {
+        background: white;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        border-radius: 10px;
+        transition: all 0.3s;
+    }
+
+    .table-militaires tbody tr:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 20px rgba(46, 125, 50, 0.15);
+    }
+
+    .table-militaires tbody td {
+        padding: 15px;
+        border: none;
+        font-size: 0.9rem;
+        vertical-align: middle;
+        font-weight: 500;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .table-militaires tbody td:first-child {
+        border-radius: 10px 0 0 10px;
+        text-align: center;
+    }
+
+    .table-militaires tbody td:last-child {
+        border-radius: 0 10px 10px 0;
+    }
+
+    .select-all-checkbox,
+    .row-checkbox {
+        width: 18px;
+        height: 18px;
+        cursor: pointer;
+        accent-color: #2e7d32;
+    }
+
+    .categorie-badge {
+        display: inline-block;
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-weight: 700;
+        font-size: 0.75rem;
+        background: #e9ecef;
+        color: #495057;
+        white-space: nowrap;
+    }
+
+    .zdef-badge {
+        display: inline-block;
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-weight: 700;
+        font-size: 0.75rem;
+        background: #2e7d32;
+        color: white;
+        white-space: nowrap;
+    }
+
+    .zdef-badge-1 {
+        background: #1e4b8c;
+    }
+
+    .zdef-badge-2 {
+        background: #b85e00;
+    }
+
+    .zdef-badge-3 {
+        background: #8b1e1e;
+    }
+
+    .null-value {
+        color: #6c757d;
+        font-weight: 500;
+        font-style: italic;
+    }
+
+    .uppercase-text {
+        text-transform: uppercase;
+    }
+
+    /* DataTables - Styles pour l'alignement recherche/boutons */
+    .dataTables_wrapper {
+        width: 100%;
+        padding: 0;
+        position: relative;
+        clear: both;
+    }
+
+    .dataTables_wrapper .dataTables_length {
+        float: left;
+        margin-bottom: 20px;
+    }
+
+    .dataTables_wrapper .dataTables_length select {
+        width: auto;
+        display: inline-block;
+        border-radius: 8px;
+        border: 1px solid #e0e0e0;
+        padding: 6px 12px;
+        margin: 0 5px;
+    }
+
+    /* Style modifié pour aligner recherche et boutons */
+    .dataTables_wrapper .dataTables_filter {
+        float: right;
+        margin-bottom: 20px;
+        display: flex !important;
+        align-items: center;
+        gap: 10px;
+        width: auto;
+        max-width: 100%;
+    }
+
+    .dataTables_wrapper .dataTables_filter label {
+        font-weight: 500;
+        color: #2e7d32;
+        margin-bottom: 0;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        flex: 0 1 auto;
+    }
+
+    .dataTables_wrapper .dataTables_filter input {
+        border-radius: 8px;
+        border: 1px solid #e0e0e0;
+        padding: 6px 12px;
+        width: 250px;
+        min-width: 200px;
+    }
+
+    .dataTables_wrapper .dataTables_filter .action-buttons {
+        display: flex;
+        gap: 8px;
+        flex-shrink: 0;
+        margin-left: 5px;
+    }
+
+    .dataTables_wrapper .dataTables_info {
+        float: left;
+        margin-top: 20px;
+        font-size: 0.9rem;
+        color: #2e7d32;
+    }
+
+    .dataTables_wrapper .dataTables_paginate {
+        float: right;
+        margin-top: 20px;
+    }
+
+    .dataTables_wrapper .dataTables_paginate .paginate_button {
+        border-radius: 3px;
+        padding: 5px 10px;
+        margin: 0 2px;
+        border: 1px solid #ccc;
+        background: white;
+        color: #666;
+        font-size: 0.85rem;
+        cursor: pointer;
+    }
+
+    .dataTables_wrapper .dataTables_paginate .paginate_button.current {
+        background: #e0e0e0;
+        color: #333;
+        border-color: #aaa;
+        font-weight: 500;
+    }
+
+    .dataTables_wrapper .dataTables_paginate .paginate_button:hover {
+        background: #f0f0f0;
+        color: #333;
+        border-color: #999;
+    }
+
+    .dataTables_scrollBody {
+        overflow-x: auto !important;
+        overflow-y: auto !important;
+        border-radius: 10px;
+    }
+
+    /* Responsive pour les petits écrans */
+    @media (max-width: 992px) {
+        .dataTables_wrapper .dataTables_filter {
+            flex-direction: column;
+            align-items: flex-start;
+            width: 100%;
+        }
+
+        .dataTables_wrapper .dataTables_filter label {
+            width: 100%;
+        }
+
+        .dataTables_wrapper .dataTables_filter input {
+            width: 100%;
+        }
+
+        .dataTables_wrapper .dataTables_filter .action-buttons {
+            width: 100%;
+            justify-content: flex-start;
+            margin-left: 0;
+            margin-top: 5px;
+        }
+    }
+
+    @media (max-width: 768px) {
+        .dataTables_wrapper .dataTables_filter .action-buttons {
+            flex-direction: column;
+            width: 100%;
+        }
+
+        .btn-modern {
+            width: 100%;
+            justify-content: center;
+        }
+    }
+
+    /* Pour les 5 colonnes sur la même ligne */
+    .col-lg-2-4 {
+        flex: 0 0 auto;
+        width: 20%;
+    }
+
+    @media (max-width: 1200px) {
+        .col-lg-2-4 {
+            width: 33.333%;
+        }
+    }
+
+    @media (max-width: 768px) {
+        .col-lg-2-4 {
+            width: 100%;
+        }
+    }
 </style>
 
 <div class="container-fluid py-3">
     <!-- Messages de succès -->
     <?php if ($success_message): ?>
-    <div class="alert alert-success alert-dismissible fade show" role="alert">
-        <i class="fas fa-check-circle me-2"></i> <?= htmlspecialchars($success_message, ENT_QUOTES, 'UTF-8') ?>
-        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-    </div>
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="fas fa-check-circle me-2"></i> <?= htmlspecialchars($success_message, ENT_QUOTES, 'UTF-8') ?>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
     <?php endif; ?>
 
     <!-- Section 1: Statistiques générales -->
@@ -859,32 +859,32 @@ body {
                     </div>
                     <div style="width: 100%;">
                         <?php if (empty($top_categories)): ?>
-                        <p class="text-muted text-center py-3">Aucune donnée disponible</p>
+                            <p class="text-muted text-center py-3">Aucune donnée disponible</p>
                         <?php else: ?>
-                        <?php foreach ($top_categories as $index => $item):
+                            <?php foreach ($top_categories as $index => $item):
                                 $libelle = $categories_labels[$item['categorie']] ?? $item['categorie'];
                                 $icone = getIconeCategorie($libelle);
                                 $percentage = round(($item['total'] / $stats['total']) * 100, 1);
                                 $colors = ['#2e7d32', '#1e4b8c', '#b85e00', '#6f42c1', '#20c997'];
                             ?>
-                        <div style="margin-bottom: 12px;">
-                            <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
-                                <span style="font-size: 0.85rem; font-weight: 500;">
-                                    <?= $index + 1 ?>. <i class="fas <?= $icone ?> me-1"
-                                        style="color: <?= $colors[$index] ?>;"></i>
-                                    <?= htmlspecialchars($libelle, ENT_QUOTES, 'UTF-8') ?>
-                                </span>
-                                <span style="font-size: 0.85rem; font-weight: 600; color: <?= $colors[$index] ?>;">
-                                    <?= $item['total'] ?> (<?= $percentage ?>%)
-                                </span>
-                            </div>
-                            <div style="height: 6px; background: #e9ecef; border-radius: 3px; overflow: hidden;">
-                                <div
-                                    style="height: 100%; width: <?= $percentage ?>%; background: <?= $colors[$index] ?>; border-radius: 3px;">
+                                <div style="margin-bottom: 12px;">
+                                    <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                                        <span style="font-size: 0.85rem; font-weight: 500;">
+                                            <?= $index + 1 ?>. <i class="fas <?= $icone ?> me-1"
+                                                style="color: <?= $colors[$index] ?>;"></i>
+                                            <?= htmlspecialchars($libelle, ENT_QUOTES, 'UTF-8') ?>
+                                        </span>
+                                        <span style="font-size: 0.85rem; font-weight: 600; color: <?= $colors[$index] ?>;">
+                                            <?= $item['total'] ?> (<?= $percentage ?>%)
+                                        </span>
+                                    </div>
+                                    <div style="height: 6px; background: #e9ecef; border-radius: 3px; overflow: hidden;">
+                                        <div
+                                            style="height: 100%; width: <?= $percentage ?>%; background: <?= $colors[$index] ?>; border-radius: 3px;">
+                                        </div>
+                                    </div>
                                 </div>
-                            </div>
-                        </div>
-                        <?php endforeach; ?>
+                            <?php endforeach; ?>
                         <?php endif; ?>
                     </div>
                 </div>
@@ -904,28 +904,28 @@ body {
                     </div>
                     <div style="width: 100%;">
                         <?php if (empty($top_garnisons)): ?>
-                        <p class="text-muted text-center py-3">Aucune donnée disponible</p>
+                            <p class="text-muted text-center py-3">Aucune donnée disponible</p>
                         <?php else: ?>
-                        <?php foreach ($top_garnisons as $index => $item):
+                            <?php foreach ($top_garnisons as $index => $item):
                                 $percentage = round(($item['total'] / $stats['total']) * 100, 1);
                                 $colors = ['#2e7d32', '#1e4b8c', '#b85e00', '#6f42c1', '#20c997'];
                             ?>
-                        <div style="margin-bottom: 12px;">
-                            <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
-                                <span style="font-size: 0.85rem; font-weight: 500; text-transform: uppercase;">
-                                    <?= $index + 1 ?>. <?= htmlspecialchars($item['garnison'], ENT_QUOTES, 'UTF-8') ?>
-                                </span>
-                                <span style="font-size: 0.85rem; font-weight: 600; color: <?= $colors[$index] ?>;">
-                                    <?= $item['total'] ?> (<?= $percentage ?>%)
-                                </span>
-                            </div>
-                            <div style="height: 6px; background: #e9ecef; border-radius: 3px; overflow: hidden;">
-                                <div
-                                    style="height: 100%; width: <?= $percentage ?>%; background: <?= $colors[$index] ?>; border-radius: 3px;">
+                                <div style="margin-bottom: 12px;">
+                                    <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                                        <span style="font-size: 0.85rem; font-weight: 500; text-transform: uppercase;">
+                                            <?= $index + 1 ?>. <?= htmlspecialchars($item['garnison'], ENT_QUOTES, 'UTF-8') ?>
+                                        </span>
+                                        <span style="font-size: 0.85rem; font-weight: 600; color: <?= $colors[$index] ?>;">
+                                            <?= $item['total'] ?> (<?= $percentage ?>%)
+                                        </span>
+                                    </div>
+                                    <div style="height: 6px; background: #e9ecef; border-radius: 3px; overflow: hidden;">
+                                        <div
+                                            style="height: 100%; width: <?= $percentage ?>%; background: <?= $colors[$index] ?>; border-radius: 3px;">
+                                        </div>
+                                    </div>
                                 </div>
-                            </div>
-                        </div>
-                        <?php endforeach; ?>
+                            <?php endforeach; ?>
                         <?php endif; ?>
                     </div>
                 </div>
@@ -946,28 +946,28 @@ body {
                     </div>
                     <div style="width: 100%;">
                         <?php if (empty($top_provinces)): ?>
-                        <p class="text-muted text-center py-3">Aucune donnée disponible</p>
+                            <p class="text-muted text-center py-3">Aucune donnée disponible</p>
                         <?php else: ?>
-                        <?php foreach ($top_provinces as $index => $item):
+                            <?php foreach ($top_provinces as $index => $item):
                                 $percentage = round(($item['total'] / $stats['total']) * 100, 1);
                                 $colors = ['#2e7d32', '#1e4b8c', '#b85e00', '#6f42c1', '#20c997'];
                             ?>
-                        <div style="margin-bottom: 12px;">
-                            <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
-                                <span style="font-size: 0.85rem; font-weight: 500; text-transform: uppercase;">
-                                    <?= $index + 1 ?>. <?= htmlspecialchars($item['province'], ENT_QUOTES, 'UTF-8') ?>
-                                </span>
-                                <span style="font-size: 0.85rem; font-weight: 600; color: <?= $colors[$index] ?>;">
-                                    <?= $item['total'] ?> (<?= $percentage ?>%)
-                                </span>
-                            </div>
-                            <div style="height: 6px; background: #e9ecef; border-radius: 3px; overflow: hidden;">
-                                <div
-                                    style="height: 100%; width: <?= $percentage ?>%; background: <?= $colors[$index] ?>; border-radius: 3px;">
+                                <div style="margin-bottom: 12px;">
+                                    <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                                        <span style="font-size: 0.85rem; font-weight: 500; text-transform: uppercase;">
+                                            <?= $index + 1 ?>. <?= htmlspecialchars($item['province'], ENT_QUOTES, 'UTF-8') ?>
+                                        </span>
+                                        <span style="font-size: 0.85rem; font-weight: 600; color: <?= $colors[$index] ?>;">
+                                            <?= $item['total'] ?> (<?= $percentage ?>%)
+                                        </span>
+                                    </div>
+                                    <div style="height: 6px; background: #e9ecef; border-radius: 3px; overflow: hidden;">
+                                        <div
+                                            style="height: 100%; width: <?= $percentage ?>%; background: <?= $colors[$index] ?>; border-radius: 3px;">
+                                        </div>
+                                    </div>
                                 </div>
-                            </div>
-                        </div>
-                        <?php endforeach; ?>
+                            <?php endforeach; ?>
                         <?php endif; ?>
                     </div>
                 </div>
@@ -1039,28 +1039,28 @@ body {
                     </div>
                     <div style="width: 100%;">
                         <?php if (empty($top_actifs)): ?>
-                        <p class="text-muted text-center py-2 small">Aucune donnée</p>
+                            <p class="text-muted text-center py-2 small">Aucune donnée</p>
                         <?php else: ?>
-                        <?php foreach ($top_actifs as $index => $item):
+                            <?php foreach ($top_actifs as $index => $item):
                                 $percentage = round(($item['total'] / $stats['actifs']) * 100, 1);
                                 $colors = ['#2e7d32', '#1e4b8c', '#b85e00', '#6f42c1', '#20c997'];
                             ?>
-                        <div style="margin-bottom: 8px;">
-                            <div style="display: flex; justify-content: space-between; margin-bottom: 2px;">
-                                <span style="font-size: 0.75rem; font-weight: 500; text-transform: uppercase;">
-                                    <?= $index + 1 ?>. <?= htmlspecialchars($item['grade'], ENT_QUOTES, 'UTF-8') ?>
-                                </span>
-                                <span style="font-size: 0.7rem; font-weight: 600; color: <?= $colors[$index] ?>;">
-                                    <?= $item['total'] ?> (<?= $percentage ?>%)
-                                </span>
-                            </div>
-                            <div style="height: 4px; background: #e9ecef; border-radius: 2px; overflow: hidden;">
-                                <div
-                                    style="height: 100%; width: <?= $percentage ?>%; background: <?= $colors[$index] ?>; border-radius: 2px;">
+                                <div style="margin-bottom: 8px;">
+                                    <div style="display: flex; justify-content: space-between; margin-bottom: 2px;">
+                                        <span style="font-size: 0.75rem; font-weight: 500; text-transform: uppercase;">
+                                            <?= $index + 1 ?>. <?= htmlspecialchars($item['grade'], ENT_QUOTES, 'UTF-8') ?>
+                                        </span>
+                                        <span style="font-size: 0.7rem; font-weight: 600; color: <?= $colors[$index] ?>;">
+                                            <?= $item['total'] ?> (<?= $percentage ?>%)
+                                        </span>
+                                    </div>
+                                    <div style="height: 4px; background: #e9ecef; border-radius: 2px; overflow: hidden;">
+                                        <div
+                                            style="height: 100%; width: <?= $percentage ?>%; background: <?= $colors[$index] ?>; border-radius: 2px;">
+                                        </div>
+                                    </div>
                                 </div>
-                            </div>
-                        </div>
-                        <?php endforeach; ?>
+                            <?php endforeach; ?>
                         <?php endif; ?>
                     </div>
                 </div>
@@ -1080,28 +1080,28 @@ body {
                     </div>
                     <div style="width: 100%;">
                         <?php if (empty($top_retraites)): ?>
-                        <p class="text-muted text-center py-2 small">Aucune donnée</p>
+                            <p class="text-muted text-center py-2 small">Aucune donnée</p>
                         <?php else: ?>
-                        <?php foreach ($top_retraites as $index => $item):
+                            <?php foreach ($top_retraites as $index => $item):
                                 $percentage = round(($item['total'] / $stats['retraites']) * 100, 1);
                                 $colors = ['#2e7d32', '#1e4b8c', '#b85e00', '#6f42c1', '#20c997'];
                             ?>
-                        <div style="margin-bottom: 8px;">
-                            <div style="display: flex; justify-content: space-between; margin-bottom: 2px;">
-                                <span style="font-size: 0.75rem; font-weight: 500; text-transform: uppercase;">
-                                    <?= $index + 1 ?>. <?= htmlspecialchars($item['grade'], ENT_QUOTES, 'UTF-8') ?>
-                                </span>
-                                <span style="font-size: 0.7rem; font-weight: 600; color: <?= $colors[$index] ?>;">
-                                    <?= $item['total'] ?> (<?= $percentage ?>%)
-                                </span>
-                            </div>
-                            <div style="height: 4px; background: #e9ecef; border-radius: 2px; overflow: hidden;">
-                                <div
-                                    style="height: 100%; width: <?= $percentage ?>%; background: <?= $colors[$index] ?>; border-radius: 2px;">
+                                <div style="margin-bottom: 8px;">
+                                    <div style="display: flex; justify-content: space-between; margin-bottom: 2px;">
+                                        <span style="font-size: 0.75rem; font-weight: 500; text-transform: uppercase;">
+                                            <?= $index + 1 ?>. <?= htmlspecialchars($item['grade'], ENT_QUOTES, 'UTF-8') ?>
+                                        </span>
+                                        <span style="font-size: 0.7rem; font-weight: 600; color: <?= $colors[$index] ?>;">
+                                            <?= $item['total'] ?> (<?= $percentage ?>%)
+                                        </span>
+                                    </div>
+                                    <div style="height: 4px; background: #e9ecef; border-radius: 2px; overflow: hidden;">
+                                        <div
+                                            style="height: 100%; width: <?= $percentage ?>%; background: <?= $colors[$index] ?>; border-radius: 2px;">
+                                        </div>
+                                    </div>
                                 </div>
-                            </div>
-                        </div>
-                        <?php endforeach; ?>
+                            <?php endforeach; ?>
                         <?php endif; ?>
                     </div>
                 </div>
@@ -1121,28 +1121,28 @@ body {
                     </div>
                     <div style="width: 100%;">
                         <?php if (empty($top_integres)): ?>
-                        <p class="text-muted text-center py-2 small">Aucune donnée</p>
+                            <p class="text-muted text-center py-2 small">Aucune donnée</p>
                         <?php else: ?>
-                        <?php foreach ($top_integres as $index => $item):
+                            <?php foreach ($top_integres as $index => $item):
                                 $percentage = round(($item['total'] / $stats['integres']) * 100, 1);
                                 $colors = ['#2e7d32', '#1e4b8c', '#b85e00', '#6f42c1', '#20c997'];
                             ?>
-                        <div style="margin-bottom: 8px;">
-                            <div style="display: flex; justify-content: space-between; margin-bottom: 2px;">
-                                <span style="font-size: 0.75rem; font-weight: 500; text-transform: uppercase;">
-                                    <?= $index + 1 ?>. <?= htmlspecialchars($item['grade'], ENT_QUOTES, 'UTF-8') ?>
-                                </span>
-                                <span style="font-size: 0.7rem; font-weight: 600; color: <?= $colors[$index] ?>;">
-                                    <?= $item['total'] ?> (<?= $percentage ?>%)
-                                </span>
-                            </div>
-                            <div style="height: 4px; background: #e9ecef; border-radius: 2px; overflow: hidden;">
-                                <div
-                                    style="height: 100%; width: <?= $percentage ?>%; background: <?= $colors[$index] ?>; border-radius: 2px;">
+                                <div style="margin-bottom: 8px;">
+                                    <div style="display: flex; justify-content: space-between; margin-bottom: 2px;">
+                                        <span style="font-size: 0.75rem; font-weight: 500; text-transform: uppercase;">
+                                            <?= $index + 1 ?>. <?= htmlspecialchars($item['grade'], ENT_QUOTES, 'UTF-8') ?>
+                                        </span>
+                                        <span style="font-size: 0.7rem; font-weight: 600; color: <?= $colors[$index] ?>;">
+                                            <?= $item['total'] ?> (<?= $percentage ?>%)
+                                        </span>
+                                    </div>
+                                    <div style="height: 4px; background: #e9ecef; border-radius: 2px; overflow: hidden;">
+                                        <div
+                                            style="height: 100%; width: <?= $percentage ?>%; background: <?= $colors[$index] ?>; border-radius: 2px;">
+                                        </div>
+                                    </div>
                                 </div>
-                            </div>
-                        </div>
-                        <?php endforeach; ?>
+                            <?php endforeach; ?>
                         <?php endif; ?>
                     </div>
                 </div>
@@ -1162,28 +1162,28 @@ body {
                     </div>
                     <div style="width: 100%;">
                         <?php if (empty($top_dcd_av_bio)): ?>
-                        <p class="text-muted text-center py-2 small">Aucune donnée</p>
+                            <p class="text-muted text-center py-2 small">Aucune donnée</p>
                         <?php else: ?>
-                        <?php foreach ($top_dcd_av_bio as $index => $item):
+                            <?php foreach ($top_dcd_av_bio as $index => $item):
                                 $percentage = round(($item['total'] / $stats['dcd_av_bio']) * 100, 1);
                                 $colors = ['#2e7d32', '#1e4b8c', '#b85e00', '#6f42c1', '#20c997'];
                             ?>
-                        <div style="margin-bottom: 8px;">
-                            <div style="display: flex; justify-content: space-between; margin-bottom: 2px;">
-                                <span style="font-size: 0.75rem; font-weight: 500; text-transform: uppercase;">
-                                    <?= $index + 1 ?>. <?= htmlspecialchars($item['grade'], ENT_QUOTES, 'UTF-8') ?>
-                                </span>
-                                <span style="font-size: 0.7rem; font-weight: 600; color: <?= $colors[$index] ?>;">
-                                    <?= $item['total'] ?> (<?= $percentage ?>%)
-                                </span>
-                            </div>
-                            <div style="height: 4px; background: #e9ecef; border-radius: 2px; overflow: hidden;">
-                                <div
-                                    style="height: 100%; width: <?= $percentage ?>%; background: <?= $colors[$index] ?>; border-radius: 2px;">
+                                <div style="margin-bottom: 8px;">
+                                    <div style="display: flex; justify-content: space-between; margin-bottom: 2px;">
+                                        <span style="font-size: 0.75rem; font-weight: 500; text-transform: uppercase;">
+                                            <?= $index + 1 ?>. <?= htmlspecialchars($item['grade'], ENT_QUOTES, 'UTF-8') ?>
+                                        </span>
+                                        <span style="font-size: 0.7rem; font-weight: 600; color: <?= $colors[$index] ?>;">
+                                            <?= $item['total'] ?> (<?= $percentage ?>%)
+                                        </span>
+                                    </div>
+                                    <div style="height: 4px; background: #e9ecef; border-radius: 2px; overflow: hidden;">
+                                        <div
+                                            style="height: 100%; width: <?= $percentage ?>%; background: <?= $colors[$index] ?>; border-radius: 2px;">
+                                        </div>
+                                    </div>
                                 </div>
-                            </div>
-                        </div>
-                        <?php endforeach; ?>
+                            <?php endforeach; ?>
                         <?php endif; ?>
                     </div>
                 </div>
@@ -1204,28 +1204,28 @@ body {
                     </div>
                     <div style="width: 100%;">
                         <?php if (empty($top_dcd_ap_bio)): ?>
-                        <p class="text-muted text-center py-2 small">Aucune donnée</p>
+                            <p class="text-muted text-center py-2 small">Aucune donnée</p>
                         <?php else: ?>
-                        <?php foreach ($top_dcd_ap_bio as $index => $item):
+                            <?php foreach ($top_dcd_ap_bio as $index => $item):
                                 $percentage = round(($item['total'] / $stats['dcd_ap_bio']) * 100, 1);
                                 $colors = ['#2e7d32', '#1e4b8c', '#b85e00', '#6f42c1', '#20c997'];
                             ?>
-                        <div style="margin-bottom: 8px;">
-                            <div style="display: flex; justify-content: space-between; margin-bottom: 2px;">
-                                <span style="font-size: 0.75rem; font-weight: 500; text-transform: uppercase;">
-                                    <?= $index + 1 ?>. <?= htmlspecialchars($item['grade'], ENT_QUOTES, 'UTF-8') ?>
-                                </span>
-                                <span style="font-size: 0.7rem; font-weight: 600; color: <?= $colors[$index] ?>;">
-                                    <?= $item['total'] ?> (<?= $percentage ?>%)
-                                </span>
-                            </div>
-                            <div style="height: 4px; background: #e9ecef; border-radius: 2px; overflow: hidden;">
-                                <div
-                                    style="height: 100%; width: <?= $percentage ?>%; background: <?= $colors[$index] ?>; border-radius: 2px;">
+                                <div style="margin-bottom: 8px;">
+                                    <div style="display: flex; justify-content: space-between; margin-bottom: 2px;">
+                                        <span style="font-size: 0.75rem; font-weight: 500; text-transform: uppercase;">
+                                            <?= $index + 1 ?>. <?= htmlspecialchars($item['grade'], ENT_QUOTES, 'UTF-8') ?>
+                                        </span>
+                                        <span style="font-size: 0.7rem; font-weight: 600; color: <?= $colors[$index] ?>;">
+                                            <?= $item['total'] ?> (<?= $percentage ?>%)
+                                        </span>
+                                    </div>
+                                    <div style="height: 4px; background: #e9ecef; border-radius: 2px; overflow: hidden;">
+                                        <div
+                                            style="height: 100%; width: <?= $percentage ?>%; background: <?= $colors[$index] ?>; border-radius: 2px;">
+                                        </div>
+                                    </div>
                                 </div>
-                            </div>
-                        </div>
-                        <?php endforeach; ?>
+                            <?php endforeach; ?>
                         <?php endif; ?>
                     </div>
                 </div>
@@ -1261,8 +1261,8 @@ body {
                                     <?php foreach ($categories_list as $categorie):
                                         $libelle = $categories_labels[$categorie] ?? $categorie;
                                     ?>
-                                    <option value="<?= htmlspecialchars($categorie, ENT_QUOTES, 'UTF-8') ?>">
-                                        <?= htmlspecialchars($libelle, ENT_QUOTES, 'UTF-8') ?></option>
+                                        <option value="<?= htmlspecialchars($categorie, ENT_QUOTES, 'UTF-8') ?>">
+                                            <?= htmlspecialchars($libelle, ENT_QUOTES, 'UTF-8') ?></option>
                                     <?php endforeach; ?>
                                 </select>
                             </div>
@@ -1273,8 +1273,8 @@ body {
                                 <select id="garnison-filter" class="form-select form-select-sm">
                                     <option value="">Toutes</option>
                                     <?php foreach ($garnisons_list as $garnison): ?>
-                                    <option value="<?= htmlspecialchars($garnison, ENT_QUOTES, 'UTF-8') ?>">
-                                        <?= htmlspecialchars($garnison, ENT_QUOTES, 'UTF-8') ?></option>
+                                        <option value="<?= htmlspecialchars($garnison, ENT_QUOTES, 'UTF-8') ?>">
+                                            <?= htmlspecialchars($garnison, ENT_QUOTES, 'UTF-8') ?></option>
                                     <?php endforeach; ?>
                                 </select>
                             </div>
@@ -1285,9 +1285,9 @@ body {
                                 <select id="province-filter" class="form-select form-select-sm">
                                     <option value="">Toutes</option>
                                     <?php foreach ($provinces_list as $province): ?>
-                                    <option value="<?= htmlspecialchars($province, ENT_QUOTES, 'UTF-8') ?>"
-                                        <?= ($province == $selected_province) ? 'selected' : '' ?>>
-                                        <?= htmlspecialchars($province, ENT_QUOTES, 'UTF-8') ?></option>
+                                        <option value="<?= htmlspecialchars($province, ENT_QUOTES, 'UTF-8') ?>"
+                                            <?= ($province == $selected_province) ? 'selected' : '' ?>>
+                                            <?= htmlspecialchars($province, ENT_QUOTES, 'UTF-8') ?></option>
                                     <?php endforeach; ?>
                                 </select>
                             </div>
@@ -1353,256 +1353,256 @@ body {
 <script src="../../assets/fontawesome/js/all.min.js"></script>
 
 <script>
-$(document).ready(function() {
-    <?php if ($success_message): ?>
-    Swal.fire({
-        icon: 'success',
-        title: 'Succès',
-        text: '<?= addslashes($success_message) ?>',
-        timer: 2000,
-        showConfirmButton: false,
-        position: 'top-end',
-        toast: true,
-        background: '#28a745',
-        color: '#ffffff',
-        iconColor: '#ffffff',
-        timerProgressBar: true,
-    });
-    <?php endif; ?>
+    $(document).ready(function() {
+        <?php if ($success_message): ?>
+            Swal.fire({
+                icon: 'success',
+                title: 'Succès',
+                text: '<?= addslashes($success_message) ?>',
+                timer: 2000,
+                showConfirmButton: false,
+                position: 'top-end',
+                toast: true,
+                background: '#28a745',
+                color: '#ffffff',
+                iconColor: '#ffffff',
+                timerProgressBar: true,
+            });
+        <?php endif; ?>
 
-    // Ordre personnalisé des grades
-    const gradeOrder = [
-        'GENA', 'GAM', 'LTGEN', 'AMR', 'GENMAJ', 'VAM',
-        'GENBDE', 'CAM', 'COL', 'CPV', 'LTCOL', 'CPF',
-        'MAJ', 'CPC', 'CAPT', 'LDV', 'LT', 'EV', 'SLT', '2EV',
-        'A-C', 'MCP', 'A-1', '1MC', 'ADJ', 'MRC', '1SM', '1MR',
-        'SM', '2MR', '1SGT', 'MR', 'SGT', 'QMT', 'CPL', '1MT',
-        '1CL', '2MT', '2CL', 'MT', 'REC', 'ASK', 'COMD'
-    ];
+        // Ordre personnalisé des grades
+        const gradeOrder = [
+            'GENA', 'GAM', 'LTGEN', 'AMR', 'GENMAJ', 'VAM',
+            'GENBDE', 'CAM', 'COL', 'CPV', 'LTCOL', 'CPF',
+            'MAJ', 'CPC', 'CAPT', 'LDV', 'LT', 'EV', 'SLT', '2EV',
+            'A-C', 'MCP', 'A-1', '1MC', 'ADJ', 'MRC', '1SM', '1MR',
+            'SM', '2MR', '1SGT', 'MR', 'SGT', 'QMT', 'CPL', '1MT',
+            '1CL', '2MT', '2CL', 'MT', 'REC', 'ASK', 'COMD'
+        ];
 
-    // ===== NOUVELLE FONCTION JS : retourne l'icône correspondant au libellé de catégorie =====
-    function getIconeCategorie(libelle) {
-        const icones = {
-            'Actif': 'fa-user-check',
-            'Intégré': 'fa-user-plus',
-            'Retraité': 'fa-user-clock',
-            'Décédé Après Bio': 'fa-skull',
-            'Décédé Avant Bio': 'fa-skull-crossbones'
+        // ===== NOUVELLE FONCTION JS : retourne l'icône correspondant au libellé de catégorie =====
+        function getIconeCategorie(libelle) {
+            const icones = {
+                'Actif': 'fa-user-check',
+                'Intégré': 'fa-user-plus',
+                'Retraité': 'fa-user-clock',
+                'Décédé Après Bio': 'fa-skull',
+                'Décédé Avant Bio': 'fa-skull-crossbones'
+            };
+            return icones[libelle] || 'fa-user-tag';
+        }
+
+        // Fonction pour calculer ZDEF
+        function getZoneDefense(province) {
+            if (!province) return '';
+
+            province = province.toUpperCase().trim()
+                .replace(/[ÉÈÊË]/g, 'E')
+                .replace(/[ÂÄ]/g, 'A')
+                .replace(/[ÎÏ]/g, 'I')
+                .replace(/[ÔÖ]/g, 'O')
+                .replace(/[ÛÜ]/g, 'U')
+                .replace(/Ç/g, 'C');
+
+            const zone1 = ['KWILU', 'KWANGO', 'MAI-NDOMBE', 'MAI NDOMBE', 'MAINDOMBE', 'KONGO-CENTRAL',
+                'KONGO CENTRAL', 'KONGOCENTRAL', 'KINSHASA', 'EQUATEUR', 'ÉQUATEUR', 'MONGALA', 'NORD-UBANGI',
+                'NORD UBANGI', 'NORDUBANGI', 'SUD-UBANGI', 'SUD UBANGI', 'SUDUBANGI', 'TSHUAPA'
+            ];
+            const zone2 = ['HAUT-KATANGA', 'HAUT KATANGA', 'HAUTKATANGA', 'HAUT-LOMAMI', 'HAUT LOMAMI',
+                'HAUTLOMAMI', 'LUALABA', 'TANGANYIKA', 'KASAI', 'KASAÏ', 'KASAI-CENTRAL', 'KASAI CENTRAL',
+                'KASAICENTRAL', 'KASAÏ-CENTRAL', 'KASAI-ORIENTAL', 'KASAI ORIENTAL', 'KASAIORIENTAL',
+                'KASAÏ-ORIENTAL', 'SANKURU', 'LOMAMI'
+            ];
+            const zone3 = ['HAUT-UELE', 'HAUT UELE', 'HAUTUELE', 'BAS-UELE', 'BAS UELE', 'BASUELE', 'ITURI',
+                'TSHOPO', 'NORD-KIVU', 'NORD KIVU', 'NORDKIVU', 'SUD-KIVU', 'SUD KIVU', 'SUDKIVU', 'MANIEMA'
+            ];
+
+            if (zone1.includes(province)) return '1ZDef';
+            if (zone2.includes(province)) return '2ZDef';
+            if (zone3.includes(province)) return '3ZDef';
+            return '';
+        }
+
+        // Fonction de tri personnalisé pour les grades (pour le tri côté client)
+        $.fn.dataTable.ext.order['grade-pre'] = function(data) {
+            const grade = $(data).text().trim();
+            const index = gradeOrder.indexOf(grade);
+            return index >= 0 ? index : 999;
         };
-        return icones[libelle] || 'fa-user-tag';
-    }
 
-    // Fonction pour calculer ZDEF
-    function getZoneDefense(province) {
-        if (!province) return '';
-
-        province = province.toUpperCase().trim()
-            .replace(/[ÉÈÊË]/g, 'E')
-            .replace(/[ÂÄ]/g, 'A')
-            .replace(/[ÎÏ]/g, 'I')
-            .replace(/[ÔÖ]/g, 'O')
-            .replace(/[ÛÜ]/g, 'U')
-            .replace(/Ç/g, 'C');
-
-        const zone1 = ['KWILU', 'KWANGO', 'MAI-NDOMBE', 'MAI NDOMBE', 'MAINDOMBE', 'KONGO-CENTRAL',
-            'KONGO CENTRAL', 'KONGOCENTRAL', 'KINSHASA', 'EQUATEUR', 'ÉQUATEUR', 'MONGALA', 'NORD-UBANGI',
-            'NORD UBANGI', 'NORDUBANGI', 'SUD-UBANGI', 'SUD UBANGI', 'SUDUBANGI', 'TSHUAPA'
-        ];
-        const zone2 = ['HAUT-KATANGA', 'HAUT KATANGA', 'HAUTKATANGA', 'HAUT-LOMAMI', 'HAUT LOMAMI',
-            'HAUTLOMAMI', 'LUALABA', 'TANGANYIKA', 'KASAI', 'KASAÏ', 'KASAI-CENTRAL', 'KASAI CENTRAL',
-            'KASAICENTRAL', 'KASAÏ-CENTRAL', 'KASAI-ORIENTAL', 'KASAI ORIENTAL', 'KASAIORIENTAL',
-            'KASAÏ-ORIENTAL', 'SANKURU', 'LOMAMI'
-        ];
-        const zone3 = ['HAUT-UELE', 'HAUT UELE', 'HAUTUELE', 'BAS-UELE', 'BAS UELE', 'BASUELE', 'ITURI',
-            'TSHOPO', 'NORD-KIVU', 'NORD KIVU', 'NORDKIVU', 'SUD-KIVU', 'SUD KIVU', 'SUDKIVU', 'MANIEMA'
-        ];
-
-        if (zone1.includes(province)) return '1ZDef';
-        if (zone2.includes(province)) return '2ZDef';
-        if (zone3.includes(province)) return '3ZDef';
-        return '';
-    }
-
-    // Fonction de tri personnalisé pour les grades (pour le tri côté client)
-    $.fn.dataTable.ext.order['grade-pre'] = function(data) {
-        const grade = $(data).text().trim();
-        const index = gradeOrder.indexOf(grade);
-        return index >= 0 ? index : 999;
-    };
-
-    // Initialisation DataTables
-    const table = $('#table-militaires').DataTable({
-        language: {
-            url: '//cdn.datatables.net/plug-ins/1.11.5/i18n/fr-FR.json',
-            search: '<i class="fas fa-search"></i>',
-            lengthMenu: "Afficher _MENU_ éléments",
-            info: "Affichage de _START_ à _END_ sur _TOTAL_ éléments",
-            infoEmpty: "Aucun élément",
-            infoFiltered: "(filtré de _MAX_ éléments)",
-            zeroRecords: "Aucun enregistrement correspondant",
-            paginate: {
-                first: "Premier",
-                previous: "Précédent",
-                next: "Suivant",
-                last: "Dernier"
-            }
-        },
-        processing: true,
-        serverSide: true,
-        ajax: {
-            url: 'ajax_get_militaires.php',
-            type: 'POST',
-            data: function(d) {
-                d.categorie = $('#categorie-filter').val();
-                d.garnison = $('#garnison-filter').val();
-                d.province = $('#province-filter').val();
-                d.zdef = $('#zdef-filter').val();
-                d.statut = $('#statut-filter').val();
-                d.search_value = d.search.value;
-
-                // Ajouter l'ordre personnalisé des grades pour le traitement côté serveur
-                d.grade_order = gradeOrder;
-
-                // Si le tri est sur la colonne grade (index 3), utiliser l'ordre personnalisé
-                if (d.order && d.order[0] && d.order[0].column == 3) {
-                    d.order[0].custom_order = 'grade_custom';
+        // Initialisation DataTables
+        const table = $('#table-militaires').DataTable({
+            language: {
+                url: '//cdn.datatables.net/plug-ins/1.11.5/i18n/fr-FR.json',
+                search: '<i class="fas fa-search"></i>',
+                lengthMenu: "Afficher _MENU_ éléments",
+                info: "Affichage de _START_ à _END_ sur _TOTAL_ éléments",
+                infoEmpty: "Aucun élément",
+                infoFiltered: "(filtré de _MAX_ éléments)",
+                zeroRecords: "Aucun enregistrement correspondant",
+                paginate: {
+                    first: "Premier",
+                    previous: "Précédent",
+                    next: "Suivant",
+                    last: "Dernier"
                 }
             },
-            dataSrc: function(json) {
-                // S'assurer que les données sont correctement encodées
-                return json.data;
-            }
-        },
-        columns: [{
-                data: null,
-                render: function(data, type, row) {
-                    return '<input type="checkbox" class="row-checkbox" value="' + escapeHtml(
-                        row.matricule) + '">';
+            processing: true,
+            serverSide: true,
+            ajax: {
+                url: 'ajax_get_militaires.php',
+                type: 'POST',
+                data: function(d) {
+                    d.categorie = $('#categorie-filter').val();
+                    d.garnison = $('#garnison-filter').val();
+                    d.province = $('#province-filter').val();
+                    d.zdef = $('#zdef-filter').val();
+                    d.statut = $('#statut-filter').val();
+                    d.search_value = d.search.value;
+
+                    // Ajouter l'ordre personnalisé des grades pour le traitement côté serveur
+                    d.grade_order = gradeOrder;
+
+                    // Si le tri est sur la colonne grade (index 3), utiliser l'ordre personnalisé
+                    if (d.order && d.order[0] && d.order[0].column == 3) {
+                        d.order[0].custom_order = 'grade_custom';
+                    }
                 },
-                orderable: false
-            },
-            {
-                data: 'matricule',
-                className: 'uppercase-text',
-                render: function(data) {
-                    return data ? escapeHtml(data.toUpperCase()) :
-                        '<span class="null-value">NULL</span>';
+                dataSrc: function(json) {
+                    // S'assurer que les données sont correctement encodées
+                    return json.data;
                 }
             },
-            {
-                data: 'noms',
-                className: 'uppercase-text',
-                render: function(data) {
-                    return data ? escapeHtml(data.toUpperCase()) :
-                        '<span class="null-value">NULL</span>';
-                }
-            },
-            {
-                data: 'grade',
-                className: 'uppercase-text',
-                render: function(data) {
-                    return data ? escapeHtml(data.toUpperCase()) :
-                        '<span class="null-value">NULL</span>';
+            columns: [{
+                    data: null,
+                    render: function(data, type, row) {
+                        return '<input type="checkbox" class="row-checkbox" value="' + escapeHtml(
+                            row.matricule) + '">';
+                    },
+                    orderable: false
                 },
-                type: 'grade' // Utiliser le type de tri personnalisé
-            },
-            {
-                data: 'unite',
-                className: 'uppercase-text',
-                render: function(data) {
-                    return data ? escapeHtml(data.toUpperCase()) :
-                        '<span class="null-value">NULL</span>';
+                {
+                    data: 'matricule',
+                    className: 'uppercase-text',
+                    render: function(data) {
+                        return data ? escapeHtml(data.toUpperCase()) :
+                            '<span class="null-value">NULL</span>';
+                    }
+                },
+                {
+                    data: 'noms',
+                    className: 'uppercase-text',
+                    render: function(data) {
+                        return data ? escapeHtml(data.toUpperCase()) :
+                            '<span class="null-value">NULL</span>';
+                    }
+                },
+                {
+                    data: 'grade',
+                    className: 'uppercase-text',
+                    render: function(data) {
+                        return data ? escapeHtml(data.toUpperCase()) :
+                            '<span class="null-value">NULL</span>';
+                    },
+                    type: 'grade' // Utiliser le type de tri personnalisé
+                },
+                {
+                    data: 'unite',
+                    className: 'uppercase-text',
+                    render: function(data) {
+                        return data ? escapeHtml(data.toUpperCase()) :
+                            '<span class="null-value">NULL</span>';
+                    }
+                },
+                {
+                    data: 'beneficiaire',
+                    className: 'uppercase-text',
+                    render: function(data) {
+                        return data ? escapeHtml(data.toUpperCase()) :
+                            '<span class="null-value"></span>';
+                    }
+                },
+                {
+                    data: 'garnison',
+                    className: 'uppercase-text',
+                    render: function(data) {
+                        return data ? escapeHtml(data.toUpperCase()) :
+                            '<span class="null-value">NULL</span>';
+                    }
+                },
+                {
+                    data: 'province',
+                    className: 'uppercase-text',
+                    render: function(data) {
+                        return data ? escapeHtml(data.toUpperCase()) :
+                            '<span class="null-value">NULL</span>';
+                    }
+                },
+                {
+                    data: 'categorie',
+                    className: 'uppercase-text',
+                    render: function(data) {
+                        if (!data) return '<span class="null-value">NULL</span>';
+                        let libelle = data;
+                        const labels = {
+                            'ACTIF': 'Actif',
+                            'RETRAITES': 'Retraité',
+                            'INTEGRES': 'Intégré',
+                            'DCD_AV_BIO': 'Décédé Avant Bio',
+                            'DCD_AP_BIO': 'Décédé Après Bio'
+                        };
+                        libelle = labels[data] || data;
+                        const icone = getIconeCategorie(libelle);
+                        return '<span class="categorie-badge"><i class="fas ' + icone +
+                            ' me-1"></i> ' + escapeHtml(libelle) + '</span>';
+                    }
+                },
+                {
+                    data: 'province',
+                    className: 'uppercase-text',
+                    render: function(data) {
+                        const zdef = getZoneDefense(data);
+                        if (!zdef) return '<span class="null-value">-</span>';
+                        let zdefClass = '';
+                        if (zdef === '1ZDef') zdefClass = 'zdef-badge-1';
+                        else if (zdef === '2ZDef') zdefClass = 'zdef-badge-2';
+                        else if (zdef === '3ZDef') zdefClass = 'zdef-badge-3';
+                        return '<span class="zdef-badge ' + zdefClass + '">' + zdef + '</span>';
+                    }
                 }
-            },
-            {
-                data: 'beneficiaire',
-                className: 'uppercase-text',
-                render: function(data) {
-                    return data ? escapeHtml(data.toUpperCase()) :
-                        '<span class="null-value"></span>';
-                }
-            },
-            {
-                data: 'garnison',
-                className: 'uppercase-text',
-                render: function(data) {
-                    return data ? escapeHtml(data.toUpperCase()) :
-                        '<span class="null-value">NULL</span>';
-                }
-            },
-            {
-                data: 'province',
-                className: 'uppercase-text',
-                render: function(data) {
-                    return data ? escapeHtml(data.toUpperCase()) :
-                        '<span class="null-value">NULL</span>';
-                }
-            },
-            {
-                data: 'categorie',
-                className: 'uppercase-text',
-                render: function(data) {
-                    if (!data) return '<span class="null-value">NULL</span>';
-                    let libelle = data;
-                    const labels = {
-                        'ACTIF': 'Actif',
-                        'RETRAITES': 'Retraité',
-                        'INTEGRES': 'Intégré',
-                        'DCD_AV_BIO': 'Décédé Avant Bio',
-                        'DCD_AP_BIO': 'Décédé Après Bio'
-                    };
-                    libelle = labels[data] || data;
-                    const icone = getIconeCategorie(libelle);
-                    return '<span class="categorie-badge"><i class="fas ' + icone +
-                        ' me-1"></i> ' + escapeHtml(libelle) + '</span>';
-                }
-            },
-            {
-                data: 'province',
-                className: 'uppercase-text',
-                render: function(data) {
-                    const zdef = getZoneDefense(data);
-                    if (!zdef) return '<span class="null-value">-</span>';
-                    let zdefClass = '';
-                    if (zdef === '1ZDef') zdefClass = 'zdef-badge-1';
-                    else if (zdef === '2ZDef') zdefClass = 'zdef-badge-2';
-                    else if (zdef === '3ZDef') zdefClass = 'zdef-badge-3';
-                    return '<span class="zdef-badge ' + zdefClass + '">' + zdef + '</span>';
-                }
-            }
-        ],
-        order: [
-            [3, 'asc'] // Tri par défaut sur la colonne grade en ordre ascendant
-        ],
-        pageLength: 10,
-        lengthMenu: [10, 25, 50, 100],
-        scrollX: true,
-        scrollY: '60vh',
-        scrollCollapse: true,
-        autoWidth: false,
-        initComplete: function() {
-            const filterDiv = $('.dataTables_filter');
+            ],
+            order: [
+                [3, 'asc'] // Tri par défaut sur la colonne grade en ordre ascendant
+            ],
+            pageLength: 10,
+            lengthMenu: [10, 25, 50, 100],
+            scrollX: true,
+            scrollY: '60vh',
+            scrollCollapse: true,
+            autoWidth: false,
+            initComplete: function() {
+                const filterDiv = $('.dataTables_filter');
 
-            // S'assurer que le conteneur a le bon style
-            filterDiv.css({
-                'display': 'flex',
-                'align-items': 'center',
-                'justify-content': 'flex-end',
-                'gap': '10px',
-                'flex-wrap': 'nowrap'
-            });
+                // S'assurer que le conteneur a le bon style
+                filterDiv.css({
+                    'display': 'flex',
+                    'align-items': 'center',
+                    'justify-content': 'flex-end',
+                    'gap': '10px',
+                    'flex-wrap': 'nowrap'
+                });
 
-            // Style pour le label de recherche
-            const searchLabel = filterDiv.find('label');
-            searchLabel.css({
-                'display': 'flex',
-                'align-items': 'center',
-                'margin-bottom': '0',
-                'flex': '0 1 auto'
-            });
+                // Style pour le label de recherche
+                const searchLabel = filterDiv.find('label');
+                searchLabel.css({
+                    'display': 'flex',
+                    'align-items': 'center',
+                    'margin-bottom': '0',
+                    'flex': '0 1 auto'
+                });
 
-            // Ajouter les boutons après la recherche
-            filterDiv.append(`
+                // Ajouter les boutons après la recherche
+                filterDiv.append(`
                 <div class="action-buttons">
                     <a href="ajouter.php" class="btn-modern btn-primary-modern">
                         <i class="fas fa-user-plus"></i> Nouveau
@@ -1612,282 +1612,282 @@ $(document).ready(function() {
                     </a>
                 </div>
             `);
-        },
-        drawCallback: function() {
-            $('#select-all').prop('checked', false);
-        }
-    });
-
-    // Fonction pour échapper les caractères HTML
-    function escapeHtml(text) {
-        if (!text) return text;
-        const map = {
-            '&': '&amp;',
-            '<': '&lt;',
-            '>': '&gt;',
-            '"': '&quot;',
-            "'": '&#039;'
-        };
-        return text.replace(/[&<>"']/g, function(m) {
-            return map[m];
+            },
+            drawCallback: function() {
+                $('#select-all').prop('checked', false);
+            }
         });
-    }
 
-    // Cases à cocher
-    $('#select-all').on('change', function() {
-        $('.row-checkbox').prop('checked', $(this).prop('checked'));
-    });
+        // Fonction pour échapper les caractères HTML
+        function escapeHtml(text) {
+            if (!text) return text;
+            const map = {
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                '"': '&quot;',
+                "'": '&#039;'
+            };
+            return text.replace(/[&<>"']/g, function(m) {
+                return map[m];
+            });
+        }
 
-    $(document).on('change', '.row-checkbox', function() {
-        const allChecked = $('.row-checkbox:checked').length === $('.row-checkbox').length;
-        $('#select-all').prop('checked', allChecked);
-    });
+        // Cases à cocher
+        $('#select-all').on('change', function() {
+            $('.row-checkbox').prop('checked', $(this).prop('checked'));
+        });
 
-    // Filtres
-    $('#categorie-filter, #garnison-filter, #province-filter, #zdef-filter, #statut-filter').on('change',
-        function() {
+        $(document).on('change', '.row-checkbox', function() {
+            const allChecked = $('.row-checkbox:checked').length === $('.row-checkbox').length;
+            $('#select-all').prop('checked', allChecked);
+        });
+
+        // Filtres
+        $('#categorie-filter, #garnison-filter, #province-filter, #zdef-filter, #statut-filter').on('change',
+            function() {
+                table.ajax.reload();
+            });
+
+        $('#reset-filters').on('click', function() {
+            $('#categorie-filter, #garnison-filter, #province-filter, #zdef-filter, #statut-filter').val(
+                '');
             table.ajax.reload();
         });
 
-    $('#reset-filters').on('click', function() {
-        $('#categorie-filter, #garnison-filter, #province-filter, #zdef-filter, #statut-filter').val(
-            '');
-        table.ajax.reload();
-    });
+        // ===== AJOUT : Si une province est passée dans l'URL, on applique le filtre =====
+        let selectedProvince = <?= json_encode($selected_province) ?>;
+        if (selectedProvince) {
+            $('#province-filter').val(selectedProvince);
+            table.ajax.reload();
+        }
 
-    // ===== AJOUT : Si une province est passée dans l'URL, on applique le filtre =====
-    let selectedProvince = <?= json_encode($selected_province) ?>;
-    if (selectedProvince) {
-        $('#province-filter').val(selectedProvince);
-        table.ajax.reload();
-    }
+        // Exports
+        function getExportData() {
+            return new Promise((resolve, reject) => {
+                const searchInput = $('.dataTables_filter input').val();
 
-    // Exports
-    function getExportData() {
-        return new Promise((resolve, reject) => {
-            const searchInput = $('.dataTables_filter input').val();
+                $.ajax({
+                    url: 'ajax_export_militaires.php',
+                    method: 'POST',
+                    data: {
+                        categorie: $('#categorie-filter').val(),
+                        garnison: $('#garnison-filter').val(),
+                        province: $('#province-filter').val(),
+                        zdef: $('#zdef-filter').val(),
+                        statut: $('#statut-filter').val(),
+                        search: searchInput,
+                        selected: $('.row-checkbox:checked').map(function() {
+                            return $(this).val();
+                        }).get(),
+                        order_column: table.order()[0][0],
+                        order_dir: table.order()[0][1],
+                        grade_order: gradeOrder // Envoyer l'ordre des grades pour le tri côté serveur
+                    },
+                    dataType: 'json',
+                    success: function(response) {
+                        resolve(response);
+                    },
+                    error: function(xhr, status, error) {
+                        console.error('Erreur export:', error);
+                        reject(error);
+                    }
+                });
+            });
+        }
 
-            $.ajax({
-                url: 'ajax_export_militaires.php',
-                method: 'POST',
-                data: {
+        function getTimestamp() {
+            const d = new Date();
+            return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}_${String(d.getHours()).padStart(2,'0')}h${String(d.getMinutes()).padStart(2,'0')}`;
+        }
+
+        function escapeCsvValue(value) {
+            if (value === null || value === undefined) return '';
+            value = String(value);
+            if (value.includes(';') || value.includes('"') || value.includes('\n')) {
+                return '"' + value.replace(/"/g, '""') + '"';
+            }
+            return value;
+        }
+
+        $('#export-csv').on('click', async function() {
+            try {
+                // --- AJOUT LOG : journalisation de l'export CSV ---
+                const filters = {
                     categorie: $('#categorie-filter').val(),
                     garnison: $('#garnison-filter').val(),
                     province: $('#province-filter').val(),
                     zdef: $('#zdef-filter').val(),
-                    statut: $('#statut-filter').val(),
-                    search: searchInput,
-                    selected: $('.row-checkbox:checked').map(function() {
-                        return $(this).val();
-                    }).get(),
-                    order_column: table.order()[0][0],
-                    order_dir: table.order()[0][1],
-                    grade_order: gradeOrder // Envoyer l'ordre des grades pour le tri côté serveur
-                },
-                dataType: 'json',
-                success: function(response) {
-                    resolve(response);
-                },
-                error: function(xhr, status, error) {
-                    console.error('Erreur export:', error);
-                    reject(error);
+                    statut: $('#statut-filter').val()
+                };
+                $.get('?ajax=log_export', {
+                    type: 'CSV',
+                    filtres: JSON.stringify(filters)
+                });
+                // --- FIN AJOUT LOG ---
+
+                Swal.fire({
+                    title: 'Préparation de l\'export...',
+                    allowOutsideClick: false,
+                    didOpen: () => Swal.showLoading()
+                });
+
+                const {
+                    headers,
+                    data
+                } = await getExportData();
+
+                if (!data || data.length === 0) {
+                    Swal.close();
+                    Swal.fire('Aucune donnée',
+                        'Veuillez sélectionner des lignes ou vérifier les filtres.', 'info');
+                    return;
                 }
-            });
+
+                // Formatage CSV
+                const csvRows = [];
+                csvRows.push(headers.map(h => escapeCsvValue(h)).join(';'));
+
+                // Trier les données selon l'ordre personnalisé des grades si nécessaire
+                const sortedData = [...data];
+                if (table.order()[0][0] === 3) {
+                    sortedData.sort((a, b) => {
+                        const gradeA = a[2] || '';
+                        const gradeB = b[2] || '';
+                        const indexA = gradeOrder.indexOf(gradeA);
+                        const indexB = gradeOrder.indexOf(gradeB);
+
+                        if (indexA === -1 && indexB === -1) return 0;
+                        if (indexA === -1) return 1;
+                        if (indexB === -1) return -1;
+
+                        if (table.order()[0][1] === 'asc') {
+                            return indexA - indexB;
+                        } else {
+                            return indexB - indexA;
+                        }
+                    });
+                }
+
+                sortedData.forEach(row => {
+                    const escapedRow = row.map(cell => escapeCsvValue(cell)).join(';');
+                    csvRows.push(escapedRow);
+                });
+
+                const csvContent = csvRows.join('\n');
+
+                // Ajouter BOM UTF-8
+                const blob = new Blob(["\uFEFF" + csvContent], {
+                    type: 'text/csv;charset=utf-8;'
+                });
+                const link = document.createElement('a');
+                link.href = URL.createObjectURL(blob);
+                link.download = `militaires_${getTimestamp()}.csv`;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                URL.revokeObjectURL(link.href);
+
+                Swal.close();
+
+            } catch (error) {
+                console.error('Erreur export CSV:', error);
+                Swal.close();
+                Swal.fire('Erreur', 'Une erreur est survenue lors de l\'export CSV', 'error');
+            }
         });
-    }
 
-    function getTimestamp() {
-        const d = new Date();
-        return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}_${String(d.getHours()).padStart(2,'0')}h${String(d.getMinutes()).padStart(2,'0')}`;
-    }
-
-    function escapeCsvValue(value) {
-        if (value === null || value === undefined) return '';
-        value = String(value);
-        if (value.includes(';') || value.includes('"') || value.includes('\n')) {
-            return '"' + value.replace(/"/g, '""') + '"';
-        }
-        return value;
-    }
-
-    $('#export-csv').on('click', async function() {
-        try {
-            // --- AJOUT LOG : journalisation de l'export CSV ---
-            const filters = {
-                categorie: $('#categorie-filter').val(),
-                garnison: $('#garnison-filter').val(),
-                province: $('#province-filter').val(),
-                zdef: $('#zdef-filter').val(),
-                statut: $('#statut-filter').val()
-            };
-            $.get('?ajax=log_export', {
-                type: 'CSV',
-                filtres: JSON.stringify(filters)
-            });
-            // --- FIN AJOUT LOG ---
-
-            Swal.fire({
-                title: 'Préparation de l\'export...',
-                allowOutsideClick: false,
-                didOpen: () => Swal.showLoading()
-            });
-
-            const {
-                headers,
-                data
-            } = await getExportData();
-
-            if (!data || data.length === 0) {
-                Swal.close();
-                Swal.fire('Aucune donnée',
-                    'Veuillez sélectionner des lignes ou vérifier les filtres.', 'info');
-                return;
-            }
-
-            // Formatage CSV
-            const csvRows = [];
-            csvRows.push(headers.map(h => escapeCsvValue(h)).join(';'));
-
-            // Trier les données selon l'ordre personnalisé des grades si nécessaire
-            const sortedData = [...data];
-            if (table.order()[0][0] === 3) {
-                sortedData.sort((a, b) => {
-                    const gradeA = a[2] || '';
-                    const gradeB = b[2] || '';
-                    const indexA = gradeOrder.indexOf(gradeA);
-                    const indexB = gradeOrder.indexOf(gradeB);
-
-                    if (indexA === -1 && indexB === -1) return 0;
-                    if (indexA === -1) return 1;
-                    if (indexB === -1) return -1;
-
-                    if (table.order()[0][1] === 'asc') {
-                        return indexA - indexB;
-                    } else {
-                        return indexB - indexA;
-                    }
+        $('#export-excel').on('click', async function() {
+            try {
+                // --- AJOUT LOG : journalisation de l'export Excel ---
+                const filters = {
+                    categorie: $('#categorie-filter').val(),
+                    garnison: $('#garnison-filter').val(),
+                    province: $('#province-filter').val(),
+                    zdef: $('#zdef-filter').val(),
+                    statut: $('#statut-filter').val()
+                };
+                $.get('?ajax=log_export', {
+                    type: 'Excel',
+                    filtres: JSON.stringify(filters)
                 });
-            }
+                // --- FIN AJOUT LOG ---
 
-            sortedData.forEach(row => {
-                const escapedRow = row.map(cell => escapeCsvValue(cell)).join(';');
-                csvRows.push(escapedRow);
-            });
-
-            const csvContent = csvRows.join('\n');
-
-            // Ajouter BOM UTF-8
-            const blob = new Blob(["\uFEFF" + csvContent], {
-                type: 'text/csv;charset=utf-8;'
-            });
-            const link = document.createElement('a');
-            link.href = URL.createObjectURL(blob);
-            link.download = `militaires_${getTimestamp()}.csv`;
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-            URL.revokeObjectURL(link.href);
-
-            Swal.close();
-
-        } catch (error) {
-            console.error('Erreur export CSV:', error);
-            Swal.close();
-            Swal.fire('Erreur', 'Une erreur est survenue lors de l\'export CSV', 'error');
-        }
-    });
-
-    $('#export-excel').on('click', async function() {
-        try {
-            // --- AJOUT LOG : journalisation de l'export Excel ---
-            const filters = {
-                categorie: $('#categorie-filter').val(),
-                garnison: $('#garnison-filter').val(),
-                province: $('#province-filter').val(),
-                zdef: $('#zdef-filter').val(),
-                statut: $('#statut-filter').val()
-            };
-            $.get('?ajax=log_export', {
-                type: 'Excel',
-                filtres: JSON.stringify(filters)
-            });
-            // --- FIN AJOUT LOG ---
-
-            Swal.fire({
-                title: 'Préparation de l\'export...',
-                allowOutsideClick: false,
-                didOpen: () => Swal.showLoading()
-            });
-
-            const {
-                headers,
-                data
-            } = await getExportData();
-
-            if (!data || data.length === 0) {
-                Swal.close();
-                Swal.fire('Aucune donnée',
-                    'Veuillez sélectionner des lignes ou vérifier les filtres.', 'info');
-                return;
-            }
-
-            // Trier les données selon l'ordre personnalisé des grades si nécessaire
-            const sortedData = [...data];
-            if (table.order()[0][0] === 3) {
-                sortedData.sort((a, b) => {
-                    const gradeA = a[2] || '';
-                    const gradeB = b[2] || '';
-                    const indexA = gradeOrder.indexOf(gradeA);
-                    const indexB = gradeOrder.indexOf(gradeB);
-
-                    if (indexA === -1 && indexB === -1) return 0;
-                    if (indexA === -1) return 1;
-                    if (indexB === -1) return -1;
-
-                    if (table.order()[0][1] === 'asc') {
-                        return indexA - indexB;
-                    } else {
-                        return indexB - indexA;
-                    }
+                Swal.fire({
+                    title: 'Préparation de l\'export...',
+                    allowOutsideClick: false,
+                    didOpen: () => Swal.showLoading()
                 });
+
+                const {
+                    headers,
+                    data
+                } = await getExportData();
+
+                if (!data || data.length === 0) {
+                    Swal.close();
+                    Swal.fire('Aucune donnée',
+                        'Veuillez sélectionner des lignes ou vérifier les filtres.', 'info');
+                    return;
+                }
+
+                // Trier les données selon l'ordre personnalisé des grades si nécessaire
+                const sortedData = [...data];
+                if (table.order()[0][0] === 3) {
+                    sortedData.sort((a, b) => {
+                        const gradeA = a[2] || '';
+                        const gradeB = b[2] || '';
+                        const indexA = gradeOrder.indexOf(gradeA);
+                        const indexB = gradeOrder.indexOf(gradeB);
+
+                        if (indexA === -1 && indexB === -1) return 0;
+                        if (indexA === -1) return 1;
+                        if (indexB === -1) return -1;
+
+                        if (table.order()[0][1] === 'asc') {
+                            return indexA - indexB;
+                        } else {
+                            return indexB - indexA;
+                        }
+                    });
+                }
+
+                const wb = XLSX.utils.book_new();
+                const wsData = [headers, ...sortedData];
+                const ws = XLSX.utils.aoa_to_sheet(wsData);
+
+                const colWidths = headers.map(h => ({
+                    wch: Math.max(h.length, 15)
+                }));
+                ws['!cols'] = colWidths;
+
+                XLSX.utils.book_append_sheet(wb, ws, 'Militaires');
+
+                const wbout = XLSX.write(wb, {
+                    bookType: 'xlsx',
+                    type: 'array'
+                });
+
+                const blob = new Blob([wbout], {
+                    type: 'application/octet-stream'
+                });
+                const link = document.createElement('a');
+                link.href = URL.createObjectURL(blob);
+                link.download = `militaires_${getTimestamp()}.xlsx`;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                URL.revokeObjectURL(link.href);
+
+                Swal.close();
+
+            } catch (error) {
+                console.error('Erreur export Excel:', error);
+                Swal.close();
+                Swal.fire('Erreur', 'Une erreur est survenue lors de l\'export Excel', 'error');
             }
-
-            const wb = XLSX.utils.book_new();
-            const wsData = [headers, ...sortedData];
-            const ws = XLSX.utils.aoa_to_sheet(wsData);
-
-            const colWidths = headers.map(h => ({
-                wch: Math.max(h.length, 15)
-            }));
-            ws['!cols'] = colWidths;
-
-            XLSX.utils.book_append_sheet(wb, ws, 'Militaires');
-
-            const wbout = XLSX.write(wb, {
-                bookType: 'xlsx',
-                type: 'array'
-            });
-
-            const blob = new Blob([wbout], {
-                type: 'application/octet-stream'
-            });
-            const link = document.createElement('a');
-            link.href = URL.createObjectURL(blob);
-            link.download = `militaires_${getTimestamp()}.xlsx`;
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-            URL.revokeObjectURL(link.href);
-
-            Swal.close();
-
-        } catch (error) {
-            console.error('Erreur export Excel:', error);
-            Swal.close();
-            Swal.fire('Erreur', 'Une erreur est survenue lors de l\'export Excel', 'error');
-        }
+        });
     });
-});
 </script>
 
 <?php

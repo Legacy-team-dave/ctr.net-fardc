@@ -6,6 +6,8 @@ if (!isset($_SESSION['user_id'])) {
     exit;
 }
 
+check_profil(['ADMIN_IG', 'OPERATEUR']);
+
 // Créer la table equipes si elle n'existe pas
 try {
     $pdo->exec("CREATE TABLE IF NOT EXISTS `equipes` (
@@ -20,40 +22,6 @@ try {
 
 $error = null;
 $success = null;
-
-// Suppression d'un membre
-if (isset($_GET['supprimer']) && is_numeric($_GET['supprimer'])) {
-    try {
-        $stmt = $pdo->prepare("DELETE FROM equipes WHERE id = ?");
-        $stmt->execute([(int)$_GET['supprimer']]);
-        log_action('SUPPRESSION', 'equipes', (int)$_GET['supprimer'], 'Suppression membre équipe');
-        $success = "Membre supprimé avec succès.";
-    } catch (PDOException $e) {
-        error_log("Erreur suppression équipe: " . $e->getMessage());
-        $error = "Erreur lors de la suppression.";
-    }
-}
-
-// Ajout d'un membre
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $noms = trim($_POST['noms'] ?? '');
-    $grade = trim($_POST['grade'] ?? '');
-    $role = trim($_POST['role'] ?? '');
-
-    if (empty($noms) || empty($grade) || empty($role)) {
-        $error = "Tous les champs sont obligatoires.";
-    } else {
-        try {
-            $stmt = $pdo->prepare("INSERT INTO equipes (noms, grade, role) VALUES (?, ?, ?)");
-            $stmt->execute([$noms, $grade, $role]);
-            log_action('AJOUT', 'equipes', (int)$pdo->lastInsertId(), "Ajout membre équipe: $noms");
-            $success = "Membre ajouté avec succès.";
-        } catch (PDOException $e) {
-            error_log("Erreur ajout équipe: " . $e->getMessage());
-            $error = "Erreur lors de l'ajout.";
-        }
-    }
-}
 
 // Récupérer les membres
 try {
@@ -405,7 +373,7 @@ try {
 
         <div class="equipe-body">
             <div class="info-line"><i class="fas fa-info-circle"></i> Enregistrez les membres de votre équipe de
-                contrôle avant de continuer.</div>
+                contrôle. Cette vue affiche uniquement la liste des membres.</div>
 
             <?php if ($error): ?>
                 <div class="alert-error"><i class="fas fa-exclamation-circle"></i> <?= htmlspecialchars($error) ?></div>
@@ -414,36 +382,6 @@ try {
             <?php if ($success): ?>
                 <div class="alert-success"><i class="fas fa-check-circle"></i> <?= htmlspecialchars($success) ?></div>
             <?php endif; ?>
-
-            <!-- Formulaire d'ajout -->
-            <div class="form-section">
-                <h4><i class="fas fa-user-plus"></i> Ajouter un membre</h4>
-                <form method="post" id="equipeForm">
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="noms">Noms</label>
-                            <input type="text" id="noms" name="noms" placeholder="Nom complet" required maxlength="150">
-                        </div>
-                        <div class="form-group">
-                            <label for="grade">Grade</label>
-                            <input type="text" id="grade" name="grade" placeholder="Grade militaire" required
-                                maxlength="50">
-                        </div>
-                        <div class="form-group">
-                            <label for="role">Rôle</label>
-                            <select id="role" name="role" required>
-                                <option value="">-- Sélectionner --</option>
-                                <option value="Chef d'équipe">Chef d'équipe</option>
-                                <option value="Contrôleur">Contrôleur</option>
-                                <option value="Opérateur">Opérateur</option>
-                                <option value="Superviseur">Superviseur</option>
-                                <option value="Autre">Autre</option>
-                            </select>
-                        </div>
-                    </div>
-                    <button type="submit" class="btn-add"><i class="fas fa-plus-circle"></i> Ajouter</button>
-                </form>
-            </div>
 
             <!-- Liste des membres -->
             <div class="membres-section">
@@ -463,7 +401,6 @@ try {
                                 <th>Noms</th>
                                 <th>Grade</th>
                                 <th>Rôle</th>
-                                <th>Action</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -473,11 +410,6 @@ try {
                                     <td><?= htmlspecialchars($m['noms']) ?></td>
                                     <td><?= htmlspecialchars($m['grade']) ?></td>
                                     <td><?= htmlspecialchars($m['role']) ?></td>
-                                    <td>
-                                        <a href="equipes.php?supprimer=<?= (int)$m['id'] ?>" class="btn-delete"
-                                            onclick="return confirm('Supprimer ce membre ?')"><i
-                                                class="fas fa-trash-alt"></i></a>
-                                    </td>
                                 </tr>
                             <?php endforeach; ?>
                         </tbody>

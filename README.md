@@ -129,6 +129,11 @@ Tables principales utilisées :
 - `logs`
 - `equipes`
 
+Script SQL de synchronisation centrale:
+
+- `sql/sync_init.sql`
+- `sql/sync_rollback.sql`
+
 ## Documentation liée
 
 - `SETUP.md`
@@ -140,6 +145,7 @@ Tables principales utilisées :
 - `OPERATEUR_GUIDE.md`
 - `CONTROLEUR_GUIDE.md`
 - `TROUBLESHOOTING.md`
+- `SYNCHRONISATION.md`
 - `PRESENTATION_CTR_NET_FARDC.md`
 - `PROMPT_PRESENTATION.md`
 

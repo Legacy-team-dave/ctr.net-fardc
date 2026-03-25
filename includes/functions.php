@@ -11,6 +11,7 @@ if (session_status() === PHP_SESSION_NONE) {
 }
 
 require_once __DIR__ . '/../config/database.php';
+require_once __DIR__ . '/../config/app_config.php';
 
 // Définir l'encodage par défaut
 mb_internal_encoding('UTF-8');
@@ -415,7 +416,16 @@ function nettoyer_anciens_logs($jours = 90)
  */
 function has_role($role)
 {
-    return isset($_SESSION['user_profil']) && $_SESSION['user_profil'] === $role;
+    if (!isset($_SESSION['user_profil'])) {
+        return false;
+    }
+
+    $profil = strtoupper(trim((string) $_SESSION['user_profil']));
+    if (is_central_mode()) {
+        return $profil === 'ADMIN_IG' && strtoupper(trim((string) $role)) === 'ADMIN_IG';
+    }
+
+    return $profil === strtoupper(trim((string) $role));
 }
 
 /**
@@ -444,6 +454,10 @@ function check_profil($profils_autorises)
     // Nettoyer et uniformiser la casse
     $profils_autorises = array_map('strtoupper', $profils_autorises);
 
+    if (is_central_mode()) {
+        $profils_autorises = ['ADMIN_IG'];
+    }
+
     if (!isset($_SESSION['user_profil'])) {
         redirect_with_flash(app_url('login.php'), 'danger', 'Session invalide. Veuillez vous reconnecter.');
     }
@@ -464,6 +478,15 @@ function require_login()
 {
     if (!isset($_SESSION['user_id'])) {
         redirect_with_flash(app_url('login.php'), 'danger', 'Accès non autorisé. Veuillez vous connecter pour continuer.');
+    }
+
+    if (is_central_mode()) {
+        $profil = strtoupper(trim((string) ($_SESSION['user_profil'] ?? '')));
+        if ($profil !== 'ADMIN_IG') {
+            session_unset();
+            session_destroy();
+            redirect_with_flash(app_url('login.php'), 'danger', 'Accès refusé : la plateforme centrale est réservée au profil ADMIN_IG.');
+        }
     }
 }
 

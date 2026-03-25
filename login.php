@@ -10,8 +10,10 @@ if (!isset($_SESSION['user_id']) && isset($_COOKIE['remember_token'])) {
         $user = $stmt->fetch();
 
         if ($user) {
-            // Bloquer le profil CONTROLEUR côté web (réservé au mobile)
-            if ($user['profil'] === 'CONTROLEUR') {
+            // En mode central, seul ADMIN_IG est autorisé
+            if (is_central_mode() && strtoupper(trim((string)$user['profil'])) !== 'ADMIN_IG') {
+                setcookie('remember_token', '', time() - 3600, '/', '', false, true);
+            } elseif ($user['profil'] === 'CONTROLEUR') {
                 setcookie('remember_token', '', time() - 3600, '/', '', false, true);
             } else {
                 session_regenerate_id(true);
@@ -47,6 +49,12 @@ if (!isset($_SESSION['user_id']) && isset($_COOKIE['remember_token'])) {
 // Si déjà connecté ET qu'on n'est PAS en mode succès (paramètre success absent), on redirige immédiatement
 if (isset($_SESSION['user_id']) && !isset($_GET['success'])) {
     $profil = $_SESSION['user_profil'] ?? null;
+
+    if (is_central_mode() && strtoupper(trim((string)$profil)) !== 'ADMIN_IG') {
+        session_destroy();
+        header('Location: login.php');
+        exit;
+    }
 
     if ($profil === 'OPERATEUR') {
         try {
@@ -98,8 +106,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $user = $stmt->fetch();
 
         if ($user && password_verify($password, $user['mot_de_passe'])) {
-            // Bloquer le profil CONTROLEUR côté web (réservé au mobile)
-            if ($user['profil'] === 'CONTROLEUR') {
+            // En mode central, seul ADMIN_IG est autorisé
+            if (is_central_mode() && strtoupper(trim((string)$user['profil'])) !== 'ADMIN_IG') {
+                audit_action('ECHEC_CONNEXION', 'utilisateurs', $user['id_utilisateur'], 'Tentative connexion hors ADMIN_IG en mode central');
+                $error = "La plateforme centrale est réservée au profil ADMIN_IG.";
+            } elseif ($user['profil'] === 'CONTROLEUR') {
                 audit_action('ECHEC_CONNEXION', 'utilisateurs', $user['id_utilisateur'], 'Tentative connexion web profil CONTROLEUR');
                 $error = "Le profil CONTROLEUR est réservé à l'application mobile.";
             } else {

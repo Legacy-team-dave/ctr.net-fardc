@@ -1,0 +1,11 @@
+{
+    "generated_at": "2026-03-25T18:03:08+01:00",
+    "created": true,
+    "reason": "backup_updated",
+    "file": "C:\\laragon\\www\\ctr.net-fardc\/backups\/backup_consolide_latest.zip",
+    "counts": {
+        "controles": 120,
+        "litiges": 5,
+        "non_vus": 36788
+    }
+}

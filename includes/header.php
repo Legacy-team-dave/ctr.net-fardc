@@ -99,6 +99,12 @@ $menuItems = [
         'roles' => ['ADMIN_IG', 'OPERATEUR']
     ],
     [
+        'title' => 'Équipe',
+        'icon'  => 'fas fa-users',
+        'url'   => '/ctr.net-fardc/equipes.php',
+        'roles' => ['ADMIN_IG', 'OPERATEUR']
+    ],
+    [
         'title' => 'Administration',
         'icon'  => 'fas fa-cogs',
         'roles' => ['ADMIN_IG'],
@@ -725,6 +731,7 @@ if (isset($_SESSION['user_id'])) {
         window.userProfil = <?= json_encode($user_profil) ?>;
         window.disableGlobalAccessToast = <?= $disable_global_access_toast ? 'true' : 'false' ?>;
         window.protectedRouteRoles = <?= json_encode($protectedRouteRoles, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?>;
+        window.csrfToken = <?= json_encode(generate_csrf_token()) ?>;
 
         function showLoginStyleToast(message, type = 'success') {
             if (!message || window.disableGlobalAccessToast) return;
@@ -793,6 +800,67 @@ if (isset($_SESSION['user_id'])) {
         })();
 
         document.addEventListener('DOMContentLoaded', function() {
+            const syncBtn = document.getElementById('syncBtn');
+
+            async function runSync() {
+                if (!syncBtn) return;
+
+                const originalHtml = syncBtn.innerHTML;
+                syncBtn.classList.add('disabled');
+                syncBtn.setAttribute('aria-disabled', 'true');
+                syncBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i><span class="d-none d-lg-inline ml-1">Synchronisation...</span>';
+
+                try {
+                    const response = await fetch('<?= htmlspecialchars($appBasePath) ?>/api/synchronisation.php?action=push', {
+                        method: 'POST',
+                        credentials: 'same-origin',
+                        headers: {
+                            'X-CSRF-Token': window.csrfToken,
+                            'Accept': 'application/json'
+                        }
+                    });
+
+                    const data = await response.json();
+                    if (!response.ok || !data.success) {
+                        throw new Error(data.message || 'Synchronisation échouée.');
+                    }
+
+                    showLoginStyleToast(data.message || 'Synchronisation terminée.', 'success');
+                } catch (error) {
+                    showLoginStyleToast(error.message || 'Erreur pendant la synchronisation.', 'error');
+                } finally {
+                    syncBtn.classList.remove('disabled');
+                    syncBtn.removeAttribute('aria-disabled');
+                    syncBtn.innerHTML = originalHtml;
+                }
+            }
+
+            if (syncBtn) {
+                syncBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
+
+                    if (typeof Swal !== 'undefined' && Swal.fire) {
+                        Swal.fire({
+                            title: 'Synchroniser les données',
+                            text: 'Confirmez-vous l\'envoi des données locales vers le serveur central ?',
+                            icon: 'question',
+                            showCancelButton: true,
+                            confirmButtonText: 'Oui, synchroniser',
+                            cancelButtonText: 'Annuler'
+                        }).then((result) => {
+                            if (result.isConfirmed) {
+                                runSync();
+                            }
+                        });
+                        return;
+                    }
+
+                    if (window.confirm('Confirmez-vous la synchronisation des données locales vers le serveur central ?')) {
+                        runSync();
+                    }
+                });
+            }
+
             function normalizePath(path) {
                 if (!path) return '/';
                 let clean = path.toLowerCase();
@@ -910,6 +978,10 @@ if (isset($_SESSION['user_id'])) {
                             Liste</a>
                     </li>
                     <li class="nav-item">
+                        <a href="/ctr.net-fardc/equipes.php" class="nav-link"><i class="fas fa-users"></i>
+                            Équipe</a>
+                    </li>
+                    <li class="nav-item">
                         <a href="/ctr.net-fardc/modules/controles/ajouter.php" class="nav-link"><i class="fas fa-plus"></i>
                             Nouveau</a>
                     </li>
@@ -917,6 +989,14 @@ if (isset($_SESSION['user_id'])) {
             </ul>
 
             <ul class="navbar-nav ml-auto">
+                <?php if (!is_central_mode() && in_array($user_profil, ['ADMIN_IG', 'OPERATEUR'], true)): ?>
+                    <li class="nav-item">
+                        <a class="nav-link logout-link" id="syncBtn" href="#" title="Synchroniser vers le serveur central">
+                            <i class="fas fa-sync-alt"></i>
+                            <span class="d-none d-lg-inline ml-1">Synchroniser</span>
+                        </a>
+                    </li>
+                <?php endif; ?>
                 <li class="nav-item dropdown">
                     <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" id="userDropdown"
                         role="button" data-bs-toggle="dropdown" aria-expanded="false">

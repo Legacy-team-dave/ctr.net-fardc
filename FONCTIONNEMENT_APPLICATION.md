@@ -54,7 +54,7 @@ Profils effectivement utilisés :
 ### Redirections post-login
 
 - `ADMIN_IG` -> `index.php`
-- `OPERATEUR` -> `preferences.php` si pas de préférences → `equipes.php` (enregistrement équipe) → `index.php`, sinon `modules/controles/ajouter.php`
+- `OPERATEUR` -> `preferences.php` si pas de préférences, sinon `modules/controles/ajouter.php`
 - `CONTROLEUR` -> **bloqué côté web** (profil réservé à l'application mobile CTR.NET Mobile)
 
 ## 3.2 Se souvenir de moi
@@ -117,6 +117,8 @@ Les préférences servent au filtrage des données du dashboard.
 ## 5.4 Équipe de contrôle (`equipes.php`)
 
 Après la validation des préférences, l'opérateur est redirigé vers `equipes.php` pour enregistrer les membres de son équipe de contrôle.
+
+Cette étape fait partie du parcours de première configuration, mais n'est pas recontrôlée à chaque connexion si les préférences existent déjà.
 
 - Table standalone `equipes` (id, noms, grade, role) — aucune relation avec les autres tables
 - Formulaire d'ajout : noms, grade, rôle

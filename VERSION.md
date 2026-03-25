@@ -34,7 +34,7 @@
 
 - Nouveau fichier `equipes.php` — page d'enregistrement des membres d'équipe
 - Nouvelle table `equipes` (id, noms, grade, role) — table standalone sans relations
-- Flux mis à jour : `preferences.php` → `equipes.php` → `index.php`
+- Flux de première configuration : `preferences.php` → `equipes.php` → `index.php`
 - Design cohérent avec `preferences.php` (page autonome, thème vert FARDC)
 
 ## 1.2.0 (2026-03-24)
@@ -72,13 +72,15 @@ Nouvelle sécurité pour le code source:
 
 - Ajout système de chiffrement **AES-256-CBC** complet
 - Déchiffrement transparent au runtime (en mémoire)
-- 8 fichiers sensibles chiffrés par défaut:
+- La commande `php bin/encrypt.php encrypt` cible par défaut 8 fichiers sensibles:
   - `config/database.php` — Identifiants BD
   - `config/load_config.php` — Configuration
   - `includes/functions.php` — Logique métier
   - `includes/auth.php` — Authentification
   - `includes/header.php` — Template principale
   - `login.php`, `logout.php`, `index.php`
+
+  Le chiffrement reste manuel : l'installation n'active pas automatiquement ces fichiers `.encrypted`.
 
 ### Interfaces de Gestion
 

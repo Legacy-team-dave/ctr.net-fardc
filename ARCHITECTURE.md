@@ -112,7 +112,7 @@ Système de chiffrement AES-256-CBC intégré pour protéger les fichiers sensib
 
 ### Fichiers chiffrables
 
-Fichiers automatiquement détectés comme chiffrables :
+Liste par défaut utilisée par la commande `php bin/encrypt.php encrypt` :
 
 ```
 config/database.php          (identifiants BD)
@@ -136,8 +136,10 @@ Clé d'encryption stockée dans :
 ### Transparence
 
 - ✅ **Zéro impact performance** : déchiffrement en mémoire (< 5ms/startup)
-- ✅ **Déchiffrement automatique** : les fichiers `.encrypted` sont chargés automatiquement déchiffrés
+- ✅ **Déchiffrement automatique** : les fichiers `.encrypted` existants sont chargés automatiquement déchiffrés
 - ✅ **Pas de modifications au code applicatif** : intégration via autoloader
+
+Le chiffrement reste une action **opt-in** : l'installation seule ne chiffre pas les fichiers tant que la commande dédiée n'a pas été exécutée.
 
 ### Interfaces d'administration
 

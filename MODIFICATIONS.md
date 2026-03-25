@@ -187,7 +187,7 @@ php bin/encrypt.php encrypt
 php bin/encrypt.php status
 ```
 
-### Fichiers Chiffrés par Défaut
+### Liste Par Défaut de Chiffrement
 
 - `config/database.php` — Identifiants BD
 - `config/load_config.php` — Configuration sensible
@@ -197,6 +197,8 @@ php bin/encrypt.php status
 - `login.php` — Page de connexion
 - `logout.php` — Déconnexion
 - `index.php` — Page d'accueil
+
+Cette liste correspond aux cibles par défaut de la commande `php bin/encrypt.php encrypt`. Le chiffrement doit être déclenché manuellement.
 
 ---
 

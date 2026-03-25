@@ -270,11 +270,13 @@ php bin/encrypt.php init
 Cela génère une clé aléatoire sauvegardée dans `.env`.
 
 ### Quels fichiers peuvent être chiffrés ?
-Par défaut, 8 fichiers sensibles :
+Par défaut, la commande `encrypt` cible 8 fichiers sensibles :
 - `config/database.php` (identifiants)
 - `includes/auth.php` (logique authentification)
 - `includes/functions.php` (logique métier)
 - Et 5 autres fichiers critiques
+
+Cette liste n'implique pas un chiffrement déjà actif : il faut lancer explicitement `php bin/encrypt.php encrypt`.
 
 ### Comment activer le chiffrement sur les fichiers ?
 ```bash

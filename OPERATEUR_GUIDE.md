@@ -15,9 +15,11 @@
 
 ## Flux de configuration (premier accès)
 
-1. `login.php` → `preferences.php` (sélection garnisons/catégories)
-2. `preferences.php` → `equipes.php` (enregistrement membres d'équipe)
-3. `equipes.php` → `index.php` (dashboard)
+1. `login.php` → `preferences.php` si aucune préférence n'est encore enregistrée
+2. `preferences.php` → `equipes.php` après sauvegarde des préférences
+3. `equipes.php` → `index.php` via le bouton de continuation
+
+Si les préférences sont déjà enregistrées, la redirection post-login va directement vers `modules/controles/ajouter.php`.
 
 ## Mentions réellement saisies
 

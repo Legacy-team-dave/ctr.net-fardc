@@ -41,7 +41,7 @@ Vos droits :
 
 L'interface CONTROLEUR est spécialement conçue pour **tablettes et smartphones** :
 
-- **Navigation en haut de l'écran** (barre de navigation horizontale)
+- **Navigation par onglets en bas de l'écran** (`Contrôle`, `Profil`, `Déconnexion`)
 - **Boutons agrandis** pour faciliter la saisie tactile
 - **Formulaire simplifié** centré sur la tâche unique : saisir un contrôle
 - **Polices plus grandes** pour une meilleure lisibilité sur petit écran
@@ -55,9 +55,9 @@ L'interface CONTROLEUR est spécialement conçue pour **tablettes et smartphones
 > **Le profil CONTROLEUR n'accède plus au web.** Utilisez l'application mobile CTR.NET Mobile installée sur votre appareil Android.
 
 1. Lancez l'application **CTR.NET Mobile** sur votre smartphone/tablette
-2. L'adresse du serveur est détectée automatiquement
+2. Si nécessaire, ouvrez la page **Configurer le serveur** et saisissez manuellement l'adresse IP du serveur
 3. Entrez votre **login** et **mot de passe**
-4. Vous accédez directement au formulaire de contrôle
+4. Vous accédez directement à l'onglet **Contrôle**
 
 > **Redirection automatique** : après connexion, vous êtes directement redirigé vers le **formulaire de contrôle**.
 
@@ -73,19 +73,18 @@ Profil :      CONTROLEUR
 
 ### Interface de Navigation
 
-L'interface CONTROLEUR utilise une **barre de navigation en haut** :
+L'interface CONTROLEUR utilise une **barre d'onglets en bas** :
 
 ```text
 ┌──────────────────────────────────────────────────────┐
-│  CTL.NET-FARDC  │  Contrôles  │  Profil  │  Quitter  │
-└──────────────────────────────────────────────────────┘
-│                                                      │
 │              FORMULAIRE DE CONTRÔLE                  │
 │                                                      │
+├──────────────────────────────────────────────────────┤
+│ Contrôle │ Profil │ Déconnexion                      │
 └──────────────────────────────────────────────────────┘
 ```
 
-> **Différence avec OPERATEUR/ADMIN_IG** : ceux-ci ont une barre latérale (sidebar) à gauche avec tous les menus. Le CONTROLEUR n'a qu'une barre horizontale en haut, ce qui libère plus d'espace pour le formulaire.
+> **Différence avec OPERATEUR/ADMIN_IG** : ceux-ci ont une barre latérale (sidebar) à gauche avec tous les menus. Le CONTROLEUR utilise une navigation mobile par onglets, plus compacte.
 
 ---
 

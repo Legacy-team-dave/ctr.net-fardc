@@ -88,11 +88,13 @@ Affiche quels fichiers sont chiffrés et lesquels ne le sont pas.
 php bin/encrypt.php encrypt
 ```
 
-Cela gère :
+Par défaut, la commande cible la liste définie dans `bin/encrypt.php`, notamment :
 - `config/database.php` (identifiants BD)
 - `includes/auth.php` (logique d'authentification)
 - `includes/functions.php` (logique applicative)
-- Et 5 autres fichiers critiques
+- ainsi que 5 autres fichiers critiques listés par la commande `php bin/encrypt.php list`
+
+Le chiffrement n'est pas activé automatiquement à l'installation : il doit être déclenché explicitement.
 
 ### Rotation de Clé (Annuellement)
 

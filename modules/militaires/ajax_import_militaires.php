@@ -39,44 +39,44 @@ try {
     $fileName = $_FILES['file']['name'];
     $fileSize = $_FILES['file']['size'];
     $extension = strtolower(pathinfo($fileName, PATHINFO_EXTENSION));
-    
+
     if ($fileSize > 10 * 1024 * 1024) {
         throw new Exception('Le fichier ne doit pas dépasser 10 Mo');
     }
-    
+
     if (!in_array($extension, ['csv'])) {
         throw new Exception('Format de fichier non supporté. Veuillez utiliser le format CSV (séparateur point-virgule)');
     }
-    
+
     // Lire le fichier CSV avec détection UTF-8
     $data = [];
     $lineCount = 0;
     $headers = [];
-    
+
     if (($handle = fopen($file, 'r')) !== false) {
         // Détecter le séparateur
         $firstLine = fgets($handle);
         rewind($handle);
-        
+
         // Vérifier si le fichier a un BOM UTF-8 et le supprimer
         $bom = "\xEF\xBB\xBF";
         if (substr($firstLine, 0, 3) === $bom) {
             $firstLine = substr($firstLine, 3);
         }
-        
+
         $separator = ';';
         if (strpos($firstLine, ',') !== false && strpos($firstLine, ';') === false) {
             $separator = ',';
         }
-        
+
         // Lire l'en-tête
         $headers = fgetcsv($handle, 0, $separator);
         if (!$headers) {
             throw new Exception('Impossible de lire l\'en-tête du fichier CSV');
         }
-        
+
         // Nettoyer les en-têtes et convertir en UTF-8 si nécessaire
-        $headers = array_map(function($h) {
+        $headers = array_map(function ($h) {
             // Supprimer le BOM UTF-8 s'il est présent
             $h = preg_replace('/^\xEF\xBB\xBF/', '', $h);
             // Convertir en UTF-8 si ce n'est pas déjà le cas
@@ -86,29 +86,29 @@ try {
             $h = trim($h);
             return strtolower($h);
         }, $headers);
-        
+
         // Vérifier les colonnes requises
         $requiredColumns = ['matricule', 'noms', 'grade', 'dependance', 'unite', 'beneficiaire', 'garnison', 'province', 'categorie', 'statut'];
         $missingColumns = array_diff($requiredColumns, $headers);
         if (!empty($missingColumns)) {
             throw new Exception('Colonnes manquantes : ' . implode(', ', $missingColumns));
         }
-        
+
         // Lire les données
         $rowNumber = 1;
         while (($row = fgetcsv($handle, 0, $separator)) !== false) {
             $rowNumber++;
-            
+
             if (count(array_filter($row)) === 0) {
                 continue;
             }
-            
+
             if (count($row) !== count($headers)) {
                 throw new Exception("Ligne $rowNumber : nombre de colonnes incorrect (" . count($row) . " au lieu de " . count($headers) . ")");
             }
-            
+
             $rowData = array_combine($headers, $row);
-            
+
             // Convertir chaque valeur en UTF-8 si nécessaire
             foreach ($rowData as $key => $value) {
                 if (!mb_check_encoding($value, 'UTF-8')) {
@@ -116,11 +116,11 @@ try {
                 }
                 $rowData[$key] = trim($value);
             }
-            
+
             if (empty($rowData['matricule'])) {
                 throw new Exception("Ligne $rowNumber : le matricule est obligatoire");
             }
-            
+
             $data[] = $rowData;
             $lineCount++;
         }
@@ -128,19 +128,19 @@ try {
     } else {
         throw new Exception('Impossible d\'ouvrir le fichier CSV');
     }
-    
+
     if (empty($data)) {
         throw new Exception('Aucune donnée valide à importer');
     }
-    
+
     // Démarrer la transaction
     $pdo->beginTransaction();
-    
+
     $inserted = 0;
     $updated = 0;
     $errors = 0;
     $errorDetails = [];
-    
+
     $stmt = $pdo->prepare("
         INSERT INTO militaires (matricule, noms, grade, dependance, unite, beneficiaire, garnison, province, categorie, statut)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
@@ -155,7 +155,7 @@ try {
         categorie = VALUES(categorie),
         statut = VALUES(statut)
     ");
-    
+
     foreach ($data as $index => $row) {
         try {
             $matricule = strtoupper(trim($row['matricule'] ?? ''));
@@ -168,11 +168,11 @@ try {
             $province = strtoupper(trim($row['province'] ?? ''));
             $categorie = strtoupper(trim($row['categorie'] ?? ''));
             $statut = isset($row['statut']) ? intval($row['statut']) : 1;
-            
+
             if (empty($matricule)) {
                 throw new Exception("Matricule vide à la ligne " . ($index + 2));
             }
-            
+
             $stmt->execute([
                 $matricule,
                 $noms ?: null,
@@ -185,26 +185,25 @@ try {
                 $categorie ?: null,
                 $statut
             ]);
-            
+
             if ($stmt->rowCount() === 1) {
                 $inserted++;
             } else {
                 $updated++;
             }
-            
         } catch (Exception $e) {
             $errors++;
             $errorDetails[] = "Ligne " . ($index + 2) . " : " . $e->getMessage();
         }
     }
-    
+
     if ($errors > 0 && $errors > count($data) * 0.2) {
         $pdo->rollBack();
         throw new Exception("Trop d'erreurs détectées (" . $errors . "). Import annulé.\n" . implode("\n", array_slice($errorDetails, 0, 5)));
     }
-    
+
     $pdo->commit();
-    
+
     $message = "$inserted militaires importés, $updated mis à jour";
     if ($errors > 0) {
         $message .= ", $errors erreurs ignorées";
@@ -215,15 +214,15 @@ try {
             }
         }
     }
-    
+
     $response['success'] = true;
     $response['message'] = $message;
-    
+    mark_sync_dirty();
 } catch (Exception $e) {
     if (isset($pdo) && $pdo->inTransaction()) {
         $pdo->rollBack();
     }
-    
+
     $response['success'] = false;
     $response['message'] = $e->getMessage();
 }
@@ -231,5 +230,3 @@ try {
 ob_clean();
 echo json_encode($response, JSON_UNESCAPED_UNICODE);
 exit;
-?>
-

@@ -193,6 +193,7 @@ function importerLitiges($data)
 
     if ($compteur > 0) {
         log_action('IMPORT', 'litiges', null, "$compteur litiges importés");
+        mark_sync_dirty();
     }
 
     $message = "$compteur litige(s) importé(s) sur " . count($data) . " ligne(s).";

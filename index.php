@@ -2037,7 +2037,7 @@ h3.card-title {
                                     <div class="table-responsive">
                                         <table class="table table-modern">
                                             <thead>
-                                                32<th>Mention</th>
+                                                <th>Mention</th>
                                                 <th>Nombre</th>
                                                 <th>%</th>
                                                 </tr>

@@ -99,6 +99,7 @@ if ($action === 'create') {
     ]);
 
     if ($success) {
+        mark_sync_dirty();
         echo json_encode(['success' => true, 'id' => $pdo->lastInsertId()]);
     } else {
         echo json_encode(['success' => false, 'message' => 'Erreur lors de l\'insertion']);

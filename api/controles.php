@@ -224,6 +224,8 @@ function handleValider($pdo, $user)
         $stmt = $pdo->prepare("INSERT INTO logs (id_utilisateur, action, table_concernee, id_enregistrement, details, ip_address, user_agent) VALUES (?, 'AJOUT_MOBILE', 'controles', ?, ?, ?, ?)");
         $stmt->execute([$user['id_utilisateur'], $controle_id, $details, $ip, $_SERVER['HTTP_USER_AGENT'] ?? 'Mobile App']);
 
+        mark_sync_dirty();
+
         echo json_encode([
             'success' => true,
             'message' => 'Contrôle enregistré avec succès pour : ' . $militaire_info['noms'],

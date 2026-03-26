@@ -1,37 +1,41 @@
 <?php
 
-header('Content-Type: application/json; charset=utf-8');
-header('Access-Control-Allow-Methods: POST, GET, OPTIONS');
-header('Access-Control-Allow-Headers: Content-Type, Authorization, X-CSRF-Token');
+// Permet l'inclusion depuis d'autres fichiers (sync_controles.php) sans exécuter le routeur
+if (basename($_SERVER['SCRIPT_FILENAME']) === basename(__FILE__)) {
 
-if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'OPTIONS') {
-    http_response_code(200);
-    exit;
-}
+    header('Content-Type: application/json; charset=utf-8');
+    header('Access-Control-Allow-Methods: POST, GET, OPTIONS');
+    header('Access-Control-Allow-Headers: Content-Type, Authorization, X-CSRF-Token');
 
-require_once __DIR__ . '/../includes/functions.php';
+    if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'OPTIONS') {
+        http_response_code(200);
+        exit;
+    }
 
-$action = $_GET['action'] ?? 'status';
+    require_once __DIR__ . '/../includes/functions.php';
 
-switch ($action) {
-    case 'push':
-        handle_push($pdo);
-        break;
-    case 'receive':
-        handle_receive($pdo);
-        break;
-    case 'status':
-    default:
-        json_out([
-            'success' => true,
-            'mode' => app_mode(),
-            'sync' => [
-                'instance_id' => sync_config()['instance_id'],
-                'central_url' => sync_config()['central_url']
-            ]
-        ]);
-        break;
-}
+    $action = $_GET['action'] ?? 'status';
+
+    switch ($action) {
+        case 'push':
+            handle_push($pdo);
+            break;
+        case 'receive':
+            handle_receive($pdo);
+            break;
+        case 'status':
+        default:
+            json_out([
+                'success' => true,
+                'mode' => app_mode(),
+                'sync' => [
+                    'instance_id' => sync_config()['instance_id'],
+                    'central_url' => sync_config()['central_url']
+                ]
+            ]);
+            break;
+    }
+} // Fin du guard d'exécution directe
 
 function handle_push(PDO $pdo)
 {
@@ -59,7 +63,13 @@ function handle_push(PDO $pdo)
         ], 500);
     }
 
-    $payload = build_export_payload($pdo, $config['allowed_tables'], $config['instance_id']);
+    // Mettre à jour le fichier sync si nécessaire, puis le lire
+    maybe_update_sync_file($pdo);
+    $payload = read_sync_file();
+    if ($payload === null) {
+        // Fallback : construction à la volée si le fichier n'existe pas
+        $payload = build_export_payload($pdo, $config['allowed_tables'], $config['instance_id']);
+    }
 
     $targetUrl = $config['central_url'] . '/api/synchronisation.php?action=receive';
     $remoteResponse = http_post_json($targetUrl, $payload, [

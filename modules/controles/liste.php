@@ -264,6 +264,15 @@ $export_fields = [
         transform: translateY(-2px);
     }
 
+    .btn-export.sync {
+        background: #17a2b8;
+    }
+
+    .btn-export.sync:hover {
+        background: #138496;
+        transform: translateY(-2px);
+    }
+
     .total-badge {
         background: rgba(255, 255, 255, 0.2);
         color: white;
@@ -932,6 +941,8 @@ $export_fields = [
                             <button class="btn-export pdf" id="export-pdf"><i class="fas fa-file-pdf"></i> PDF</button>
                             <button class="btn-export zip" id="export-zip"><i class="fas fa-file-archive"></i>
                                 ZIP</button>
+                            <button class="btn-export sync" id="sync-controles"><i class="fas fa-cloud-upload-alt"></i>
+                                Synchroniser</button>
                         </div>
                     </div>
                 </div>
@@ -2140,6 +2151,71 @@ $export_fields = [
                 }
             });
         });
+
+        // ========== Synchronisation des contrôles sélectionnés ==========
+        $('#sync-controles').on('click', function() {
+            const checked = $('.row-checkbox:checked');
+            if (checked.length === 0) {
+                return Swal.fire('Sélection requise', 'Cochez les contrôles à synchroniser.', 'info');
+            }
+
+            const ids = [];
+            checked.each(function() {
+                ids.push($(this).val());
+            });
+
+            Swal.fire({
+                title: 'Synchroniser ' + ids.length + ' contrôle(s) ?',
+                text: 'Les contrôles sélectionnés seront envoyés au serveur central.',
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: '#17a2b8',
+                confirmButtonText: '<i class="fas fa-cloud-upload-alt"></i> Synchroniser',
+                cancelButtonText: 'Annuler'
+            }).then((result) => {
+                if (!result.isConfirmed) return;
+
+                Swal.fire({
+                    title: 'Synchronisation en cours...',
+                    html: '<i class="fas fa-spinner fa-spin"></i> Envoi de ' + ids.length + ' contrôle(s)',
+                    allowOutsideClick: false,
+                    showConfirmButton: false,
+                    didOpen: () => Swal.showLoading()
+                });
+
+                $.ajax({
+                    url: '../../api/sync_controles.php',
+                    method: 'POST',
+                    contentType: 'application/json',
+                    headers: {
+                        'X-CSRF-Token': '<?= htmlspecialchars(generate_csrf_token()) ?>'
+                    },
+                    data: JSON.stringify({
+                        ids: ids
+                    }),
+                    dataType: 'json',
+                    success: function(resp) {
+                        if (resp.success) {
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'Synchronisation réussie',
+                                html: '<b>' + (resp.stats?.inserted ?? 0) + '</b> insérés, ' +
+                                    '<b>' + (resp.stats?.updated ?? 0) + '</b> mis à jour, ' +
+                                    '<b>' + (resp.stats?.skipped ?? 0) + '</b> ignorés',
+                                confirmButtonColor: '#17a2b8'
+                            }).then(() => location.reload());
+                        } else {
+                            Swal.fire('Erreur', resp.message || 'Échec de la synchronisation.', 'error');
+                        }
+                    },
+                    error: function(xhr) {
+                        Swal.fire('Erreur', 'Impossible de contacter le serveur.', 'error');
+                        console.error('Sync error:', xhr.responseText);
+                    }
+                });
+            });
+        });
+        // ========== Fin synchronisation ==========
 
         // ========== Auto-refresh après contrôle mobile ==========
         let lastControleId = <?php echo intval($pdo->query("SELECT COALESCE(MAX(id),0) FROM controles")->fetchColumn()); ?>;

@@ -181,6 +181,8 @@ if ($action === 'valider' && $matricule && $mention) {
         audit_action('AJOUT', 'controles', $controle_id, $details);
         // --- FIN LOG ---
 
+        mark_sync_dirty();
+
         // Stocker le message de succès en session pour l'afficher après redirection
         $_SESSION['toast_message'] = "Contrôle enregistré avec succès pour : <strong>" . $militaire_info['noms'] . "</strong>";
         $_SESSION['toast_type'] = 'success';

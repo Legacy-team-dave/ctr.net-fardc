@@ -12,6 +12,7 @@ if (session_status() === PHP_SESSION_NONE) {
 
 require_once __DIR__ . '/../config/database.php';
 require_once __DIR__ . '/../config/app_config.php';
+require_once __DIR__ . '/sync_file_manager.php';
 
 // Définir l'encodage par défaut
 mb_internal_encoding('UTF-8');

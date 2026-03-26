@@ -9,7 +9,7 @@
                 <div class="float-right d-none d-sm-inline-block" style="color: #2e7d32;">
                     <b>Version</b> 1.0 |
                     <?php if (isset($_SESSION['user_nom'])): ?>
-                        <b>Connecté :</b> <?= htmlspecialchars($_SESSION['user_nom']) ?>
+                    <b>Connecté :</b> <?= htmlspecialchars($_SESSION['user_nom']) ?>
                     <?php endif; ?>
                 </div>
             </footer>
@@ -26,18 +26,20 @@
             <script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
             <script src="https://cdn.datatables.net/1.11.5/js/dataTables.bootstrap5.min.js"></script>
             <script>
-                if (window.jQuery && $.fn.dataTable) {
-                    $.extend(true, $.fn.dataTable.defaults, {
-                        pageLength: 10,
-                        lengthMenu: [10, 25, 50, 100],
-                        language: {
-                            lengthMenu: "Afficher _MENU_ éléments"
-                        }
-                    });
-                }
+if (window.jQuery && $.fn.dataTable) {
+    $.extend(true, $.fn.dataTable.defaults, {
+        pageLength: 10,
+        lengthMenu: [10, 25, 50, 100],
+        language: {
+            lengthMenu: "Afficher _MENU_ éléments"
+        }
+    });
+}
             </script>
             <!-- Scripts personnalisés -->
-            <script src="<?= isset($appBasePath) ? htmlspecialchars($appBasePath) : '/ctr.net-fardc' ?>/assets/js/custom.js"></script>
+            <script
+                src="<?= isset($appBasePath) ? htmlspecialchars($appBasePath) : '/ctr.net-fardc' ?>/assets/js/custom.js">
+            </script>
             </body>
 
             </html>

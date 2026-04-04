@@ -186,10 +186,12 @@ if ($forwardResponse['body'] === false) {
 $cleanRemoteBody = sync_extract_json_payload((string) ($forwardResponse['body'] ?? ''));
 $remote = json_decode($cleanRemoteBody, true);
 if (!is_array($remote)) {
-    sync_json_response(false, 'Réponse invalide du serveur distant.', 502, 'REMOTE_INVALID_RESPONSE', [
+    sync_json_response(false, 'Réponse invalide du serveur distant : le serveur a répondu avec un contenu non JSON.', 502, 'REMOTE_INVALID_RESPONSE', [
         'target_url' => $forwardResponse['target_url'],
-        'raw_response' => mb_substr($cleanRemoteBody !== '' ? $cleanRemoteBody : (string) $forwardResponse['body'], 0, 500),
+        'raw_response' => mb_substr($cleanRemoteBody !== '' ? $cleanRemoteBody : (string) $forwardResponse['body'], 0, 800),
         'json_error' => json_last_error_msg(),
+        'transport_error' => $forwardResponse['transport_error'] ?? '',
+        'attempted_urls' => $forwardResponse['attempted_urls'] ?? [],
     ]);
 }
 
@@ -370,10 +372,36 @@ function sync_extract_json_payload(string $body): string
         return $body;
     }
 
+    foreach (['{"success"', '{"status"', '{"message"', '{"error"', '[{"success"'] as $needle) {
+        $jsonStart = strpos($body, $needle);
+        if ($jsonStart === false) {
+            continue;
+        }
+
+        $candidate = substr($body, $jsonStart);
+        $jsonEnd = max(
+            strrpos($candidate, '}') === false ? -1 : strrpos($candidate, '}'),
+            strrpos($candidate, ']') === false ? -1 : strrpos($candidate, ']')
+        );
+
+        if ($jsonEnd >= 0) {
+            $candidate = substr($candidate, 0, $jsonEnd + 1);
+        }
+
+        $decoded = json_decode($candidate, true);
+        if (is_array($decoded)) {
+            return $candidate;
+        }
+    }
+
     $jsonStart = strpos($body, '{');
     $jsonEnd = strrpos($body, '}');
     if ($jsonStart !== false && $jsonEnd !== false && $jsonEnd >= $jsonStart) {
-        return substr($body, $jsonStart, $jsonEnd - $jsonStart + 1);
+        $candidate = substr($body, $jsonStart, $jsonEnd - $jsonStart + 1);
+        $decoded = json_decode($candidate, true);
+        if (is_array($decoded)) {
+            return $candidate;
+        }
     }
 
     return $body;

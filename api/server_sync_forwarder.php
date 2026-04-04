@@ -11,6 +11,47 @@ function parse_server_receiver_response_headers(array $responseHeaders): int
     return 0;
 }
 
+function sync_extract_json_segment_from_response(string $body): ?string
+{
+    $body = preg_replace('/^\xEF\xBB\xBF/u', '', $body) ?? $body;
+    $body = trim($body);
+    if ($body === '') {
+        return null;
+    }
+
+    $decoded = json_decode($body, true);
+    if (is_array($decoded)) {
+        return $body;
+    }
+
+    foreach (['{"success"', '{"status"', '{"message"', '{"error"', '[{"success"'] as $needle) {
+        $start = strpos($body, $needle);
+        if ($start === false) {
+            continue;
+        }
+
+        $candidate = substr($body, $start);
+        $endObject = strrpos($candidate, '}');
+        $endArray = strrpos($candidate, ']');
+        $end = max($endObject === false ? -1 : $endObject, $endArray === false ? -1 : $endArray);
+        if ($end >= 0) {
+            $candidate = substr($candidate, 0, $end + 1);
+        }
+
+        $decoded = json_decode($candidate, true);
+        if (is_array($decoded)) {
+            return $candidate;
+        }
+    }
+
+    return null;
+}
+
+function sync_response_is_json_payload($responseBody): bool
+{
+    return is_string($responseBody) && sync_extract_json_segment_from_response($responseBody) !== null;
+}
+
 function sync_forward_request_headers(bool $includeContentType = true, array $extraHeaders = []): array
 {
     $headers = [];
@@ -159,11 +200,17 @@ function probe_server_receiver_connection(string $serverAddress, int $timeout = 
         $httpCode = $result['http_code'];
 
         if (($responseBody !== false || $httpCode > 0) && $httpCode !== 404) {
-            break;
+            if (sync_response_is_json_payload($responseBody)) {
+                break;
+            }
+
+            $transportError = trim($transportError) !== ''
+                ? $transportError
+                : 'Réponse non JSON reçue depuis ' . $serverUrl . '.';
         }
     }
 
-    $success = ($responseBody !== false || $httpCode > 0) && $httpCode !== 404;
+    $success = sync_response_is_json_payload($responseBody) && $httpCode !== 404;
 
     return [
         'success' => $success,
@@ -251,12 +298,21 @@ function forward_sync_payload_to_server(string $serverAddress, string $rawPayloa
             $httpCode = $result['http_code'];
 
             if (($responseBody !== false || $httpCode > 0) && $httpCode !== 404) {
-                if (sync_forward_should_retry($httpCode, $responseBody, $transportError, $attempt, $maxRetries)) {
-                    $totalBackoffMs += sync_wait_before_retry($attempt, $retryDelayMs);
-                    continue;
+                $isJsonPayload = sync_response_is_json_payload($responseBody);
+
+                if ($isJsonPayload) {
+                    if (sync_forward_should_retry($httpCode, $responseBody, $transportError, $attempt, $maxRetries)) {
+                        $totalBackoffMs += sync_wait_before_retry($attempt, $retryDelayMs);
+                        continue;
+                    }
+
+                    break 2;
                 }
 
-                break 2;
+                $transportError = trim($transportError) !== ''
+                    ? $transportError
+                    : 'Le serveur a répondu sans JSON valide pour ' . $serverUrl . '.';
+                break;
             }
 
             if ($httpCode === 404) {

@@ -1097,20 +1097,23 @@ $export_fields = [
 
                                     // Données pour le QR code
                                     $qrData = [
-                                        'source'          => 'ctr.net-fardc',
-                                        'payload_version' => 2,
-                                        'controle_id'     => (int) ($c['id'] ?? 0),
-                                        'matricule'       => $c['matricule'],
-                                        'noms'            => $c['nom_militaire'],
-                                        'grade'           => $grade,
-                                        'unite'           => $unite,
-                                        'garnison'        => $garnison,
-                                        'province'        => $province,
-                                        'categorie'       => $c['militaire_categorie'] ?? '',
-                                        'type_controle'   => $c['type_controle'] ?? '',
-                                        'lien_parente'    => $lien_parente,
-                                        'date_controle'   => $date_controle_brut,
-                                        'mention'         => $c['mention']
+                                        'source'           => 'ctr.net-fardc',
+                                        'payload_version'  => 2,
+                                        'controle_id'      => (int) ($c['id'] ?? 0),
+                                        'matricule'        => $c['matricule'],
+                                        'noms'             => $c['nom_militaire'],
+                                        'grade'            => $grade,
+                                        'unite'            => $unite,
+                                        'garnison'         => $garnison,
+                                        'province'         => $province,
+                                        'categorie'        => $c['militaire_categorie'] ?? '',
+                                        'type_controle'    => $c['type_controle'] ?? '',
+                                        'lien_parente'     => $lien_parente,
+                                        'nom_beneficiaire' => $ancien_beneficiaire,
+                                        'new_beneficiaire' => $c['new_beneficiaire'] ?? '',
+                                        'observations'     => $observations,
+                                        'date_controle'    => $date_controle_brut,
+                                        'mention'          => $c['mention']
                                     ];
                                 ?>
                                 <tr data-zone="<?= $zdef['code'] ?>"
@@ -1586,14 +1589,25 @@ $(document).ready(function() {
         $('#qrDateControle').text(info.date_controle || '');
         $('#qrMention').text(info.mention || '');
 
-        // Construction d'un QR léger: l'app mobile récupère ensuite le détail depuis CTR.NET-FARDC
+        // Construction d'un QR compact mais complet, compatible avec l'affichage mobile hors ligne
         const textToEncode = `CTR.NET:${JSON.stringify({
-            source: info.source || 'ctr.net-fardc',
-            payload_version: info.payload_version || 2,
-            controle_id: Number(info.controle_id || 0) || undefined,
-            matricule: info.matricule || '',
-            noms: info.noms || '',
-            grade: info.grade || ''
+            s: info.source || 'ctr.net-fardc',
+            v: Number(info.payload_version || 2),
+            id: Number(info.controle_id || 0) || undefined,
+            m: info.matricule || '',
+            n: info.noms || '',
+            g: info.grade || '',
+            u: info.unite || '',
+            ga: info.garnison || '',
+            p: info.province || '',
+            c: info.categorie || '',
+            tc: info.type_controle || '',
+            lp: info.lien_parente || '',
+            b: info.nom_beneficiaire || '',
+            nb: info.new_beneficiaire || '',
+            d: info.date_controle || '',
+            mn: info.mention || '',
+            o: info.observations || ''
         })}`;
 
         // Génération du QR code avec qrcode-generator

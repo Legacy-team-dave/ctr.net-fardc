@@ -181,7 +181,7 @@ if ($action === 'valider' && $matricule && $mention) {
         audit_action('AJOUT', 'controles', $controle_id, $details);
         // --- FIN LOG ---
 
-        mark_sync_dirty();
+        mark_sync_dirty('controles', (int) $controle_id);
 
         // Stocker le message de succès en session pour l'afficher après redirection
         $_SESSION['toast_message'] = "Contrôle enregistré avec succès pour : <strong>" . $militaire_info['noms'] . "</strong>";
@@ -620,8 +620,8 @@ include '../../includes/header.php';
 
     /* Ajustement pour que la liste des résultats s'allonge selon le contenu */
     #search-results {
-        max-height: 400px !important;
-        overflow-y: auto !important;
+        max-height: none !important;
+        overflow-y: visible !important;
     }
 
     /* Style pour le toast de succès */
@@ -799,7 +799,7 @@ include '../../includes/header.php';
                             placeholder="Matricule ou nom complet" autocomplete="off"
                             value="<?= htmlspecialchars($q) ?>">
                         <div id="search-results" class="list-group position-absolute w-100 shadow"
-                            style="z-index: 1000; max-height: 400px; overflow-y: auto; display: none;"></div>
+                            style="z-index: 1000; max-height: none; overflow-y: visible; display: none;"></div>
                         <div class="mt-2 text-muted small">
                             <i class="fas fa-info-circle"></i> Saisissez au moins 2 caractères
                         </div>

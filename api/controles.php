@@ -15,6 +15,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 }
 
 require_once __DIR__ . '/../config/database.php';
+require_once __DIR__ . '/../includes/functions.php';
 
 // Authentification par token
 $user = authenticateToken($pdo);
@@ -224,7 +225,9 @@ function handleValider($pdo, $user)
         $stmt = $pdo->prepare("INSERT INTO logs (id_utilisateur, action, table_concernee, id_enregistrement, details, ip_address, user_agent) VALUES (?, 'AJOUT_MOBILE', 'controles', ?, ?, ?, ?)");
         $stmt->execute([$user['id_utilisateur'], $controle_id, $details, $ip, $_SERVER['HTTP_USER_AGENT'] ?? 'Mobile App']);
 
-        mark_sync_dirty();
+        if (function_exists('mark_sync_dirty')) {
+            mark_sync_dirty('controles', (int) $controle_id);
+        }
 
         echo json_encode([
             'success' => true,

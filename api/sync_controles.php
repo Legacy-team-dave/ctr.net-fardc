@@ -1,166 +1,429 @@
 <?php
 
-/**
- * API : Synchronisation sélective des contrôles vers le serveur central.
- * Reçoit un tableau d'IDs de contrôles, les envoie au central.
- */
 header('Content-Type: application/json; charset=utf-8');
 
 require_once __DIR__ . '/../includes/functions.php';
+require_once __DIR__ . '/server_sync_forwarder.php';
+
 require_login();
 check_profil(['ADMIN_IG', 'OPERATEUR']);
 
 if (is_central_mode()) {
-    http_response_code(403);
-    echo json_encode(['success' => false, 'message' => 'Action non autorisée en mode central.']);
-    exit;
+    sync_json_response(false, 'Action non autorisée en mode central.', 403, 'CENTRAL_MODE_FORBIDDEN');
 }
 
-if (($_SERVER['REQUEST_METHOD'] ?? 'GET') !== 'POST') {
-    http_response_code(405);
-    echo json_encode(['success' => false, 'message' => 'Méthode POST requise.']);
-    exit;
+if (strtoupper((string) ($_SERVER['REQUEST_METHOD'] ?? 'GET')) !== 'POST') {
+    sync_json_response(false, 'Méthode POST requise.', 405, 'METHOD_NOT_ALLOWED');
 }
 
 $csrfToken = $_SERVER['HTTP_X_CSRF_TOKEN'] ?? '';
 if (!verify_csrf_token($csrfToken)) {
-    http_response_code(403);
-    echo json_encode(['success' => false, 'message' => 'Token CSRF invalide.']);
-    exit;
+    sync_json_response(false, 'Token CSRF invalide.', 403, 'CSRF_INVALID');
 }
 
-$input = json_decode(file_get_contents('php://input'), true);
-$ids = $input['ids'] ?? [];
-
-if (!is_array($ids) || empty($ids)) {
-    http_response_code(400);
-    echo json_encode(['success' => false, 'message' => 'Aucun contrôle sélectionné.']);
-    exit;
+$rawInput = file_get_contents('php://input');
+$input = json_decode($rawInput ?: '[]', true);
+if (!is_array($input)) {
+    $input = [];
 }
 
-// Nettoyer et valider les IDs (entiers uniquement)
-$ids = array_values(array_unique(array_filter(array_map('intval', $ids), fn($id) => $id > 0)));
-if (empty($ids)) {
-    http_response_code(400);
-    echo json_encode(['success' => false, 'message' => 'IDs invalides.']);
-    exit;
+if (!empty($_POST)) {
+    $input = array_merge($input, $_POST);
 }
+
+$isProgressRequest = (string) ($input['ajax_progress'] ?? '') === '1';
+$GLOBALS['sync_stream_enabled'] = $isProgressRequest;
+
+if ($isProgressRequest) {
+    @ini_set('output_buffering', 'off');
+    @ini_set('zlib.output_compression', '0');
+    header('Content-Type: text/event-stream; charset=utf-8');
+    header('Cache-Control: no-cache, no-transform');
+    header('X-Accel-Buffering: no');
+}
+
+$serverIp = trim((string) ($input['server_ip'] ?? $input['server_url'] ?? ''));
+if ($serverIp === '') {
+    sync_json_response(false, 'Adresse du serveur manquante.', 400, 'SERVER_ADDRESS_MISSING');
+}
+
+if (!is_valid_server_address($serverIp)) {
+    sync_json_response(false, 'Adresse du serveur invalide.', 400, 'SERVER_ADDRESS_INVALID');
+}
+
+$_SESSION['sync_server_ip'] = $serverIp;
 
 $config = sync_config();
-if (empty($config['central_url']) || empty($config['shared_token'])) {
-    http_response_code(500);
-    echo json_encode(['success' => false, 'message' => 'Configuration de synchronisation incomplète.']);
-    exit;
+ensure_equipes_sync_columns($pdo);
+ensure_sync_log_table($pdo);
+$selectedGarnisons = function_exists('preferred_garnison_labels') ? preferred_garnison_labels() : [];
+$baseSourceLabel = sync_join_garnison_labels($selectedGarnisons);
+if ($baseSourceLabel === '') {
+    $baseSourceLabel = 'SITE LOCAL 01';
 }
 
-// Récupérer les contrôles sélectionnés
-$placeholders = implode(',', array_fill(0, count($ids), '?'));
-$stmt = $pdo->prepare("SELECT * FROM controles WHERE id IN ($placeholders)");
-$stmt->execute($ids);
-$controles = $stmt->fetchAll(PDO::FETCH_ASSOC);
+$pendingControles = $pdo->query("SELECT * FROM controles WHERE COALESCE(sync_status, 'local') <> 'synced' ORDER BY date_controle ASC, id ASC")->fetchAll(PDO::FETCH_ASSOC);
+$equipesRows = $pdo->query("SELECT * FROM equipes WHERE COALESCE(sync_status, 'local') <> 'synced' ORDER BY id ASC")->fetchAll(PDO::FETCH_ASSOC);
+$sourceInstance = sync_build_source_instance((string) ($config['instance_id'] ?? ''));
+$sourceLabel = sync_build_source_label($baseSourceLabel, $sourceInstance);
 
-if (empty($controles)) {
-    echo json_encode(['success' => false, 'message' => 'Aucun contrôle trouvé.']);
-    exit;
+if (empty($pendingControles) && empty($equipesRows)) {
+    sync_json_response(true, 'Aucune donnée à synchroniser.', 200, null, [
+        'summary' => 'Aucun membre d\'équipe ni contrôle n\'est actuellement en attente de synchronisation.',
+        'sync_state' => 'no_data',
+        'sent' => [
+            'equipes' => 0,
+            'controles' => 0,
+        ],
+        'stats' => [
+            'equipes' => 0,
+            'controles' => 0,
+        ],
+    ]);
 }
 
-// Récupérer les militaires associés (pour s'assurer qu'ils existent côté central)
-$matricules = array_unique(array_column($controles, 'matricule'));
-$placeholdersMat = implode(',', array_fill(0, count($matricules), '?'));
-$stmtMil = $pdo->prepare("SELECT * FROM militaires WHERE matricule IN ($placeholdersMat)");
-$stmtMil->execute(array_values($matricules));
-$militaires = $stmtMil->fetchAll(PDO::FETCH_ASSOC);
+sync_progress_event('progress', [
+    'percentage' => 10,
+    'step' => 'Analyse des données locales en attente...',
+]);
 
-// Construire le payload
-$payload = [
-    'source_instance' => $config['instance_id'],
-    'sent_at' => gmdate('c'),
-    'tables' => [
-        'militaires' => $militaires,
-        'controles' => $controles
+sync_progress_event('progress', [
+    'percentage' => 30,
+    'step' => sprintf('Préparation de %d membre(s) d\'équipe et %d contrôle(s) à synchroniser...', count($equipesRows), count($pendingControles)),
+    'sent' => [
+        'equipes' => count($equipesRows),
+        'controles' => count($pendingControles),
     ],
+]);
+
+$payload = [
+    'client_id' => $sourceInstance,
+    'source_instance' => $sourceInstance,
+    'source_label' => $sourceLabel,
+    'sent_at' => gmdate('c'),
+    'equipes' => $equipesRows,
+    'controles' => $pendingControles,
     'meta' => [
         'app_mode' => app_mode(),
-        'total_records' => count($militaires) + count($controles),
-        'sync_type' => 'controles_selectifs'
-    ]
+        'sync_type' => 'equipes_controles',
+        'total_records' => count($equipesRows) + count($pendingControles),
+        'source_label' => $sourceLabel,
+        'origin_instance_id' => (string) ($config['instance_id'] ?? ''),
+    ],
 ];
 
-// Enregistrer localement dans la table synchronisation
-ensure_sync_log_table($pdo);
-
-// Envoyer au serveur central
-$url = rtrim($config['central_url'], '/') . '/api/synchronisation.php?action=receive';
-$headers = [
-    'Authorization: Bearer ' . $config['shared_token'],
-    'X-Sync-Instance: ' . $config['instance_id']
-];
-
-// Inclure les fonctions HTTP depuis synchronisation.php
-require_once __DIR__ . '/synchronisation.php';
-
-$response = http_post_json($url, $payload, $headers, $config['timeout']);
-
-if ($response === false) {
-    // Sauvegarder les IDs comme "en attente" pour retry ultérieur
-    log_sync_attempt($pdo, $ids, 'echec', 'Impossible de contacter le serveur central.');
-    echo json_encode(['success' => false, 'message' => 'Impossible de contacter le serveur central.']);
-    exit;
+$payloadJson = json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+if ($payloadJson === false) {
+    sync_json_response(false, 'Impossible de préparer les données à envoyer.', 500, 'PAYLOAD_BUILD_FAILED');
 }
 
-$result = json_decode($response, true);
+sync_progress_event('progress', [
+    'percentage' => 55,
+    'step' => 'Connexion au serveur distant et envoi des données...',
+    'sent' => [
+        'equipes' => count($equipesRows),
+        'controles' => count($pendingControles),
+    ],
+]);
 
-if (is_array($result) && ($result['success'] ?? false)) {
-    // Marquer les contrôles comme synchronisés
-    log_sync_attempt($pdo, $ids, 'succes', json_encode($result['stats'] ?? []));
-    audit_action(
-        'SYNC_CONTROLES',
-        'controles',
-        null,
-        count($controles) . ' contrôles synchronisés vers le central — Instance: ' . $config['instance_id']
-    );
+try {
+    $forwardResponse = forward_sync_payload_to_server($serverIp, $payloadJson, min(max(5, (int) $config['timeout']), 30));
+} catch (InvalidArgumentException $exception) {
+    sync_json_response(false, $exception->getMessage(), 400, 'SERVER_ADDRESS_INVALID');
+}
 
-    echo json_encode([
-        'success' => true,
-        'message' => 'Synchronisation réussie.',
-        'stats' => $result['stats'] ?? [],
-        'synced_count' => count($controles)
-    ]);
-} else {
-    log_sync_attempt($pdo, $ids, 'echec', $result['message'] ?? 'Erreur inconnue');
-    echo json_encode([
-        'success' => false,
-        'message' => $result['message'] ?? 'Erreur lors de la synchronisation.'
+if ($forwardResponse['body'] === false) {
+    log_sync_attempt($pdo, array_column($pendingControles, 'id'), array_column($equipesRows, 'id'), 'echec', json_encode([
+        'server_ip' => $serverIp,
+        'target_url' => $forwardResponse['target_url'],
+        'attempted_urls' => $forwardResponse['attempted_urls'],
+        'error' => $forwardResponse['transport_error'],
+    ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
+
+    sync_json_response(false, 'Impossible de joindre le service de synchronisation.', 502, 'REMOTE_CONNECTION_FAILED', [
+        'transport_error' => $forwardResponse['transport_error'],
+        'target_url' => $forwardResponse['target_url'],
     ]);
 }
 
-// ============================================
-// Fonctions utilitaires
-// ============================================
+$cleanRemoteBody = sync_extract_json_payload((string) ($forwardResponse['body'] ?? ''));
+$remote = json_decode($cleanRemoteBody, true);
+if (!is_array($remote)) {
+    sync_json_response(false, 'Réponse invalide du serveur distant.', 502, 'REMOTE_INVALID_RESPONSE', [
+        'target_url' => $forwardResponse['target_url'],
+        'raw_response' => mb_substr($cleanRemoteBody !== '' ? $cleanRemoteBody : (string) $forwardResponse['body'], 0, 500),
+        'json_error' => json_last_error_msg(),
+    ]);
+}
 
-function ensure_sync_log_table(PDO $pdo)
+if (!($remote['success'] ?? false)) {
+    log_sync_attempt($pdo, array_column($pendingControles, 'id'), array_column($equipesRows, 'id'), 'echec', json_encode([
+        'server_ip' => $serverIp,
+        'target_url' => $forwardResponse['target_url'],
+        'remote_response' => $remote,
+    ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
+
+    sync_json_response(false, (string) ($remote['message'] ?? 'Le serveur a rejeté la synchronisation.'), 409, 'REMOTE_REJECTED', [
+        'target_url' => $forwardResponse['target_url'],
+        'remote_response' => $remote,
+    ]);
+}
+
+sync_progress_event('progress', [
+    'percentage' => 82,
+    'step' => 'Réponse du serveur reçue. Mise à jour des statuts locaux...',
+    'sent' => [
+        'equipes' => count($equipesRows),
+        'controles' => count($pendingControles),
+    ],
+]);
+
+$controleIds = array_values(array_filter(array_map(static fn($row) => (int) ($row['id'] ?? 0), $pendingControles)));
+if (!empty($controleIds)) {
+    $placeholders = implode(',', array_fill(0, count($controleIds), '?'));
+    $stmtUpdate = $pdo->prepare("UPDATE controles SET sync_status = 'synced', sync_date = NOW() WHERE id IN ($placeholders)");
+    $stmtUpdate->execute($controleIds);
+}
+
+$equipeIds = array_values(array_filter(array_map(static fn($row) => (int) ($row['id'] ?? 0), $equipesRows)));
+if (!empty($equipeIds)) {
+    $placeholders = implode(',', array_fill(0, count($equipeIds), '?'));
+    $stmtUpdate = $pdo->prepare("UPDATE equipes SET sync_status = 'synced', sync_date = NOW() WHERE id IN ($placeholders)");
+    $stmtUpdate->execute($equipeIds);
+}
+
+$summaryParts = [];
+if (!empty($equipesRows)) {
+    $summaryParts[] = sprintf('%d membre(s) d\'équipe', count($equipesRows));
+}
+if (!empty($pendingControles)) {
+    $summaryParts[] = sprintf('%d contrôle(s)', count($pendingControles));
+}
+
+$summary = 'Synchronisation effectuée : ' . implode(' et ', $summaryParts) . ' envoyé(s) vers ' . $serverIp . '.';
+
+log_sync_attempt($pdo, $controleIds, $equipeIds, 'succes', json_encode([
+    'server_ip' => $serverIp,
+    'target_url' => $forwardResponse['target_url'],
+    'remote_response' => $remote,
+    'summary' => $summary,
+], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
+
+audit_action('SYNC_CONTROLES', 'synchronisation', null, $summary);
+
+sync_progress_event('progress', [
+    'percentage' => 100,
+    'step' => 'Synchronisation finalisée avec succès.',
+    'sent' => [
+        'equipes' => count($equipesRows),
+        'controles' => count($pendingControles),
+    ],
+]);
+
+sync_json_response(true, 'Synchronisation terminée avec succès.', 200, null, [
+    'summary' => $summary,
+    'sync_state' => 'completed',
+    'target_url' => $forwardResponse['target_url'],
+    'sent' => [
+        'equipes' => count($equipesRows),
+        'controles' => count($pendingControles),
+    ],
+    'stats' => $remote['stats'] ?? [
+        'equipes' => ['recus' => count($equipesRows), 'inseres' => count($equipesRows), 'maj' => 0],
+        'controles' => ['recus' => count($pendingControles), 'inseres' => count($pendingControles), 'maj' => 0],
+    ],
+]);
+
+function ensure_sync_log_table(PDO $pdo): void
 {
     $pdo->exec("CREATE TABLE IF NOT EXISTS synchronisation (
         id INT AUTO_INCREMENT PRIMARY KEY,
-        controle_ids TEXT NOT NULL,
+        controle_ids TEXT NULL,
+        equipe_ids TEXT NULL,
         nb_controles INT NOT NULL DEFAULT 0,
+        nb_equipes INT NOT NULL DEFAULT 0,
         statut ENUM('succes','echec','en_attente') NOT NULL DEFAULT 'en_attente',
-        details TEXT NULL,
+        details LONGTEXT NULL,
         utilisateur_id INT NULL,
         cree_le TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
         INDEX idx_sync_statut (statut),
         INDEX idx_sync_date (cree_le)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
+    foreach ([
+        "ALTER TABLE synchronisation ADD COLUMN equipe_ids TEXT NULL AFTER controle_ids",
+        "ALTER TABLE synchronisation ADD COLUMN nb_equipes INT NOT NULL DEFAULT 0 AFTER nb_controles"
+    ] as $statement) {
+        try {
+            $pdo->exec($statement);
+        } catch (PDOException $e) {
+            if (stripos($e->getMessage(), 'Duplicate column name') === false) {
+                throw $e;
+            }
+        }
+    }
 }
 
-function log_sync_attempt(PDO $pdo, array $ids, string $statut, string $details = '')
+function ensure_equipes_sync_columns(PDO $pdo): void
 {
-    $stmt = $pdo->prepare("INSERT INTO synchronisation (controle_ids, nb_controles, statut, details, utilisateur_id) VALUES (?, ?, ?, ?, ?)");
+    $pdo->exec("CREATE TABLE IF NOT EXISTS equipes (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        matricule VARCHAR(50) NULL,
+        noms VARCHAR(150) NOT NULL,
+        grade VARCHAR(50) NOT NULL,
+        unites VARCHAR(150) NULL,
+        role VARCHAR(50) NOT NULL,
+        id_source INT NULL,
+        db_source VARCHAR(50) NULL DEFAULT 'local',
+        sync_status ENUM('local','synced') NOT NULL DEFAULT 'local',
+        sync_date DATETIME NULL,
+        sync_version INT NOT NULL DEFAULT 1,
+        INDEX idx_equipes_sync_status (sync_status),
+        INDEX idx_equipes_source (db_source, id_source),
+        INDEX idx_equipes_matricule (matricule)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+
+    foreach ([
+        "ALTER TABLE equipes ADD COLUMN matricule VARCHAR(50) NULL AFTER id",
+        "ALTER TABLE equipes ADD COLUMN unites VARCHAR(150) NULL AFTER grade",
+        "ALTER TABLE equipes ADD COLUMN id_source INT NULL AFTER role",
+        "ALTER TABLE equipes ADD COLUMN db_source VARCHAR(50) NULL DEFAULT 'local' AFTER id_source",
+        "ALTER TABLE equipes ADD COLUMN sync_status ENUM('local','synced') NOT NULL DEFAULT 'local' AFTER db_source",
+        "ALTER TABLE equipes ADD COLUMN sync_date DATETIME NULL AFTER sync_status",
+        "ALTER TABLE equipes ADD COLUMN sync_version INT NOT NULL DEFAULT 1 AFTER sync_date"
+    ] as $statement) {
+        try {
+            $pdo->exec($statement);
+        } catch (PDOException $e) {
+            if (stripos($e->getMessage(), 'Duplicate column name') === false) {
+                throw $e;
+            }
+        }
+    }
+}
+
+function sync_extract_json_payload(string $body): string
+{
+    $body = preg_replace('/^\xEF\xBB\xBF/u', '', $body) ?? $body;
+    $body = ltrim($body, "\x00..\x20");
+
+    $decoded = json_decode($body, true);
+    if (is_array($decoded)) {
+        return $body;
+    }
+
+    $jsonStart = strpos($body, '{');
+    $jsonEnd = strrpos($body, '}');
+    if ($jsonStart !== false && $jsonEnd !== false && $jsonEnd >= $jsonStart) {
+        return substr($body, $jsonStart, $jsonEnd - $jsonStart + 1);
+    }
+
+    return $body;
+}
+
+function is_valid_server_address(string $value): bool
+{
+    $value = trim($value);
+    if ($value === '') {
+        return false;
+    }
+
+    return (bool) preg_match('/^(https?:\/\/)?([a-zA-Z0-9.-]+|\[[0-9a-fA-F:]+\])(?::\d+)?(\/.*)?$/', $value);
+}
+
+function sync_join_garnison_labels(array $garnisons): string
+{
+    $labels = [];
+    foreach ($garnisons as $garnison) {
+        $garnison = trim((string) $garnison);
+        if ($garnison !== '' && !in_array($garnison, $labels, true)) {
+            $labels[] = $garnison;
+        }
+    }
+
+    return implode(' • ', $labels);
+}
+
+function sync_build_source_label(string $baseLabel, string $sourceInstance): string
+{
+    $baseLabel = trim($baseLabel);
+    if ($baseLabel === '') {
+        $baseLabel = 'SITE LOCAL 01';
+    }
+
+    return mb_substr('Equipe : ' . $baseLabel, 0, 150);
+}
+
+function sync_build_source_instance(string $instanceId): string
+{
+    $instanceId = trim($instanceId);
+    if ($instanceId === '') {
+        $instanceId = php_uname('n') ?: 'client';
+    }
+
+    $normalized = preg_replace('/[^a-zA-Z0-9_-]+/', '-', strtolower($instanceId)) ?? 'client';
+    $normalized = trim($normalized, '-_');
+
+    if ($normalized === '') {
+        $normalized = 'client';
+    }
+
+    return substr($normalized, 0, 50);
+}
+
+function sync_progress_event(string $event, array $payload = []): void
+{
+    if (empty($GLOBALS['sync_stream_enabled'])) {
+        return;
+    }
+
+    echo 'data: ' . json_encode(array_merge([
+        'event' => $event,
+    ], $payload), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) . "\n\n";
+
+    if (function_exists('ob_flush')) {
+        @ob_flush();
+    }
+    flush();
+}
+
+function sync_json_response(bool $success, string $message, int $httpCode = 200, ?string $errorCode = null, array $data = []): void
+{
+    http_response_code($httpCode);
+
+    $response = [
+        'success' => $success,
+        'message' => $message,
+        'timestamp' => gmdate('c'),
+    ];
+
+    if ($errorCode !== null) {
+        $response['error_code'] = $errorCode;
+    }
+
+    if (!empty($data)) {
+        $response['data'] = $data;
+    }
+
+    if (!empty($GLOBALS['sync_stream_enabled'])) {
+        sync_progress_event($success ? 'complete' : 'error', $response);
+        exit;
+    }
+
+    echo json_encode($response, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+    exit;
+}
+
+function log_sync_attempt(PDO $pdo, array $controleIds, array $equipeIds, string $statut, string $details = ''): void
+{
+    $stmt = $pdo->prepare("INSERT INTO synchronisation (controle_ids, equipe_ids, nb_controles, nb_equipes, statut, details, utilisateur_id) VALUES (?, ?, ?, ?, ?, ?, ?)");
     $stmt->execute([
-        json_encode($ids),
-        count($ids),
+        json_encode($controleIds, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
+        json_encode($equipeIds, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
+        count($controleIds),
+        count($equipeIds),
         $statut,
         $details,
-        $_SESSION['user_id'] ?? null
+        $_SESSION['user_id'] ?? null,
     ]);
 }

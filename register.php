@@ -5,8 +5,9 @@ $error = null;
 
 // Profils disponibles (fixes)
 $profils = [
-    'ADMIN_IG'      => 'ADMIN_IG',
-    'OPERATEUR'     => 'OPERATEUR'
+    'ADMIN_IG'   => 'ADMIN_IG',
+    'OPERATEUR' => 'OPERATEUR',
+    'CONTROLEUR' => 'CONTROLEUR'
 ];
 
 // Configuration de l'upload d'avatar
@@ -28,8 +29,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $error = "Tous les champs sauf avatar sont obligatoires.";
     } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
         $error = "L'email n'est pas valide.";
-    } elseif (strlen($password) < 4) {
-        $error = "Le mot de passe doit contenir au moins 4 caractères.";
+    } elseif (strlen($password) < 8) {
+        $error = "Le mot de passe doit contenir au moins 8 caractères.";
     } elseif ($password !== $confirm) {
         $error = "Les mots de passe ne correspondent pas.";
     } elseif (!array_key_exists($profil, $profils)) {
@@ -78,7 +79,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     // Insertion avec actif = 0 (compte inactif en attente d'activation)
                     $stmt = $pdo->prepare("INSERT INTO utilisateurs 
                         (login, nom_complet, email, mot_de_passe, avatar, profil, actif, reset_token, reset_expires, dernier_acces, preferences, created_at) 
-                        VALUES (?, ?, ?, ?, ?, ?, 0, NULL, NULL, NULL, NULL, NOW())");
+                        VALUES (?, ?, ?, ?, ?, ?, 1, NULL, NULL, NULL, NULL, NOW())");
                     $stmt->execute([$login, $nom_complet, $email, $hashedPassword, $avatarPath, $profil]);
 
                     $newUserId = $pdo->lastInsertId();
@@ -89,7 +90,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                     $_SESSION['flash_message'] = [
                         'type' => 'success',
-                        'text' => 'Inscription réussie. Votre compte est en attente d\'activation par un administrateur. Vous pourrez vous connecter une fois activé.'
+                        'text' => 'Inscription réussie. Vous pouvez maintenant vous connecter.'
                     ];
                     header('Location: ' . app_url('login.php'));
                     exit;
@@ -135,17 +136,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             --fb-green-hover: #36a420;
             --primary: #2e7d32;
             --primary-dark: #1b5e20;
+            --gray: #6c757d;
+            --card-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
         }
 
         html,
         body {
-            height: 100%;
-            overflow: hidden;
+            min-height: 100%;
+            overflow-y: auto;
         }
 
         body.register-page {
-            /* Fond avec image et superposition sombre */
-            background: linear-gradient(135deg, rgba(0, 0, 0, 0.7) 0%, rgba(0, 0, 0, 0.7) 100%),
+            background: linear-gradient(135deg, rgba(0, 0, 0, 0.6) 0%, rgba(0, 0, 0, 0.7) 100%),
                 url('assets/img/fardc2.png') no-repeat center center fixed;
             background-size: cover;
             font-family: 'Barlow', sans-serif;
@@ -153,14 +155,106 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             align-items: center;
             justify-content: center;
             min-height: 100vh;
-            padding: 5px;
+            padding: 16px;
         }
 
         .register-wrapper {
             width: 100%;
-            max-width: 340px;
-            /* encore plus compact */
+            max-width: 380px;
+            max-height: calc(100vh - 32px);
             animation: fadeInUp 0.3s ease-out;
+        }
+
+        @media (min-width: 768px) {
+            body.register-page {
+                padding: 24px;
+            }
+
+            .register-wrapper {
+                max-width: 480px;
+                max-height: calc(100vh - 48px);
+            }
+
+            .card-modern {
+                padding: 32px 28px !important;
+                border-radius: 16px !important;
+                box-shadow: var(--card-shadow) !important;
+                max-height: calc(100vh - 170px);
+            }
+
+            .form-header .title {
+                font-size: 1.8rem !important;
+                margin-bottom: 8px !important;
+            }
+
+            .form-header .subtitle {
+                font-size: 0.9rem !important;
+            }
+
+            .input-group-modern .form-control,
+            .input-group-modern select {
+                padding: 12px !important;
+                font-size: 1rem !important;
+            }
+
+            .input-group-modern input[type="file"] {
+                padding: 12px !important;
+                font-size: 0.95rem !important;
+            }
+
+            .password-toggle {
+                font-size: 1rem !important;
+                right: 14px !important;
+            }
+
+            .btn-register,
+            .btn-secondary {
+                padding: 12px !important;
+                font-size: 1rem !important;
+            }
+        }
+
+        @media (max-width: 767px) {
+            .register-wrapper {
+                max-width: 100%;
+                max-height: calc(100vh - 20px);
+            }
+
+            .card-modern {
+                padding: 18px 16px;
+                border-radius: 8px;
+                max-height: calc(100vh - 120px);
+            }
+
+            .form-header .title {
+                font-size: 1.3rem;
+            }
+
+            #registerForm {
+                grid-template-columns: 1fr;
+            }
+
+            #registerForm .form-span-2,
+            #registerForm .btn-register {
+                grid-column: auto;
+            }
+
+            .input-group-modern .form-control,
+            .input-group-modern select {
+                padding: 10px 12px;
+                font-size: 0.9rem;
+            }
+
+            .input-group-modern input[type="file"] {
+                padding: 10px 12px;
+                font-size: 0.9rem;
+            }
+
+            .btn-register,
+            .btn-secondary {
+                padding: 10px;
+                font-size: 0.9rem;
+            }
         }
 
         @keyframes fadeInUp {
@@ -177,7 +271,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         .register-logo {
             text-align: center;
-            margin-bottom: 8px;
+            margin-bottom: 16px;
             flex-shrink: 0;
         }
 
@@ -189,10 +283,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
         .register-logo .brand-image {
-            max-height: 40px;
-            /* logo plus petit */
+            max-height: 45px;
             width: auto;
-            margin-bottom: 2px;
+            margin-bottom: 5px;
             border: 2px solid white;
             border-radius: 50%;
             padding: 2px;
@@ -205,11 +298,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
         .register-logo .brand-text {
-            font-size: 1.2rem;
-            /* réduit */
+            font-size: 1.3rem;
             font-weight: 700;
             color: white;
-            /* blanc pour contraster sur fond sombre */
             text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
             letter-spacing: 0.3px;
             line-height: 1.2;
@@ -220,49 +311,56 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             border: none;
             border-radius: 8px;
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-            padding: 12px 10px 14px;
-            /* encore plus compact */
+            padding: 20px 18px;
+            max-height: calc(100vh - 132px);
+            overflow-y: auto;
+            scrollbar-width: thin;
         }
 
         .form-header {
             text-align: center;
-            margin-bottom: 8px;
+            margin-bottom: 16px;
         }
 
         .form-header .title {
-            font-size: 1.3rem;
-            /* réduit */
             font-weight: 700;
             color: var(--primary-dark);
-            margin-bottom: 0;
+            margin-bottom: 4px;
             line-height: 1.2;
         }
 
         .form-header .subtitle {
-            font-size: 0.7rem;
-            /* plus petit */
-            color: #6c757d;
+            font-size: 0.75rem;
+            color: var(--gray);
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 3px;
+            gap: 5px;
+        }
+
+        #registerForm {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 14px 12px;
+        }
+
+        #registerForm .form-span-2,
+        #registerForm .btn-register {
+            grid-column: 1 / -1;
         }
 
         .input-group-modern {
-            margin-bottom: 8px;
-            /* réduit */
+            margin-bottom: 0;
             position: relative;
         }
 
         .input-group-modern .form-control,
         .input-group-modern select {
             width: 100%;
-            padding: 8px 10px;
-            /* moins de padding */
+            padding: 10px 12px;
             border: 1.5px solid #e0e0e0;
-            border-radius: 5px;
-            font-size: 0.8rem;
-            /* plus petit */
+            border-radius: 6px;
+            font-size: 0.9rem;
             transition: all 0.2s;
             font-family: 'Barlow', sans-serif;
             background: white;
@@ -275,48 +373,46 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             outline: none;
         }
 
-        /* Champ fichier */
         .input-group-modern input[type="file"] {
-            padding: 5px 10px;
-            font-size: 0.75rem;
+            padding: 10px 12px;
+            font-size: 0.85rem;
         }
 
-        /* Icônes de validation */
         .validation-icon {
             position: absolute;
-            right: 10px;
+            right: 12px;
             top: 50%;
             transform: translateY(-50%);
-            font-size: 0.8rem;
+            font-size: 0.9rem;
             pointer-events: none;
         }
 
         .password-toggle {
             position: absolute;
-            right: 10px;
+            right: 12px;
             top: 50%;
             transform: translateY(-50%);
             cursor: pointer;
-            color: #6c757d;
+            color: var(--gray);
             z-index: 2;
-            font-size: 0.8rem;
+            font-size: 0.9rem;
             background: transparent;
             padding: 0;
+            border: none;
         }
 
-        /* Barre de force du mot de passe ultra-compacte */
         .password-strength {
-            margin-top: 2px;
+            margin-top: 6px;
             display: flex;
             align-items: center;
-            gap: 4px;
+            gap: 6px;
         }
 
         .strength-bar {
             flex: 1;
-            height: 3px;
+            height: 4px;
             background-color: #e0e0e0;
-            border-radius: 2px;
+            border-radius: 999px;
             overflow: hidden;
         }
 
@@ -327,31 +423,28 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
         .strength-text {
-            min-width: 35px;
-            font-size: 0.65rem;
-            /* tout petit */
-            color: #6c757d;
+            min-width: 42px;
+            font-size: 0.72rem;
+            color: var(--gray);
             text-align: right;
         }
 
         .field-error {
             color: #dc3545;
-            font-size: 0.65rem;
-            margin-top: 1px;
+            font-size: 0.72rem;
+            margin-top: 4px;
             padding-left: 2px;
         }
 
-        /* Boutons avec icônes - compacts */
         .btn-register,
         .btn-secondary {
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            gap: 5px;
+            gap: 8px;
             border: none;
-            border-radius: 5px;
-            padding: 8px 10px;
-            /* réduit */
+            border-radius: 8px;
+            padding: 10px;
             font-weight: 600;
             color: white;
             width: 100%;
@@ -359,9 +452,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             transition: background 0.2s, transform 0.1s;
             font-family: 'Barlow', sans-serif;
             text-decoration: none;
-            font-size: 0.85rem;
-            /* plus petit */
-            margin-top: 5px;
+            font-size: 0.9rem;
+            margin-top: 8px;
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
         }
 
@@ -382,26 +474,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
         .btn-secondary {
-            background: #60757d;
+            background: #6c757d;
+            color: white;
             margin-top: 10px;
-            /* légèrement plus d'espace */
         }
 
         .btn-secondary:hover {
-            background: #6c757d;
+            background: #5c636a;
             transform: translateY(-1px);
             color: white;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
         }
 
         .alert-modern {
-            border-radius: 5px;
-            padding: 6px 10px;
-            margin-bottom: 8px;
-            font-size: 0.75rem;
+            border-radius: 6px;
+            padding: 10px 12px;
+            margin-bottom: 14px;
+            font-size: 0.85rem;
             display: flex;
             align-items: center;
-            gap: 5px;
+            gap: 8px;
         }
 
         .alert-modern.error {
@@ -418,29 +510,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         .register-footer {
             text-align: center;
-            margin-top: 8px;
+            margin-top: 16px;
             color: rgba(255, 255, 255, 0.8);
-            /* blanc pour fond sombre */
-            font-size: 0.65rem;
+            font-size: 0.7rem;
             border-top: 1px solid rgba(255, 255, 255, 0.2);
-            padding-top: 6px;
+            padding-top: 10px;
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 3px;
+            gap: 5px;
         }
 
         .register-footer i {
             color: #ffc107;
-            font-size: 0.6rem;
+            font-size: 0.7rem;
         }
 
-        /* Petit texte sous le champ fichier */
         .input-group-modern small {
             display: block;
-            margin-top: 2px;
-            color: #6c757d;
-            font-size: 0.6rem;
+            margin-top: 4px;
+            color: var(--gray);
+            font-size: 0.7rem;
             padding-left: 2px;
         }
     </style>
@@ -504,7 +594,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                 <div class="input-group-modern" style="position: relative;">
                     <input type="password" name="password" id="password" class="form-control"
-                        placeholder="Mot de passe (min. 4)" required>
+                        placeholder="Mot de passe (min. 8)" minlength="8" required>
                     <span class="password-toggle" onclick="togglePasswordVisibility('password', this)">
                         <i class="far fa-eye"></i>
                     </span>
@@ -519,7 +609,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                 <div class="input-group-modern" style="position: relative;">
                     <input type="password" name="confirm_password" id="confirm_password" class="form-control"
-                        placeholder="Confirmer le mot de passe" required>
+                        placeholder="Confirmer le mot de passe" minlength="8" required>
                     <span class="password-toggle" onclick="togglePasswordVisibility('confirm_password', this)">
                         <i class="far fa-eye"></i>
                     </span>
@@ -527,7 +617,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <div id="confirmError" class="field-error"></div>
                 </div>
 
-                <div class="input-group-modern">
+                <div class="input-group-modern form-span-2">
                     <input type="file" name="avatar" id="avatar" class="form-control"
                         accept="image/jpeg,image/png,image/gif,image/webp">
                     <small>Optionnel - 5 Mo max (JPG, PNG, GIF, WEBP)</small>
@@ -551,6 +641,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <script src="assets/js/jquery-3.6.0.min.js"></script>
     <script>
         $('#registerForm').on('submit', function() {
+            if (!($('#email').val() || '').trim() && typeof updateGeneratedEmail === 'function') {
+                emailManuallyEdited = false;
+                updateGeneratedEmail();
+            }
+
             $('#submitBtn').prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Inscription...');
         });
 
@@ -575,11 +670,51 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         const strengthBarFill = document.getElementById('strengthBarFill');
         const strengthText = document.getElementById('strengthText');
         const passwordStrengthIcon = document.getElementById('passwordStrengthIcon');
+        const fullNameInput = document.getElementById('nom_complet');
+        const emailInput = document.getElementById('email');
+        const profilInput = document.getElementById('profil');
+        let emailManuallyEdited = false;
+
+        function normalizeEmailName(value) {
+            return String(value || '')
+                .normalize('NFD')
+                .replace(/[\u0300-\u036f]/g, '')
+                .toLowerCase()
+                .trim()
+                .replace(/[^a-z0-9\s.-]/g, ' ')
+                .replace(/[\s._-]+/g, '.')
+                .replace(/^\.+|\.+$/g, '');
+        }
+
+        function updateGeneratedEmail() {
+            if (!fullNameInput || !emailInput || emailManuallyEdited) {
+                return;
+            }
+
+            const normalizedName = normalizeEmailName(fullNameInput.value);
+            emailInput.value = normalizedName ? `${normalizedName}@ctr.net-fardc.cd` : '';
+        }
+
+        if (emailInput) {
+            emailInput.addEventListener('input', function() {
+                const currentValue = emailInput.value.trim();
+                emailManuallyEdited = currentValue !== '' && currentValue !== `${normalizeEmailName(fullNameInput ? fullNameInput.value : '')}@ctr.net-fardc.cd`;
+            });
+        }
+
+        if (fullNameInput) {
+            fullNameInput.addEventListener('input', updateGeneratedEmail);
+            updateGeneratedEmail();
+        }
+
+        if (profilInput) {
+            profilInput.addEventListener('change', updateGeneratedEmail);
+        }
 
         function evaluatePasswordStrength(password) {
             let strength = 0;
-            if (password.length >= 4) strength += 1;
-            if (password.length >= 6) strength += 1;
+            if (password.length >= 8) strength += 1;
+            if (password.length >= 10) strength += 1;
             if (/[a-z]/.test(password) && /[A-Z]/.test(password)) strength += 1;
             if (/[0-9]/.test(password)) strength += 1;
             if (/[^a-zA-Z0-9]/.test(password)) strength += 1;

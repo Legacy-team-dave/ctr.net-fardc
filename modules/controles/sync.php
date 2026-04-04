@@ -1,440 +1,881 @@
 <?php
-
-/**
- * Page de synchronisation — Console ADMIN_IG
- * Permet de :
- * - Lancer la synchronisation sélective des contrôles
- * - Lancer la synchronisation des archives
- * - Consulter l'historique des sessions de synchronisation
- * - Voir et résoudre les conflits
- */
 require_once '../../includes/functions.php';
 require_login();
-check_profil(['ADMIN_IG']);
-
-require_once '../../config/database_central.php';
+check_profil(['ADMIN_IG', 'OPERATEUR']);
 
 $page_titre = 'Synchronisation';
 $breadcrumb = ['Contrôles' => app_url('modules/controles/liste.php'), 'Synchronisation' => '#'];
+$csrf_token = generate_csrf_token();
+$saved_server_ip = trim((string) ($_SESSION['sync_server_ip'] ?? ''));
 
-// Vérifier si base centrale est accessible
-$central_ok = ($pdo_central !== null);
+$pending_controles = (int) $pdo->query("SELECT COUNT(*) FROM controles WHERE COALESCE(sync_status, 'local') <> 'synced'")->fetchColumn();
+$pending_equipes = 0;
 
-// Historique des sessions (depuis la base centrale)
-$sessions = [];
-$conflits_pending = 0;
-if ($central_ok) {
-    try {
-        // Les tables sync_sessions, sync_conflits, archives_sync existent déjà dans la base centrale
-        // (créées par le SQL de structure ctr_net-fardc-active-web-1.sql)
-        // Pas besoin de CREATE TABLE IF NOT EXISTS ici
-
-        $sessions = $pdo->query("SELECT * FROM sync_sessions ORDER BY date_debut DESC LIMIT 20")->fetchAll();
-        $conflits_pending = (int)$pdo->query("SELECT COUNT(*) FROM sync_conflits WHERE resolution = 'pending'")->fetchColumn();
-    } catch (PDOException $e) {
-        error_log("Erreur sync page: " . $e->getMessage());
-    }
-}
-
-// Compter les contrôles non synchronisés (terrain)
-// L'enum sync_status utilise 'local' (pas 'pending')
-$pending_controles = 0;
 try {
-    $pending_controles = (int)$pdo->query("SELECT COUNT(*) FROM controles WHERE sync_status = 'local'")->fetchColumn();
-} catch (PDOException $e) {
-    error_log("Erreur comptage controles: " . $e->getMessage());
+    $pending_equipes = (int) $pdo->query("SELECT COUNT(*) FROM equipes WHERE COALESCE(sync_status, 'local') <> 'synced'")->fetchColumn();
+} catch (Throwable $e) {
+    $pending_equipes = 0;
 }
 
-// Compter les archives disponibles
-$archives_count = 0;
-$backups_dir = realpath(__DIR__ . '/../../backups/');
-if ($backups_dir && is_dir($backups_dir)) {
-    $archives_count = count(array_filter(scandir($backups_dir), fn($f) => $f !== '.' && $f !== '..' && is_file($backups_dir . DIRECTORY_SEPARATOR . $f)));
+$last_syncs = [];
+try {
+    $tableExists = $pdo->query("SHOW TABLES LIKE 'synchronisation'");
+    if ($tableExists && $tableExists->rowCount() > 0) {
+        $last_syncs = $pdo->query("SELECT * FROM synchronisation ORDER BY cree_le DESC LIMIT 10")->fetchAll(PDO::FETCH_ASSOC);
+    }
+} catch (Throwable $e) {
+    $last_syncs = [];
 }
 
 include '../../includes/header.php';
 ?>
 
 <style>
-    .sync-dashboard {
-        padding: 0 5px;
+    .sync-simple-page {
+        padding: 0 6px;
     }
 
-    .sync-card {
-        background: white;
-        border-radius: 12px;
-        box-shadow: 0 2px 15px rgba(0, 0, 0, 0.08);
+    .sync-hero,
+    .sync-panel {
+        background: #fff;
         border: none;
+        border-radius: 16px;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
         margin-bottom: 20px;
         overflow: hidden;
     }
 
-    .sync-card-header {
+    .sync-hero-head,
+    .sync-panel-head {
         background: linear-gradient(135deg, #2e7d32, #1b5e20);
-        color: white;
-        padding: 12px 18px;
+        color: #fff;
+        padding: 16px 20px;
         font-weight: 600;
-        font-size: 0.95rem;
         display: flex;
         align-items: center;
-        gap: 8px;
+        gap: 10px;
     }
 
-    .sync-card-body {
-        padding: 18px;
+    .sync-hero-body,
+    .sync-panel-body {
+        padding: 20px;
     }
 
-    .sync-stat {
-        background: #f8f9fa;
-        border-radius: 10px;
-        padding: 18px;
-        text-align: center;
-        border: 1px solid #e0e0e0;
-        transition: transform 0.15s;
+    .sync-stat-card {
+        background: #fff;
+        border-radius: 15px;
+        padding: 20px 22px;
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        height: 100%;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+        transition: all 0.3s ease;
+        border: 1px solid rgba(0, 0, 0, 0.05);
     }
 
-    .sync-stat:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    .sync-stat-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 25px rgba(46, 125, 50, 0.15);
     }
 
-    .sync-stat .stat-value {
+    .sync-stat-icon {
+        width: 56px;
+        height: 56px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #fff;
+        font-size: 1.4rem;
+        box-shadow: 0 4px 10px rgba(46, 125, 50, 0.25);
+        flex-shrink: 0;
+    }
+
+    .sync-stat-icon.sync-team {
+        background: linear-gradient(135deg, #2e7d32 0%, #1b5e20 100%);
+    }
+
+    .sync-stat-icon.sync-pending {
+        background: linear-gradient(135deg, #2e7d32 0%, #1b5e20 100%);
+    }
+
+    .sync-stat-icon.sync-history {
+        background: linear-gradient(135deg, #6c757d 0%, #495057 100%);
+    }
+
+    .sync-stat-info {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+    }
+
+    .sync-stat-value {
         font-size: 2rem;
+        font-weight: 700;
+        color: #1b5e20;
+        line-height: 1;
+        margin: 0;
+    }
+
+    .sync-stat-label {
+        color: #6c757d;
+        font-size: 0.88rem;
+        font-weight: 600;
+    }
+
+    .sync-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+    }
+
+    .sync-btn-primary,
+    .sync-btn-secondary,
+    .sync-btn-neutral {
+        border: none;
+        border-radius: 8px;
+        min-height: 34px;
+        min-width: auto;
+        padding: 0 10px;
+        font-weight: 600;
+        font-size: 0.82rem;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 5px;
+        cursor: pointer;
+        text-decoration: none;
+        transition: all 0.3s ease;
+        white-space: nowrap;
+    }
+
+    .sync-btn-primary {
+        background: linear-gradient(135deg, #2e7d32, #1b5e20);
+        color: #fff;
+    }
+
+    .sync-btn-secondary {
+        background: linear-gradient(135deg, #1565c0, #0d47a1);
+        color: #fff;
+    }
+
+    .sync-btn-neutral {
+        background: linear-gradient(135deg, #6c757d, #495057);
+        color: #fff;
+    }
+
+    .sync-btn-primary:hover {
+        background: linear-gradient(135deg, #1b5e20, #145a18);
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(46, 125, 50, 0.22);
+        color: #fff;
+        text-decoration: none;
+    }
+
+    .sync-btn-secondary:hover {
+        background: linear-gradient(135deg, #0d47a1, #0a3d8f);
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(13, 71, 161, 0.24);
+        color: #fff;
+        text-decoration: none;
+    }
+
+    .sync-btn-secondary.is-testing {
+        background: linear-gradient(135deg, #1565c0, #0d47a1);
+        box-shadow: 0 8px 20px rgba(13, 71, 161, 0.24);
+    }
+
+    .sync-btn-secondary.is-success {
+        background: linear-gradient(135deg, #2e7d32, #1b5e20);
+        box-shadow: 0 8px 20px rgba(46, 125, 50, 0.22);
+    }
+
+    .sync-btn-secondary.is-success:hover {
+        background: linear-gradient(135deg, #1b5e20, #145a18);
+        color: #fff;
+    }
+
+    .sync-btn-secondary.is-danger {
+        background: linear-gradient(135deg, #dc3545, #b02a37);
+        box-shadow: 0 8px 20px rgba(220, 53, 69, 0.24);
+    }
+
+    .sync-btn-secondary.is-danger:hover {
+        background: linear-gradient(135deg, #b02a37, #8f1f2b);
+        color: #fff;
+    }
+
+    .sync-btn-neutral:hover {
+        background: linear-gradient(135deg, #545b62, #3f464d);
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(108, 117, 125, 0.24);
+        color: #fff;
+        text-decoration: none;
+    }
+
+    .sync-steps {
+        margin: 0;
+        padding-left: 18px;
+        color: #555;
+    }
+
+    .sync-steps li {
+        margin-bottom: 6px;
+    }
+
+    .progress-container {
+        display: none;
+        margin-top: 16px;
+        padding: 14px 16px;
+        background: #f8f9fa;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+    }
+
+    .progress-container.active {
+        display: block;
+    }
+
+    .progress-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 8px;
+        flex-wrap: wrap;
+    }
+
+    .progress-title {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        color: #333;
+        font-weight: 600;
+    }
+
+    .progress-stats {
+        background: #fff;
+        padding: 2px 10px;
+        border-radius: 12px;
         font-weight: 700;
         color: #1b5e20;
     }
 
-    .sync-stat .stat-label {
-        font-size: 0.8rem;
-        color: #666;
-        margin-top: 4px;
-    }
-
-    .sync-stat.warning .stat-value {
-        color: #e65100;
-    }
-
-    .sync-stat.danger .stat-value {
-        color: #c62828;
-    }
-
-    .sync-stat.info .stat-value {
-        color: #1565c0;
-    }
-
-    .btn-sync {
-        background: linear-gradient(135deg, #2e7d32, #1b5e20);
-        color: white;
-        border: none;
-        padding: 10px 20px;
-        border-radius: 8px;
-        font-weight: 600;
-        font-size: 0.9rem;
-        cursor: pointer;
-        display: inline-flex;
-        align-items: center;
-        gap: 6px;
-        transition: transform 0.15s, box-shadow 0.15s;
-    }
-
-    .btn-sync:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 4px 15px rgba(46, 125, 50, 0.3);
-        color: white;
-    }
-
-    .btn-sync:disabled {
-        opacity: 0.5;
-        cursor: not-allowed;
-        transform: none;
-    }
-
-    .btn-sync-archives {
-        background: linear-gradient(135deg, #1565c0, #0d47a1);
-    }
-
-    .btn-sync-archives:hover {
-        box-shadow: 0 4px 15px rgba(21, 101, 192, 0.3);
-    }
-
-    .status-badge {
-        padding: 3px 10px;
-        border-radius: 20px;
-        font-size: 0.75rem;
-        font-weight: 600;
-        text-transform: uppercase;
-    }
-
-    .status-succes {
-        background: #e8f5e9;
-        color: #2e7d32;
-    }
-
-    .status-partiel {
-        background: #fff3e0;
-        color: #e65100;
-    }
-
-    .status-echec {
-        background: #fce4ec;
-        color: #c62828;
-    }
-
-    .status-en_cours {
-        background: #e3f2fd;
-        color: #1565c0;
-    }
-
-    .session-table {
-        width: 100%;
-        border-collapse: collapse;
-        font-size: 0.85rem;
-    }
-
-    .session-table thead th {
-        background: #f8f9fa;
-        padding: 10px 12px;
-        text-align: left;
-        font-weight: 600;
-        color: #555;
-        border-bottom: 2px solid #e0e0e0;
-        font-size: 0.78rem;
-        text-transform: uppercase;
-    }
-
-    .session-table tbody td {
-        padding: 8px 12px;
-        border-bottom: 1px solid #f0f0f0;
-    }
-
-    .session-table tbody tr:hover {
-        background: #f8f9fa;
-    }
-
-    .central-offline {
-        background: #fce4ec;
-        border: 1px solid #ef9a9a;
+    .progress-bar-container {
+        height: 20px;
+        background: #fff;
         border-radius: 10px;
-        padding: 20px;
-        text-align: center;
-        color: #c62828;
+        overflow: hidden;
+        margin: 10px 0;
     }
 
-    .central-offline i {
-        font-size: 2rem;
-        margin-bottom: 10px;
-        display: block;
-    }
-
-    .info-box-sync {
-        background: #e8f5e9;
-        border-left: 4px solid #2e7d32;
-        border-radius: 6px;
-        padding: 10px 14px;
-        font-size: 0.82rem;
-        color: #2e7d32;
-        margin-bottom: 15px;
+    .progress-bar-fill {
+        height: 100%;
+        width: 0%;
+        background: linear-gradient(90deg, #ffc107, #e0a800);
+        border-radius: 10px;
+        transition: width 0.3s ease;
         display: flex;
         align-items: center;
-        gap: 8px;
+        justify-content: center;
+        color: #212529;
+        font-size: 0.8rem;
+        font-weight: 700;
+    }
+
+    .progress-bar-fill.is-complete {
+        background: linear-gradient(90deg, #28a745, #1e7e34);
+        color: #fff;
+    }
+
+    .progress-details {
+        display: flex;
+        gap: 15px;
+        flex-wrap: wrap;
+        font-size: 0.85rem;
+        color: #666;
+    }
+
+    .sync-history-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.88rem;
+    }
+
+    .sync-history-table th,
+    .sync-history-table td {
+        padding: 10px 12px;
+        border-bottom: 1px solid #edf0f2;
+        text-align: left;
+    }
+
+    .sync-history-table th {
+        background: #f8f9fa;
+        font-size: 0.78rem;
+        text-transform: uppercase;
+        color: #666;
     }
 </style>
 
-<div class="sync-dashboard">
+<div class="sync-simple-page">
+    <div class="sync-hero">
+        <div class="sync-hero-head">
+            <i class="fas fa-network-wired"></i>
+            Synchronisation simple client / serveur
+        </div>
+        <div class="sync-hero-body">
+            <div class="row g-3 mb-3">
+                <div class="col-md-4">
+                    <div class="sync-stat-card">
+                        <div class="sync-stat-icon sync-team"><i class="fas fa-users"></i></div>
+                        <div class="sync-stat-info">
+                            <div class="sync-stat-value"><?= (int) $pending_equipes ?></div>
+                            <div class="sync-stat-label">Membres d'équipe à envoyer</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="sync-stat-card">
+                        <div class="sync-stat-icon sync-pending"><i class="fas fa-clipboard-list"></i></div>
+                        <div class="sync-stat-info">
+                            <div class="sync-stat-value"><?= (int) $pending_controles ?></div>
+                            <div class="sync-stat-label">Contrôles à envoyer</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="sync-stat-card">
+                        <div class="sync-stat-icon sync-history"><i class="fas fa-history"></i></div>
+                        <div class="sync-stat-info">
+                            <div class="sync-stat-value"><?= count($last_syncs) ?></div>
+                            <div class="sync-stat-label">Tentatives enregistrées</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
 
-    <!-- Bandeau d'info -->
-    <div class="info-box-sync">
-        <i class="fas fa-info-circle"></i>
-        Synchronisation terrain → central. Ordre : Militaires → Contrôles → Litiges (automatique). Seuls les contrôles sélectionnés dans la liste sont synchronisés.
+            <div class="sync-actions">
+                <button type="button" class="sync-btn-secondary" id="test-sync-btn">
+                    <i class="fas fa-wifi"></i> Tester la connexion IP
+                </button>
+                <button type="button" class="sync-btn-primary" id="start-sync-btn">
+                    <i class="fas fa-cloud-upload-alt"></i> Synchroniser maintenant
+                </button>
+                <a href="<?= htmlspecialchars(app_url('modules/controles/liste.php')) ?>" class="sync-btn-neutral">
+                    <i class="fas fa-list"></i> Retour à la liste
+                </a>
+            </div>
+
+            <div id="progressContainer" class="progress-container">
+                <div class="progress-header">
+                    <div class="progress-title">
+                        <i class="fas fa-spinner fa-pulse"></i>
+                        <span id="progressPhase">Synchronisation en cours...</span>
+                    </div>
+                    <div class="progress-stats" id="progressStats">0%</div>
+                </div>
+                <div class="progress-bar-container">
+                    <div class="progress-bar-fill" id="progressBar">0%</div>
+                </div>
+                <div class="progress-details">
+                    <span><i class="fas fa-users"></i> Équipes : <strong id="syncEquipesCount">0</strong></span>
+                    <span><i class="fas fa-clipboard-check"></i> Contrôles : <strong id="syncControlesCount">0</strong></span>
+                    <span><i class="fas fa-clock"></i> <span id="progressTime">--</span></span>
+                </div>
+            </div>
+        </div>
     </div>
 
-    <?php if (!$central_ok): ?>
-        <div class="central-offline">
-            <i class="fas fa-exclamation-triangle"></i>
-            <strong>Base centrale inaccessible</strong><br>
-            Vérifiez la configuration dans <code>.env</code> (CENTRAL_DB_HOST, CENTRAL_DB_NAME, etc.)
+    <div class="sync-panel">
+        <div class="sync-panel-head">
+            <i class="fas fa-list-check"></i>
+            Fonctionnement
         </div>
-    <?php else: ?>
-
-        <!-- Statistiques -->
-        <div class="row mb-3">
-            <div class="col-sm-6 col-md-3 mb-2">
-                <div class="sync-stat">
-                    <div class="stat-value"><?= $pending_controles ?></div>
-                    <div class="stat-label"><i class="fas fa-clock"></i> Contrôles en attente</div>
-                </div>
-            </div>
-            <div class="col-sm-6 col-md-3 mb-2">
-                <div class="sync-stat warning">
-                    <div class="stat-value"><?= $conflits_pending ?></div>
-                    <div class="stat-label"><i class="fas fa-exclamation-triangle"></i> Conflits non résolus</div>
-                </div>
-            </div>
-            <div class="col-sm-6 col-md-3 mb-2">
-                <div class="sync-stat info">
-                    <div class="stat-value"><?= $archives_count ?></div>
-                    <div class="stat-label"><i class="fas fa-archive"></i> Fichiers d'archive</div>
-                </div>
-            </div>
-            <div class="col-sm-6 col-md-3 mb-2">
-                <div class="sync-stat">
-                    <div class="stat-value"><?= count($sessions) ?></div>
-                    <div class="stat-label"><i class="fas fa-history"></i> Sessions récentes</div>
-                </div>
-            </div>
+        <div class="sync-panel-body">
+            <ol class="sync-steps">
+                <li>Cliquer sur <strong>Tester la connexion IP</strong>.</li>
+                <li>Saisir l'adresse IP ou l'URL de la machine serveur.</li>
+                <li>Cliquer sur <strong>Synchroniser maintenant</strong> pour envoyer uniquement les <strong>membres d'équipe</strong> et les <strong>contrôles</strong> encore en attente.</li>
+            </ol>
         </div>
+    </div>
 
-        <!-- Actions -->
-        <div class="row mb-3">
-            <div class="col-md-6 mb-2">
-                <div class="sync-card">
-                    <div class="sync-card-header"><i class="fas fa-sync-alt"></i> Synchroniser les contrôles</div>
-                    <div class="sync-card-body">
-                        <p style="font-size:0.85rem;color:#666;margin-bottom:12px;">
-                            Sélectionnez les contrôles à synchroniser depuis la
-                            <a href="liste.php" style="color:#2e7d32;font-weight:600;">liste des contrôles</a>,
-                            puis lancez la synchronisation.
-                        </p>
-                        <a href="liste.php" class="btn-sync">
-                            <i class="fas fa-list"></i> Aller à la liste des contrôles
-                        </a>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-6 mb-2">
-                <div class="sync-card">
-                    <div class="sync-card-header" style="background:linear-gradient(135deg,#1565c0,#0d47a1);">
-                        <i class="fas fa-archive"></i> Synchroniser les archives
-                    </div>
-                    <div class="sync-card-body">
-                        <p style="font-size:0.85rem;color:#666;margin-bottom:12px;">
-                            Rapatrier les fichiers de sauvegarde (exports SQL, logs) vers le serveur central.
-                            <?= $archives_count ?> fichier(s) dans le répertoire source.
-                        </p>
-                        <form method="post" action="sync_archives.php" onsubmit="return confirm('Lancer la synchronisation des archives ?')">
-                            <div style="margin-bottom:8px;">
-                                <label style="font-size:0.82rem;cursor:pointer;">
-                                    <input type="checkbox" name="force" value="1">
-                                    Forcer la re-synchronisation des fichiers déjà présents
-                                </label>
-                            </div>
-                            <button type="submit" class="btn-sync btn-sync-archives" <?= $archives_count === 0 ? 'disabled' : '' ?>>
-                                <i class="fas fa-upload"></i> Synchroniser les archives
-                            </button>
-                        </form>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Historique des sessions -->
-        <div class="sync-card">
-            <div class="sync-card-header"><i class="fas fa-history"></i> Historique des synchronisations</div>
-            <div class="sync-card-body" style="padding:0;">
-                <?php if (empty($sessions)): ?>
-                    <div style="text-align:center;padding:30px;color:#999;">
-                        <i class="fas fa-inbox" style="font-size:2rem;margin-bottom:8px;display:block;"></i>
-                        Aucune synchronisation effectuée
-                    </div>
-                <?php else: ?>
-                    <div style="overflow-x:auto;">
-                        <table class="session-table">
-                            <thead>
-                                <tr>
-                                    <th>#</th>
-                                    <th>Type</th>
-                                    <th>Début</th>
-                                    <th>Fin</th>
-                                    <th>Status</th>
-                                    <th>Détails</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <?php foreach ($sessions as $s):
-                                    $det = json_decode($s['details'] ?? '{}', true);
-                                    $det_text = [];
-                                    if (isset($det['inserted'])) $det_text[] = $det['inserted'] . ' ins.';
-                                    if (isset($det['updated'])) $det_text[] = $det['updated'] . ' maj.';
-                                    if (isset($det['conflicts'])) $det_text[] = $det['conflicts'] . ' conf.';
-                                    if (isset($det['ok'])) $det_text[] = $det['ok'] . ' ok';
-                                    if (isset($det['skipped'])) $det_text[] = $det['skipped'] . ' ign.';
-                                    if (isset($det['error'])) $det_text[] = $det['error'] . ' err.';
-                                ?>
-                                    <tr>
-                                        <td><?= (int)$s['id_session'] ?></td>
-                                        <td><strong><?= htmlspecialchars($s['type_sync']) ?></strong></td>
-                                        <td><?= htmlspecialchars($s['date_debut']) ?></td>
-                                        <td><?= $s['date_fin'] ? htmlspecialchars($s['date_fin']) : '<em>—</em>' ?></td>
-                                        <td><span class="status-badge status-<?= htmlspecialchars($s['status']) ?>"><?= htmlspecialchars($s['status']) ?></span></td>
-                                        <td style="font-size:0.8rem;"><?= implode(', ', $det_text) ?: '—' ?></td>
-                                    </tr>
-                                <?php endforeach; ?>
-                            </tbody>
-                        </table>
-                    </div>
-                <?php endif; ?>
-            </div>
-        </div>
-
-        <?php if ($conflits_pending > 0): ?>
-            <!-- Conflits en attente -->
-            <div class="sync-card">
-                <div class="sync-card-header" style="background:linear-gradient(135deg,#e65100,#bf360c);">
-                    <i class="fas fa-exclamation-triangle"></i> Conflits en attente (<?= $conflits_pending ?>)
-                </div>
-                <div class="sync-card-body" style="padding:0;">
-                    <?php
-                    $conflits = $pdo->query("SELECT c.*, s.type_sync FROM sync_conflits c 
-                JOIN sync_sessions s ON c.id_session = s.id_session 
-                WHERE c.resolution = 'pending' ORDER BY c.id_conflit DESC LIMIT 50")->fetchAll();
-                    ?>
-                    <div style="overflow-x:auto;">
-                        <table class="session-table">
-                            <thead>
-                                <tr>
-                                    <th>#</th>
-                                    <th>Table</th>
-                                    <th>ID Terrain</th>
-                                    <th>ID Central</th>
-                                    <th>V. Terrain</th>
-                                    <th>V. Central</th>
-                                    <th>Action</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <?php foreach ($conflits as $c): ?>
-                                    <tr>
-                                        <td><?= (int)$c['id_conflit'] ?></td>
-                                        <td><strong><?= htmlspecialchars($c['table_concernee']) ?></strong></td>
-                                        <td><?= (int)$c['id_record_terrain'] ?></td>
-                                        <td><?= $c['id_record_central'] ? (int)$c['id_record_central'] : '—' ?></td>
-                                        <td><?= (int)$c['version_terrain'] ?></td>
-                                        <td><?= (int)$c['version_central'] ?></td>
-                                        <td>
-                                            <form method="post" action="sync_resolve.php" style="display:inline;">
-                                                <input type="hidden" name="id_conflit" value="<?= (int)$c['id_conflit'] ?>">
-                                                <button type="submit" name="resolution" value="terrain_wins" class="btn btn-sm btn-success" title="Garder version terrain" onclick="return confirm('Appliquer la version terrain ?')">
-                                                    <i class="fas fa-arrow-up"></i>
-                                                </button>
-                                                <button type="submit" name="resolution" value="central_wins" class="btn btn-sm btn-primary" title="Garder version centrale" onclick="return confirm('Garder la version centrale ?')">
-                                                    <i class="fas fa-arrow-down"></i>
-                                                </button>
-                                                <button type="submit" name="resolution" value="ignored" class="btn btn-sm btn-secondary" title="Ignorer">
-                                                    <i class="fas fa-times"></i>
-                                                </button>
-                                            </form>
-                                        </td>
-                                    </tr>
-                                <?php endforeach; ?>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-        <?php endif; ?>
-
-    <?php endif; // central_ok 
-    ?>
 </div>
+
+<script>
+    const syncEndpoint = <?= json_encode(app_url('api/sync_controles.php')) ?>;
+    const testSyncEndpoint = <?= json_encode(app_url('api/test_sync_connection.php')) ?>;
+    const syncCsrfToken = <?= json_encode($csrf_token) ?>;
+    const pendingEquipesCount = <?= json_encode((int) $pending_equipes) ?>;
+    const pendingControlesCount = <?= json_encode((int) $pending_controles) ?>;
+    const defaultSavedServerIp = (() => {
+        try {
+            return window.localStorage.getItem('ctrSyncServerIp') || <?= json_encode($saved_server_ip) ?> || '';
+        } catch (error) {
+            return <?= json_encode($saved_server_ip) ?> || '';
+        }
+    })();
+
+    let syncStartTime = null;
+    let syncTimer = null;
+
+    function isValidServerAddress(value) {
+        const trimmed = (value || '').trim();
+        if (!trimmed) {
+            return false;
+        }
+        return /^(https?:\/\/)?([a-zA-Z0-9.-]+|\[[0-9a-fA-F:]+\])(?::\d+)?(\/.*)?$/.test(trimmed);
+    }
+
+    function escapeHtml(value) {
+        return String(value || '')
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#039;');
+    }
+
+    function toSyncCount(value) {
+        if (typeof value === 'number' && Number.isFinite(value)) {
+            return value;
+        }
+
+        const parsed = parseInt(value, 10);
+        return Number.isFinite(parsed) ? parsed : 0;
+    }
+
+    function storeServerIp(value) {
+        try {
+            if (value && value.trim() !== '') {
+                window.localStorage.setItem('ctrSyncServerIp', value.trim());
+            }
+        } catch (error) {
+            // Ignorer si le stockage navigateur n'est pas disponible.
+        }
+    }
+
+    function setConnectionButtonState(state) {
+        const testButton = document.getElementById('test-sync-btn');
+        if (!testButton) {
+            return;
+        }
+
+        testButton.classList.remove('is-testing', 'is-success', 'is-danger');
+
+        if (state === 'testing') {
+            testButton.classList.add('is-testing');
+            testButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Test en cours...';
+            return;
+        }
+
+        if (state === 'success') {
+            testButton.classList.add('is-success');
+            testButton.innerHTML = '<i class="fas fa-check-circle"></i> Connexion réussie';
+            return;
+        }
+
+        if (state === 'error') {
+            testButton.classList.add('is-danger');
+            testButton.innerHTML = '<i class="fas fa-times-circle"></i> Serveur injoignable';
+            return;
+        }
+
+        testButton.innerHTML = '<i class="fas fa-wifi"></i> Tester la connexion IP';
+    }
+
+    function setSyncButtonsState(disabled) {
+        const testButton = document.getElementById('test-sync-btn');
+        const syncButton = document.getElementById('start-sync-btn');
+
+        if (testButton) {
+            testButton.disabled = disabled;
+        }
+
+        if (syncButton) {
+            syncButton.disabled = disabled;
+        }
+    }
+
+    function updateElapsedTime() {
+        const timeNode = document.getElementById('progressTime');
+        if (!timeNode || !syncStartTime) {
+            return;
+        }
+
+        const elapsedSeconds = Math.max(0, Math.floor((Date.now() - syncStartTime.getTime()) / 1000));
+        const minutes = Math.floor(elapsedSeconds / 60);
+        const seconds = elapsedSeconds % 60;
+        timeNode.textContent = minutes > 0 ? `${minutes}m ${seconds}s` : `${seconds}s`;
+    }
+
+    function updateSyncProgress(progress) {
+        const progressBar = document.getElementById('progressBar');
+        const progressStats = document.getElementById('progressStats');
+        const progressPhase = document.getElementById('progressPhase');
+        const equipesNode = document.getElementById('syncEquipesCount');
+        const controlesNode = document.getElementById('syncControlesCount');
+
+        if (!progressBar || !progressStats || !progressPhase) {
+            return;
+        }
+
+        const percentage = Math.max(0, Math.min(100, toSyncCount(progress.percentage)));
+        progressBar.style.width = `${percentage}%`;
+        progressBar.textContent = `${percentage}%`;
+        progressStats.textContent = `${percentage}%`;
+        progressBar.classList.toggle('is-complete', percentage >= 100);
+
+        if (progress.step) {
+            progressPhase.textContent = progress.step;
+        }
+
+        const sent = progress.sent || {};
+        if (equipesNode && Object.prototype.hasOwnProperty.call(sent, 'equipes')) {
+            equipesNode.textContent = toSyncCount(sent.equipes);
+        }
+        if (controlesNode && Object.prototype.hasOwnProperty.call(sent, 'controles')) {
+            controlesNode.textContent = toSyncCount(sent.controles);
+        }
+
+        updateElapsedTime();
+    }
+
+    function resetSyncProgress() {
+        const container = document.getElementById('progressContainer');
+        if (!container) {
+            return;
+        }
+
+        container.classList.add('active');
+        syncStartTime = new Date();
+
+        if (syncTimer) {
+            window.clearInterval(syncTimer);
+        }
+        syncTimer = window.setInterval(updateElapsedTime, 1000);
+
+        updateSyncProgress({
+            percentage: 0,
+            step: 'Initialisation de la synchronisation...',
+            sent: {
+                equipes: 0,
+                controles: 0
+            }
+        });
+    }
+
+    function hideSyncProgress() {
+        const container = document.getElementById('progressContainer');
+        if (container) {
+            container.classList.remove('active');
+        }
+    }
+
+    function stopSyncProgress() {
+        if (syncTimer) {
+            window.clearInterval(syncTimer);
+            syncTimer = null;
+        }
+        updateElapsedTime();
+    }
+
+    async function fetchJsonWithCsrf(endpoint, payload) {
+        const response = await fetch(endpoint, {
+            method: 'POST',
+            credentials: 'same-origin',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+                'X-CSRF-Token': syncCsrfToken
+            },
+            body: JSON.stringify(payload)
+        });
+
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok || !data.success) {
+            throw new Error(data.message || 'Impossible de joindre le service demandé.');
+        }
+
+        return data;
+    }
+
+    async function streamSyncRequest(serverIp) {
+        const formData = new FormData();
+        formData.append('server_ip', serverIp);
+        formData.append('ajax_progress', '1');
+
+        const response = await fetch(syncEndpoint, {
+            method: 'POST',
+            credentials: 'same-origin',
+            headers: {
+                'Accept': 'text/event-stream, application/json',
+                'X-CSRF-Token': syncCsrfToken
+            },
+            body: formData
+        });
+
+        const reader = response.body ? response.body.getReader() : null;
+        if (!reader) {
+            const fallback = await response.json().catch(() => ({}));
+            if (!response.ok || !fallback.success) {
+                throw new Error(fallback.message || 'Impossible de lancer la synchronisation.');
+            }
+            return fallback;
+        }
+
+        const decoder = new TextDecoder();
+        let buffer = '';
+        let finalPayload = null;
+
+        const consumeLines = (textChunk) => {
+            buffer += textChunk;
+            const lines = buffer.split(/\r?\n/);
+            buffer = lines.pop() || '';
+
+            for (const rawLine of lines) {
+                const line = rawLine.trim();
+                if (!line.startsWith('data:')) {
+                    continue;
+                }
+
+                const jsonText = line.substring(5).trim();
+                if (!jsonText) {
+                    continue;
+                }
+
+                let eventData;
+                try {
+                    eventData = JSON.parse(jsonText);
+                } catch (error) {
+                    continue;
+                }
+
+                if (eventData.event === 'progress') {
+                    updateSyncProgress(eventData);
+                    continue;
+                }
+
+                if (eventData.event === 'complete') {
+                    finalPayload = eventData;
+                    const isNoDataState = eventData.data && eventData.data.sync_state === 'no_data';
+
+                    if (isNoDataState) {
+                        hideSyncProgress();
+                    } else {
+                        updateSyncProgress({
+                            percentage: 100,
+                            step: 'Synchronisation finalisée avec succès.',
+                            sent: (eventData.data && eventData.data.sent) || {
+                                equipes: pendingEquipesCount,
+                                controles: pendingControlesCount
+                            }
+                        });
+                    }
+                    continue;
+                }
+
+                if (eventData.event === 'error') {
+                    throw new Error(eventData.message || 'Une erreur est survenue pendant la synchronisation.');
+                }
+            }
+        };
+
+        while (true) {
+            const result = await reader.read();
+            if (result.done) {
+                break;
+            }
+            consumeLines(decoder.decode(result.value, {
+                stream: true
+            }));
+        }
+
+        if (buffer.trim().startsWith('{')) {
+            const fallbackJson = JSON.parse(buffer.trim());
+            if (!fallbackJson.success) {
+                throw new Error(fallbackJson.message || 'Une erreur est survenue pendant la synchronisation.');
+            }
+            return fallbackJson;
+        }
+
+        if (finalPayload) {
+            return finalPayload;
+        }
+
+        if (!response.ok) {
+            throw new Error('La synchronisation a été interrompue avant la fin.');
+        }
+
+        return {
+            success: true,
+            message: 'Synchronisation terminée.'
+        };
+    }
+
+    function buildSyncFeedbackHtml(mode, data, serverIp) {
+        const payload = data && data.data ? data.data : {};
+
+        if (mode === 'test') {
+            const targetUrl = payload.target_url || data.target_url || serverIp;
+            return `
+                <div style="text-align:left; line-height:1.6;">
+                    <div><strong>Serveur saisi :</strong> ${escapeHtml(serverIp)}</div>
+                    <div><strong>Point de réception :</strong> ${escapeHtml(targetUrl)}</div>
+                    <div style="margin-top:10px;">La connexion avec le serveur distant est opérationnelle.</div>
+                </div>
+            `;
+        }
+
+        const sent = payload.sent || {};
+        const stats = payload.stats || {};
+        const equipesCount = toSyncCount(sent.equipes ?? (stats.equipes && stats.equipes.recus) ?? stats.equipes ?? 0);
+        const controlesCount = toSyncCount(sent.controles ?? (stats.controles && stats.controles.recus) ?? stats.controles ?? 0);
+        const summary = payload.summary || data.message || 'Opération terminée.';
+
+        return `
+            <div style="text-align:left; line-height:1.6;">
+                <div>${escapeHtml(summary)}</div>
+                <ul style="margin:10px 0 0 18px; padding:0;">
+                    <li><strong>Membres d'équipe synchronisés :</strong> ${equipesCount}</li>
+                    <li><strong>Contrôles synchronisés :</strong> ${controlesCount}</li>
+                </ul>
+            </div>
+        `;
+    }
+
+    async function requestSync(mode) {
+        if (mode === 'sync' && pendingEquipesCount === 0 && pendingControlesCount === 0) {
+            hideSyncProgress();
+            stopSyncProgress();
+            await Swal.fire({
+                icon: 'info',
+                title: 'Aucune donnée à synchroniser',
+                text: 'Aucun membre d\'équipe ni contrôle n\'est actuellement en attente de synchronisation.',
+                confirmButtonText: 'Fermer'
+            });
+            return;
+        }
+
+        const result = await Swal.fire({
+            icon: 'question',
+            title: 'Adresse du serveur',
+            input: 'text',
+            inputLabel: 'Saisissez l\'IP ou l\'URL de la machine serveur.',
+            inputValue: defaultSavedServerIp,
+            inputPlaceholder: 'Ex: http://192.168.1.107/ctr-net-fardc_active_front_web',
+            showCancelButton: true,
+            confirmButtonText: mode === 'test' ? 'Tester' : 'Synchroniser',
+            cancelButtonText: 'Annuler',
+            preConfirm: (value) => {
+                const serverIp = (value || '').trim();
+                if (!isValidServerAddress(serverIp)) {
+                    Swal.showValidationMessage('Veuillez saisir une IP ou une URL valide.');
+                    return false;
+                }
+                return serverIp;
+            }
+        });
+
+        if (!result.isConfirmed || !result.value) {
+            return;
+        }
+
+        const serverIp = result.value.trim();
+        storeServerIp(serverIp);
+
+        try {
+            if (mode === 'test') {
+                setConnectionButtonState('testing');
+
+                Swal.fire({
+                    title: 'Connexion',
+                    text: 'Vérification de la connexion au serveur...',
+                    allowOutsideClick: false,
+                    allowEscapeKey: false,
+                    didOpen: () => Swal.showLoading()
+                });
+
+                const data = await fetchJsonWithCsrf(testSyncEndpoint, {
+                    server_ip: serverIp
+                });
+
+                setConnectionButtonState('success');
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Connexion établie',
+                    html: buildSyncFeedbackHtml('test', data, serverIp),
+                    confirmButtonText: 'Fermer'
+                });
+                return;
+            }
+
+            resetSyncProgress();
+            setSyncButtonsState(true);
+            updateSyncProgress({
+                percentage: 8,
+                step: 'Préparation des données locales à synchroniser...',
+                sent: {
+                    equipes: pendingEquipesCount,
+                    controles: pendingControlesCount
+                }
+            });
+
+            const data = await streamSyncRequest(serverIp);
+            const payload = data && data.data ? data.data : {};
+            const isNoData = payload.sync_state === 'no_data';
+
+            if (isNoData) {
+                hideSyncProgress();
+            } else {
+                await new Promise((resolve) => window.setTimeout(resolve, 2000));
+            }
+
+            Swal.fire({
+                icon: isNoData ? 'info' : 'success',
+                title: isNoData ? 'Aucune donnée à synchroniser' : 'Synchronisation terminée',
+                html: buildSyncFeedbackHtml('sync', data, serverIp),
+                confirmButtonText: 'Fermer'
+            }).then(() => {
+                if (!isNoData) {
+                    window.location.reload();
+                }
+            });
+        } catch (error) {
+            if (mode === 'test') {
+                setConnectionButtonState('error');
+            }
+
+            Swal.fire({
+                icon: 'error',
+                title: mode === 'test' ? 'Connexion impossible' : 'Erreur de synchronisation',
+                text: error.message || 'Impossible de joindre le service de synchronisation.'
+            });
+        } finally {
+            if (mode === 'sync') {
+                stopSyncProgress();
+                setSyncButtonsState(false);
+            }
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        const testButton = document.getElementById('test-sync-btn');
+        const syncButton = document.getElementById('start-sync-btn');
+
+        if (testButton) {
+            testButton.addEventListener('click', function() {
+                requestSync('test');
+            });
+        }
+
+        if (syncButton) {
+            syncButton.addEventListener('click', function() {
+                requestSync('sync');
+            });
+        }
+    });
+</script>
 
 <?php include '../../includes/footer.php'; ?>

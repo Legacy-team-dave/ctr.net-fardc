@@ -95,16 +95,42 @@ if (!function_exists('app_bool_env')) {
     }
 }
 
+if (!function_exists('sync_instance_id')) {
+    function sync_instance_id()
+    {
+        $configured = trim((string) app_env('SYNC_INSTANCE_ID', ''));
+        $hostName = trim((string) php_uname('n'));
+        $hostSlug = preg_replace('/[^a-zA-Z0-9_-]+/', '-', strtolower($hostName)) ?: 'client';
+        $hostSlug = trim($hostSlug, '-_');
+        if ($hostSlug === '') {
+            $hostSlug = 'client';
+        }
+
+        $configuredSlug = preg_replace('/[^a-zA-Z0-9_-]+/', '-', strtolower($configured)) ?: '';
+        $configuredSlug = trim($configuredSlug, '-_');
+
+        if ($configuredSlug === '' || in_array($configuredSlug, ['local', 'client', 'site-local-01', 'default'], true)) {
+            return substr($hostSlug, 0, 50);
+        }
+
+        if (str_contains($configuredSlug, $hostSlug)) {
+            return substr($configuredSlug, 0, 50);
+        }
+
+        return substr($configuredSlug . '-' . $hostSlug, 0, 50);
+    }
+}
+
 if (!function_exists('sync_config')) {
     function sync_config()
     {
         return [
-            'instance_id' => trim((string) app_env('SYNC_INSTANCE_ID', php_uname('n'))),
+            'instance_id' => sync_instance_id(),
             'central_url' => rtrim((string) app_env('SYNC_CENTRAL_URL', ''), '/'),
             'shared_token' => trim((string) app_env('SYNC_SHARED_TOKEN', '')),
             'timeout' => max(5, (int) app_env('SYNC_TIMEOUT', 30)),
             'require_https' => app_bool_env('SYNC_REQUIRE_HTTPS', true),
-            'allowed_tables' => ['militaires', 'controles', 'litiges', 'equipes']
+            'allowed_tables' => ['equipes', 'controles']
         ];
     }
 }

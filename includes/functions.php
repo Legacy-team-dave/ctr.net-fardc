@@ -12,7 +12,6 @@ if (session_status() === PHP_SESSION_NONE) {
 
 require_once __DIR__ . '/../config/database.php';
 require_once __DIR__ . '/../config/app_config.php';
-require_once __DIR__ . '/sync_file_manager.php';
 
 // Définir l'encodage par défaut
 mb_internal_encoding('UTF-8');
@@ -48,6 +47,98 @@ function app_url($path = '')
     $path = ltrim((string) $path, '/');
 
     return $path === '' ? $base_path : $base_path . '/' . $path;
+}
+
+/**
+ * Retourne toutes les garnisons filtrées depuis la session ou les préférences utilisateur.
+ */
+function preferred_garnison_labels(?int $user_id = null): array
+{
+    $labels = [];
+    $collect = static function (array $garnisons) use (&$labels): void {
+        foreach ($garnisons as $garnison) {
+            $garnison = trim((string) $garnison);
+            if ($garnison !== '' && !in_array($garnison, $labels, true)) {
+                $labels[] = $garnison;
+            }
+        }
+    };
+
+    $sessionGarnisons = $_SESSION['filtres']['garnisons'] ?? [];
+    if (is_array($sessionGarnisons)) {
+        $collect($sessionGarnisons);
+    }
+
+    if (!empty($labels)) {
+        return $labels;
+    }
+
+    if ($user_id === null && !empty($_SESSION['user_id'])) {
+        $user_id = (int) $_SESSION['user_id'];
+    }
+
+    if (!empty($user_id)) {
+        $preferences = get_user_preferences((int) $user_id);
+        $storedGarnisons = $preferences['garnisons'] ?? [];
+        if (is_array($storedGarnisons)) {
+            $collect($storedGarnisons);
+        }
+    }
+
+    return $labels;
+}
+
+/**
+ * Retourne la première garnison filtrée depuis la session ou les préférences utilisateur.
+ */
+function preferred_garnison_label(?int $user_id = null): string
+{
+    $labels = preferred_garnison_labels($user_id);
+    return $labels[0] ?? '';
+}
+
+/**
+ * Marque la session courante comme ayant des données locales à synchroniser.
+ */
+function mark_sync_dirty(?string $table = null, ?int $record_id = null): bool
+{
+    $_SESSION['sync_dirty'] = true;
+    $_SESSION['sync_dirty_at'] = date('c');
+
+    if (!isset($GLOBALS['pdo']) || !($GLOBALS['pdo'] instanceof PDO)) {
+        return true;
+    }
+
+    $tableName = strtolower(trim((string) $table));
+    if ($tableName === '' || $record_id === null || $record_id <= 0) {
+        return true;
+    }
+
+    if (!in_array($tableName, ['controles', 'equipes', 'militaires'], true)) {
+        return true;
+    }
+
+    try {
+        $columns = $GLOBALS['pdo']->query("SHOW COLUMNS FROM `{$tableName}`")->fetchAll(PDO::FETCH_COLUMN) ?: [];
+        if (!in_array('sync_status', $columns, true)) {
+            return true;
+        }
+
+        $sets = ["sync_status = 'local'"];
+        if (in_array('sync_date', $columns, true)) {
+            $sets[] = 'sync_date = NULL';
+        }
+        if (in_array('sync_version', $columns, true)) {
+            $sets[] = 'sync_version = COALESCE(sync_version, 0) + 1';
+        }
+
+        $stmt = $GLOBALS['pdo']->prepare("UPDATE `{$tableName}` SET " . implode(', ', $sets) . " WHERE id = ?");
+        $stmt->execute([(int) $record_id]);
+    } catch (Throwable $e) {
+        error_log('⚠️ mark_sync_dirty: ' . $e->getMessage());
+    }
+
+    return true;
 }
 
 /**
@@ -1134,7 +1225,6 @@ function read_backup_state()
         'last_backup_at' => 0,
         'last_run_at' => 0,
         'last_control_id' => 0,
-        'last_litige_id' => 0,
         'non_vus_snapshot' => []
     ];
 
@@ -1548,11 +1638,9 @@ function maybe_create_backup($force = false)
     }
 
     $control_fields = ['id', 'matricule', 'type_controle', 'nom_beneficiaire', 'new_beneficiaire', 'lien_parente', 'date_controle', 'mention', 'observations', 'cree_le'];
-    $litige_fields = ['id', 'matricule', 'noms', 'grade', 'type_controle', 'nom_beneficiaire', 'lien_parente', 'garnison', 'province', 'date_controle', 'observations', 'cree_le'];
     $non_vus_fields = ['SERIE', 'MATRICULE', 'NOMS', 'GRADE', 'UNITE', 'BENEFICIAIRE', 'GARNISON', 'PROVINCE', 'CATEGORIE', 'ZDEF'];
 
     $all_controles = fetch_full_rows_for_table('controles', $control_fields);
-    $all_litiges = fetch_full_rows_for_table('litiges', $litige_fields);
     $current_non_vus = get_non_vus_rows_for_backup();
     $current_non_vus_snapshot = get_non_vus_matricule_snapshot($current_non_vus);
 
@@ -1561,11 +1649,6 @@ function maybe_create_backup($force = false)
             'headers' => $control_fields,
             'rows' => $all_controles,
             'sheet_name' => 'Controles'
-        ],
-        'litiges' => [
-            'headers' => $litige_fields,
-            'rows' => $all_litiges,
-            'sheet_name' => 'Litiges'
         ],
         'non_vus' => [
             'headers' => $non_vus_fields,
@@ -1583,12 +1666,10 @@ function maybe_create_backup($force = false)
     }
 
     $max_control_id = (int)$pdo->query("SELECT COALESCE(MAX(id), 0) FROM controles")->fetchColumn();
-    $max_litige_id = (int)$pdo->query("SELECT COALESCE(MAX(id), 0) FROM litiges")->fetchColumn();
 
     $state['last_backup_at'] = $now;
     $state['last_run_at'] = $now;
     $state['last_control_id'] = $max_control_id;
-    $state['last_litige_id'] = $max_litige_id;
     $state['non_vus_snapshot'] = $current_non_vus_snapshot;
     write_backup_state($state);
 
@@ -1598,7 +1679,6 @@ function maybe_create_backup($force = false)
         'file' => $zip_file,
         'counts' => [
             'controles' => count($all_controles),
-            'litiges' => count($all_litiges),
             'non_vus' => count($current_non_vus)
         ]
     ];

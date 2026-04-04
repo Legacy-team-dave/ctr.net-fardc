@@ -26,17 +26,11 @@ return [
     '/ctr.net-fardc/modules/controles/modifier.php' => ['ADMIN_IG', 'OPERATEUR'],
     '/ctr.net-fardc/modules/controles/supprimer.php' => ['ADMIN_IG'],
     '/ctr.net-fardc/modules/controles/consulter.php' => ['ADMIN_IG', 'OPERATEUR'],
-
-    // Litiges Module
-    '/ctr.net-fardc/modules/litige/liste.php' => ['ADMIN_IG', 'OPERATEUR'],
-    '/ctr.net-fardc/modules/litige/ajouter.php' => ['ADMIN_IG', 'OPERATEUR'],
-    '/ctr.net-fardc/modules/litige/modifier.php' => ['ADMIN_IG', 'OPERATEUR'],
-    '/ctr.net-fardc/modules/litige/supprimer.php' => ['ADMIN_IG'],
+    '/ctr.net-fardc/modules/controles/sync.php' => ['ADMIN_IG', 'OPERATEUR'],
 
     // Reports Module
     '/ctr.net-fardc/modules/rapports/index.php' => ['ADMIN_IG', 'OPERATEUR'],
     '/ctr.net-fardc/modules/rapports/controles.php' => ['ADMIN_IG', 'OPERATEUR'],
-    '/ctr.net-fardc/modules/rapports/litiges.php' => ['ADMIN_IG', 'OPERATEUR'],
 
     // Settings and Profile
     '/ctr.net-fardc/parametres.php' => ['ADMIN_IG'],

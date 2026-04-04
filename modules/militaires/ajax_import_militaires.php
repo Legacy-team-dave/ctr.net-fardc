@@ -217,7 +217,6 @@ try {
 
     $response['success'] = true;
     $response['message'] = $message;
-    mark_sync_dirty();
 } catch (Exception $e) {
     if (isset($pdo) && $pdo->inTransaction()) {
         $pdo->rollBack();

@@ -192,7 +192,6 @@ function importerMilitaires($data)
         // --- AJOUT LOG ---
         log_action('IMPORT', 'militaires', null, "$compteur militaires importés");
         // --- FIN AJOUT LOG ---
-        mark_sync_dirty();
     }
 
     $message = "$compteur militaire(s) importé(s) sur " . count($data) . " ligne(s).";
@@ -368,7 +367,7 @@ function importerMilitaires($data)
     }
 
     .table-responsive {
-        overflow-x: auto;
+        overflow: visible;
         border-radius: 4px;
     }
 

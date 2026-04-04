@@ -486,8 +486,7 @@ $export_fields = [
     }
 
     .dataTables_scrollBody {
-        overflow-x: auto !important;
-        overflow-y: auto !important;
+        overflow: visible !important;
         border-radius: 10px;
     }
 
@@ -595,8 +594,8 @@ $export_fields = [
         max-width: 700px;
         box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
         animation: slideDown 0.3s ease;
-        max-height: 96vh;
-        overflow-y: auto;
+        max-height: none;
+        overflow-y: visible;
     }
 
     .modal-champs-header {
@@ -1119,9 +1118,9 @@ $export_fields = [
             ],
             pageLength: 10,
             lengthMenu: [10, 25, 50, 100],
-            scrollX: true,
-            scrollY: '400px',
-            scrollCollapse: true,
+            scrollX: false,
+            scrollY: false,
+            scrollCollapse: false,
             paging: true,
             columnDefs: [{
                 orderable: false,

@@ -51,7 +51,6 @@ try {
             "Sauvegarde consolidée exécutée: "
                 . ($result['file'] ?? 'archive inconnue')
                 . " | controles=" . ($counts['controles'] ?? 0)
-                . " | litiges=" . ($counts['litiges'] ?? 0)
                 . " | non_vus=" . ($counts['non_vus'] ?? 0)
         );
     } else {

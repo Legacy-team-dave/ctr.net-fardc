@@ -452,7 +452,7 @@ if ($step === 'reset') {
             <a href="index.php" class="brand-link">
                 <img src="assets/img/logo-fardc.png" alt="FARDC Logo" class="brand-image"
                     onerror="this.style.display='none'">
-                <span class="brand-text">Réinitialisation</span>
+                <span class="brand-text">CTR.NET - FARDC</span>
             </a>
         </div>
 
@@ -569,7 +569,7 @@ if ($step === 'reset') {
 
         <div class="reset-footer">
             <i class="fas fa-shield-alt"></i>
-            <span>IG - FARDC v1.1.0</span>
+            <span>IG-FARDC @ 2026</span>
         </div>
     </div>
 

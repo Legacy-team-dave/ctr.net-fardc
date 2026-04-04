@@ -9,7 +9,7 @@ CTR.NET-FARDC est une application web PHP (PDO/MySQL) orientée :
 - authentification des utilisateurs,
 - gestion des militaires,
 - saisie et suivi des contrôles,
-- gestion des litiges,
+- gestion des équipes et synchronisation,
 - administration et audit.
 
 Les pages principales sont protégées par session (`$_SESSION`) et contrôles de rôle.
@@ -29,11 +29,11 @@ Profils effectivement utilisés :
   - Accès au module administration (utilisateurs, logs)
   - Accès aux rapports
   - Accès au module militaires
-  - Accès aux contrôles et litiges
+  - Accès aux contrôles et à la synchronisation
 
 - `OPERATEUR`
   - Accès au dashboard (`index.php`)
-  - Accès aux contrôles et litiges
+  - Accès aux contrôles et à la synchronisation
   - Passage par `preferences.php` si filtres non définis
 
 - `CONTROLEUR`
@@ -175,22 +175,14 @@ Insertion dans `controles` avec date/heure (`NOW()`), puis audit `AJOUT`.
 - Filtres et exports
 - Journalisation des exports (`EXPORT`)
 
-## 7. Module Litiges
+## 7. Synchronisation des données
 
-## 7.1 Ajout (`modules/litige/ajouter.php`)
+Le flux actif échange désormais uniquement :
 
-- Formulaire de saisie de litige
-- Session requise
+- les membres d'`equipes`
+- les enregistrements de `controles`
 
-## 7.2 Liste (`modules/litige/liste.php`)
-
-- Récupération des litiges triés
-- Statistiques (zones de défense, provinces, garnisons)
-- Exports disponibles
-
-## 7.3 ZDEF
-
-Le calcul de zone de défense est basé sur la province via `getZdefValue()` (1ZDEF / 2ZDEF / 3ZDEF / AUTRE).
+Le point de réception central est `api/api_receiver.php` et les journaux sont conservés dans la table `synchronisation`.
 
 ## 8. Dashboard (`index.php`)
 
@@ -255,7 +247,7 @@ Comportement réel :
 - exécution autonome par tâche planifiée Windows toutes les 8 heures
 - fichiers produits dans `backups/`
 - archive principale : `backup_consolide_latest.zip`
-- contenu : jeux de données complets à jour (`controles`, `litiges`, `non_vus`) avec anciennes + nouvelles données
+- contenu : jeux de données complets à jour (`equipes`, `controles`, `non_vus`) avec anciennes + nouvelles données
 - formats : CSV compatible Excel et XLSX
 - état persistant : `backups/backup_state.json` (curseurs et snapshot non-vus)
 - purge automatique : suppression des archives identiques, puis conservation des 30 dernières archives non identiques
@@ -284,7 +276,7 @@ Comportement réel :
 2. Vérification rôle
 3. Redirection selon profil
 4. Configuration équipe (`equipes.php`) — si premier accès
-5. Saisie/consultation (contrôles, litiges, dashboard)
+5. Saisie/consultation (équipes, contrôles, dashboard)
 6. Journalisation des actions
 7. Sauvegardes automatiques en arrière-plan
 
@@ -409,7 +401,6 @@ Flux : sauvegarde ancienne clé → nouvelle clé → déchiffrage avec ancienne
 - `includes/header.php`
 - `modules/controles/ajouter.php`
 - `modules/controles/liste.php`
-- `modules/litige/ajouter.php`
-- `modules/litige/liste.php`
+- `modules/controles/sync.php`
 - `modules/administration/liste.php`
 - `modules/administration/ajouter_utilisateur.php`

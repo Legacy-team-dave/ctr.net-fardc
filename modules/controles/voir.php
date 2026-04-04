@@ -210,7 +210,7 @@ include '../../includes/header.php';
 
 <link rel="stylesheet" href="../../assets/fontawesome/css/all.min.css">
 <style>
-    /* ===== STYLES AGRANDIS (comme modules/litige/voir.php) ===== */
+    /* ===== STYLES AGRANDIS POUR L'AFFICHAGE DETAILLE ===== */
     * {
         margin: 0;
         padding: 0;

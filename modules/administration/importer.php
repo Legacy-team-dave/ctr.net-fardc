@@ -397,7 +397,7 @@ body {
 }
 
 .table-responsive {
-    overflow-x: auto;
+    overflow: visible;
     border-radius: 4px;
 }
 

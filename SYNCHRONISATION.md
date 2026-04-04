@@ -1,22 +1,66 @@
 # Synchronisation locale → serveur central
 
-## Principe
+## Portée retenue
 
-- L'application **centrale** est la même base code que l'application locale.
-- La différence se fait via `APP_MODE` dans `.env` :
-  - `APP_MODE=local` : instance terrain (avec bouton **Synchroniser**)
-  - `APP_MODE=central` : serveur central (accès **ADMIN_IG uniquement**)
-- Les données synchronisées portent sur les tables :
-  - `militaires`
-  - `controles`
-  - `litiges`
-  - `equipes`
+La synchronisation a été simplifiée pour ne transporter que :
 
-## Déploiement du serveur central
+- `equipes`
+- `controles`
 
-1. Déployer une copie de l'application sur le serveur principal.
-2. Configurer la base MySQL centrale avec la **même structure** que les instances locales.
-3. Mettre dans `.env` du central :
+> Toute la logique liée aux `litiges` et à l’ancienne synchronisation par mapping a été retirée.
+
+## Architecture
+
+- `APP_MODE=local` : instance terrain qui envoie les données.
+- `APP_MODE=central` : instance serveur qui reçoit les données.
+- Page locale de lancement : `modules/controles/sync.php`
+- Endpoint serveur de réception : `api/api_receiver.php`
+- Test de connectivité : `api/test_sync_connection.php`
+
+## Structure SQL attendue
+
+### Table `equipes`
+Elle doit désormais contenir les métadonnées de synchronisation suivantes :
+
+- `id_source`
+- `db_source`
+- `sync_status`
+- `sync_date`
+- `sync_version`
+
+### Table `controles`
+Elle conserve les champs de suivi :
+
+- `id_source`
+- `db_source`
+- `sync_status`
+- `sync_date`
+- `sync_version`
+
+### Table `synchronisation`
+Un journal simple enregistre les envois avec :
+
+- `controle_ids`
+- `equipe_ids`
+- `nb_controles`
+- `nb_equipes`
+- `statut`
+- `details`
+- `cree_le`
+
+## Configuration `.env`
+
+### Côté local
+
+```env
+APP_MODE=local
+SYNC_INSTANCE_ID=site-local-01
+SYNC_CENTRAL_URL=
+SYNC_SHARED_TOKEN=le_meme_token_que_le_central
+SYNC_TIMEOUT=30
+```
+
+### Côté central
 
 ```env
 APP_MODE=central
@@ -24,78 +68,41 @@ SYNC_SHARED_TOKEN=un_token_fort_et_unique
 SYNC_REQUIRE_HTTPS=true
 ```
 
-4. Créer/mettre à jour les comptes applicatifs (authentification classique login/mot de passe).
-5. Vérifier que seuls les utilisateurs `ADMIN_IG` peuvent se connecter en mode central.
+## Utilisation
 
-### Initialiser les tables de synchronisation
+1. Ouvrir `Contrôles > Synchronisation`.
+2. Saisir l’IP ou l’URL de la machine centrale.
+   - Avec **Laragon** en configuration standard, l’IP seule suffit (`10.x.x.x`) sans `:port`.
+   - Ajouter `:port` uniquement si Apache a été déplacé hors de `80` / `443`.
+3. Cliquer sur **Tester la connexion IP**.
+4. Cliquer sur **Synchroniser maintenant**.
 
-Exécuter le script SQL sur la base centrale:
+Le système envoie automatiquement :
 
-```sql
-USE `ctr.net-fardc`;
-SOURCE sql/sync_init.sql;
-```
+- le roster complet de `equipes`
+- les lignes de `controles` encore non synchronisées
 
-Script fourni: `sql/sync_init.sql`
+## Dashboard central attendu
 
-### Rollback des tables de synchronisation
+Après synchronisation, `ctr-net-fardc_active_front_web/index.php` doit afficher :
 
-En cas de réinitialisation complète des métadonnées de synchronisation:
+- une section de synthèse avec `Militaires (total)`, `Total Contrôlés`, `Non-vus` et `Équipes synchronisées`
+- une deuxième section avec une carte par équipe/source qui a transmis des données, regroupée par **libellé d’équipe** si l’identifiant technique du PC varie
+- la `Carte interactive de la RDC par province`
 
-```sql
-USE `ctr.net-fardc`;
-SOURCE sql/sync_rollback.sql;
-```
+## Ancienne logique supprimée
 
-Script fourni: `sql/sync_rollback.sql`
+Les éléments suivants ne font plus partie du flux actif :
 
-## Configuration d'une instance locale
+- `api/synchronisation.php` (remplacé par `api/api_receiver.php`)
+- `sync_batches`
+- `sync_record_map`
+- l’ancienne synchronisation élargie hors `equipes` / `controles`
+- les anciennes pages de comparaison/archives/conflits
 
-Dans `.env` de chaque site local :
+## Sécurité
 
-```env
-APP_MODE=local
-SYNC_INSTANCE_ID=site-local-01
-SYNC_CENTRAL_URL=https://votre-serveur-central/ctr.net-fardc
-SYNC_SHARED_TOKEN=le_meme_token_que_le_central
-SYNC_TIMEOUT=30
-```
+- Utiliser le même `SYNC_SHARED_TOKEN` des deux côtés.
+- Préférer HTTPS en production.
+- Ne jamais laisser le token par défaut.
 
-## Usage
-
-1. Se connecter sur l'instance locale avec un profil `ADMIN_IG` ou `OPERATEUR`.
-2. Cliquer sur **Synchroniser** (barre supérieure).
-3. Confirmer l'envoi.
-4. L'application affiche le résultat (succès/erreur).
-
-## API
-
-Endpoint unique : `api/synchronisation.php`
-
-- **Envoi local vers central**
-  - `POST /api/synchronisation.php?action=push`
-  - Authentification : session web + CSRF
-  - Rôle : `ADMIN_IG` ou `OPERATEUR`
-
-- **Réception côté central**
-  - `POST /api/synchronisation.php?action=receive`
-  - Authentification : `Authorization: Bearer <SYNC_SHARED_TOKEN>`
-  - Sécurité : HTTPS requis si `SYNC_REQUIRE_HTTPS=true`
-
-## Logique de fusion
-
-- Le central n'écrase pas aveuglément par ID local.
-- Une table de mapping (`sync_record_map`) lie :
-  - `source_instance`
-  - `table_name`
-  - `source_pk`
-  - `target_pk`
-- Si un enregistrement est déjà mappé : **mise à jour** de la ligne centrale.
-- Sinon : **insertion** d'une nouvelle ligne centrale + création du mapping.
-- Les batchs de réception sont journalisés dans `sync_batches`.
-
-## Notes de sécurité
-
-- Toujours utiliser HTTPS pour les échanges inter-sites.
-- Ne pas laisser `SYNC_SHARED_TOKEN` par défaut.
-- Changer périodiquement le token et le distribuer aux instances autorisées.

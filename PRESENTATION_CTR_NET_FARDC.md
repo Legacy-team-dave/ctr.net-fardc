@@ -2,7 +2,7 @@
 
 ## Section 1: Résumé exécutif
 
-CTR.NET-FARDC est une application de contrôle des effectifs qui structure le travail de terrain autour de trois profils (`ADMIN_IG`, `OPERATEUR`, `CONTROLEUR`), de règles de saisie claires et d’une traçabilité systématique des actions sensibles. La solution centralise la gestion des militaires, la saisie des contrôles, le traitement des litiges et la supervision via tableaux de bord, avec un fonctionnement adapté aux responsabilités de chaque profil. L’enjeu principal est d’améliorer la fiabilité des données, d’accélérer les opérations de contrôle et de sécuriser la gouvernance grâce aux journaux d’audit et aux sauvegardes automatiques.
+CTR.NET-FARDC est une application de contrôle des effectifs qui structure le travail de terrain autour de trois profils (`ADMIN_IG`, `OPERATEUR`, `CONTROLEUR`), de règles de saisie claires et d’une traçabilité systématique des actions sensibles. La solution centralise la gestion des militaires, la saisie des contrôles, la synchronisation des équipes et la supervision via tableaux de bord, avec un fonctionnement adapté aux responsabilités de chaque profil. L’enjeu principal est d’améliorer la fiabilité des données, d’accélérer les opérations de contrôle et de sécuriser la gouvernance grâce aux journaux d’audit et aux sauvegardes automatiques.
 
 ---
 
@@ -33,14 +33,14 @@ Le dispositif répond au besoin de fiabilité des contrôles, de rapidité d’e
 ## Slide 3 — Périmètre fonctionnel
 
 **Message clé**
-L’application couvre les fonctions clés: administration, militaires, contrôles, litiges, rapports.
+L’application couvre les fonctions clés: administration, militaires, contrôles, synchronisation et supervision centrale.
 
 **Points à dire à l’oral**
 - Module Administration: utilisateurs et journaux.
 - Module Militaires: référentiel de base des personnes contrôlées.
 - Module Contrôles: saisie et consultation des contrôles.
-- Module Litige: enregistrement et suivi des cas litigieux.
-- Module Rapports: visibilité consolidée pour le pilotage.
+- Module Synchronisation: envoi sécurisé des `equipes` et `controles` vers le central.
+- Module Tableau de bord: visibilité consolidée par équipe synchronisée.
 
 ## Slide 4 — Profils et responsabilités
 
@@ -76,16 +76,16 @@ La saisie de contrôle est encadrée par des règles qui sécurisent la qualité
 - Règles de bénéficiaire et lien de parenté appliquées avant enregistrement.
 - Horodatage précis à l’insertion (`NOW()`).
 
-## Slide 7 — Litiges et continuité de traitement
+## Slide 7 — Synchronisation terrain → central
 
 **Message clé**
-Le module litige complète le dispositif en traitant les cas non standard.
+La synchronisation a été simplifiée pour envoyer uniquement les `equipes` et les `controles` vers le serveur central.
 
 **Points à dire à l’oral**
-- Les litiges sont saisis, classés et consultables.
-- La liste permet tri, filtre, export et lecture consolidée.
-- Les provinces/garnisons sont exploitables pour l’analyse.
-- La catégorisation territoriale (ZDEF) facilite la supervision.
+- Chaque site renseigne l’IP ou l’URL du serveur central avant l’envoi.
+- Le flux transporte le roster de `equipes` et les `controles` non encore synchronisés.
+- Le tableau de bord central crée une carte par équipe source avec les effectifs reçus.
+- Cette approche réduit les erreurs et facilite le suivi multi-sites.
 
 ## Slide 8 — Sécurité et contrôle d’accès
 

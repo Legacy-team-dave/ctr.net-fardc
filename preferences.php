@@ -6,21 +6,29 @@ if (!isset($_SESSION['user_id'])) {
     exit;
 }
 
+$saved_filters = [];
+
 try {
     $stmt = $pdo->prepare("SELECT preferences FROM utilisateurs WHERE id_utilisateur = ?");
     $stmt->execute([$_SESSION['user_id']]);
     $preferences = $stmt->fetchColumn();
 
     if ($preferences) {
-        $_SESSION['filtres'] = json_decode($preferences, true);
-        header('Location: ' . app_url('index.php'));
-        exit;
+        $decodedPreferences = json_decode($preferences, true);
+        if (is_array($decodedPreferences)) {
+            $saved_filters = $decodedPreferences;
+            $_SESSION['filtres'] = $decodedPreferences;
+        }
+    } elseif (isset($_SESSION['filtres']) && is_array($_SESSION['filtres'])) {
+        $saved_filters = $_SESSION['filtres'];
     }
 } catch (PDOException $e) {
     error_log("Erreur vérification préférences: " . $e->getMessage());
 }
 
 $error = null;
+$selected_garnisons = $saved_filters['garnisons'] ?? [];
+$selected_categories = $saved_filters['categories'] ?? [];
 
 try {
     $garnisons = $pdo->query("SELECT garnison, COUNT(*) as total FROM militaires WHERE garnison IS NOT NULL AND garnison != '' GROUP BY garnison ORDER BY garnison")->fetchAll(PDO::FETCH_ASSOC);
@@ -38,8 +46,8 @@ $traductions_categories = [
 ];
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $selected_garnisons = $_POST['garnisons'] ?? [];
-    $selected_categories = $_POST['categories'] ?? [];
+    $selected_garnisons = array_values(array_filter($_POST['garnisons'] ?? [], static fn($value): bool => trim((string) $value) !== ''));
+    $selected_categories = array_values(array_filter($_POST['categories'] ?? [], static fn($value): bool => trim((string) $value) !== ''));
 
     if (empty($selected_garnisons)) {
         $error = "Sélectionnez au moins une garnison.";
@@ -52,16 +60,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         ];
 
         try {
-            $stmt = $pdo->prepare("UPDATE utilisateurs SET preferences = ? WHERE id_utilisateur = ?");
-            $stmt->execute([json_encode($_SESSION['filtres']), $_SESSION['user_id']]);
+            if (!update_user_preferences((int) $_SESSION['user_id'], $_SESSION['filtres'])) {
+                throw new RuntimeException('Échec de la mise à jour des préférences utilisateur.');
+            }
 
-            // --- REMPLACEMENT audit_action() PAR log_action() ---
             log_action('PREFERENCES', 'utilisateurs', $_SESSION['user_id'], 'Définition des filtres');
-            // --- FIN REMPLACEMENT ---
 
+            $_SESSION['setup_equipes'] = true;
             header('Location: ' . app_url('equipes.php'));
             exit;
-        } catch (PDOException $e) {
+        } catch (Throwable $e) {
             error_log("Erreur sauvegarde préférences: " . $e->getMessage());
             $error = "Erreur lors de la sauvegarde.";
         }
@@ -109,11 +117,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
         .pref-card {
-            width: 950px;
+            width: 850px;
             max-width: 100%;
-            max-height: 98vh;
+            max-height: 96vh;
             background: white;
-            border-radius: 16px;
+            border-radius: 12px;
             box-shadow: 0 15px 30px rgba(0, 0, 0, 0.2);
             overflow: hidden;
             display: flex;
@@ -122,22 +130,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         .pref-header {
             background: linear-gradient(135deg, #2e7d32 0%, #1b5e20 100%);
-            padding: 8px 12px;
+            padding: 6px 10px;
             color: white;
             display: flex;
             align-items: center;
             justify-content: space-between;
             flex-wrap: wrap;
-            gap: 8px;
+            gap: 4px;
             flex-shrink: 0;
         }
 
         .pref-header h2 {
-            font-size: 1.1rem;
+            font-size: 0.95rem;
             font-weight: 600;
             display: flex;
             align-items: center;
-            gap: 6px;
+            gap: 4px;
             margin: 0;
         }
 
@@ -153,7 +161,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
         .pref-body {
-            padding: 12px;
+            padding: 8px;
             background: #f8f9fa;
             flex: 1;
             display: flex;
@@ -163,23 +171,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         .info-line {
             background: white;
-            border-left: 4px solid #2e7d32;
-            padding: 8px 12px;
-            border-radius: 8px;
-            margin-bottom: 10px;
+            border-left: 3px solid #2e7d32;
+            padding: 4px 8px;
+            border-radius: 6px;
+            margin-bottom: 6px;
             display: flex;
             align-items: center;
-            gap: 8px;
-            font-size: 0.85rem;
+            gap: 6px;
+            font-size: 0.78rem;
             color: #6c757d;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
             flex-shrink: 0;
         }
 
         .row {
             display: flex;
-            gap: 12px;
-            margin-bottom: 10px;
+            gap: 8px;
+            margin-bottom: 6px;
             flex: 1;
             min-height: 0;
         }
@@ -192,9 +200,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         .box {
             background: white;
-            border-radius: 12px;
-            padding: 8px;
-            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.05);
+            border-radius: 8px;
+            padding: 6px;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
             border: 1px solid #e0e0e0;
             width: 100%;
             display: flex;
@@ -203,11 +211,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
         .box h4 {
-            font-size: 0.95rem;
+            font-size: 0.82rem;
             font-weight: 600;
             color: #1b5e20;
-            margin: 0 0 6px 0;
-            padding-bottom: 4px;
+            margin: 0 0 4px 0;
+            padding-bottom: 3px;
             border-bottom: 2px solid #f8f9fa;
             display: flex;
             align-items: center;
@@ -230,11 +238,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             background: white;
             border: 1px solid #e0e0e0;
             border-radius: 30px;
-            padding: 4px 10px;
-            margin-bottom: 8px;
+            padding: 3px 8px;
+            margin-bottom: 4px;
             display: flex;
             align-items: center;
-            gap: 6px;
+            gap: 4px;
             transition: all 0.2s;
             flex-shrink: 0;
         }
@@ -248,7 +256,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             border: none;
             background: transparent;
             width: 100%;
-            font-size: 0.8rem;
+            font-size: 0.75rem;
             outline: none;
             color: #1e293b;
         }
@@ -258,7 +266,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             /* 3 colonnes pour les garnisons et catégories */
             grid-template-columns: repeat(3, 1fr);
             gap: 4px;
-            overflow-y: auto;
+            overflow-y: visible;
             padding-right: 2px;
             flex: 1;
             min-height: 0;
@@ -284,12 +292,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             align-items: center;
             background: #f8f9fa;
             border: 1px solid #e0e0e0;
-            border-radius: 4px;
-            padding: 2px 4px;
+            border-radius: 3px;
+            padding: 1px 3px;
             cursor: pointer;
             transition: all 0.2s;
-            font-size: 0.9rem;
-            /* Augmenté de 0.7rem à 0.8rem */
+            font-size: 0.78rem;
         }
 
         .item:hover {
@@ -299,9 +306,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
         .item input[type="checkbox"] {
-            width: 12px;
-            height: 12px;
-            margin-right: 3px;
+            width: 11px;
+            height: 11px;
+            margin-right: 2px;
             accent-color: #2e7d32;
             cursor: pointer;
             flex-shrink: 0;
@@ -331,13 +338,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         .item-count {
             background: white;
             color: #1b5e20;
-            padding: 2px 5px;
-            /* Augmenté de 1px 3px à 2px 5px */
+            padding: 1px 4px;
             border-radius: 20px;
-            font-size: 0.9rem;
-            /* Augmenté de 0.6rem à 0.7rem */
+            font-size: 0.72rem;
             font-weight: 600;
-            margin-left: 3px;
+            margin-left: 2px;
             border: 1px solid #2e7d32;
             flex-shrink: 0;
         }
@@ -346,8 +351,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             display: flex;
             align-items: center;
             justify-content: space-between;
-            margin-top: 6px;
-            padding-top: 4px;
+            margin-top: 4px;
+            padding-top: 3px;
             border-top: 1px dashed #e0e0e0;
             flex-shrink: 0;
         }
@@ -355,13 +360,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         .counter {
             background: #e8f5e9;
             color: #1b5e20;
-            padding: 3px 8px;
+            padding: 2px 6px;
             border-radius: 20px;
-            font-size: 0.7rem;
+            font-size: 0.65rem;
             font-weight: 600;
             display: flex;
             align-items: center;
-            gap: 4px;
+            gap: 3px;
         }
 
         .btn-group {
@@ -370,16 +375,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
         .btn-sm {
-            padding: 3px 10px;
+            padding: 2px 8px;
             border: none;
             border-radius: 20px;
-            font-size: 0.7rem;
+            font-size: 0.65rem;
             font-weight: 500;
             cursor: pointer;
             transition: all 0.2s;
             display: inline-flex;
             align-items: center;
-            gap: 3px;
+            gap: 2px;
         }
 
         .btn-select {
@@ -404,14 +409,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         .summary {
             background: white;
-            border-radius: 8px;
-            padding: 6px 12px;
-            margin: 8px 0;
-            font-size: 0.8rem;
+            border-radius: 6px;
+            padding: 4px 8px;
+            margin: 4px 0;
+            font-size: 0.75rem;
             border: 1px solid #e0e0e0;
             display: flex;
             align-items: center;
-            gap: 15px;
+            gap: 10px;
             flex-wrap: wrap;
             flex-shrink: 0;
         }
@@ -430,16 +435,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         .btn-submit {
             background: linear-gradient(135deg, #2e7d32 0%, #1b5e20 100%);
             border: none;
-            border-radius: 8px;
-            padding: 8px;
+            border-radius: 6px;
+            padding: 6px;
             font-weight: 600;
-            font-size: 0.9rem;
+            font-size: 0.82rem;
             width: 100%;
             color: white;
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 6px;
+            gap: 5px;
             cursor: pointer;
             transition: all 0.3s;
             text-transform: uppercase;
@@ -461,14 +466,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         .alert {
             background: #fee2e2;
             color: #991b1b;
-            padding: 8px 12px;
-            border-radius: 8px;
-            margin-bottom: 10px;
-            font-size: 0.8rem;
+            padding: 5px 8px;
+            border-radius: 6px;
+            margin-bottom: 6px;
+            font-size: 0.75rem;
             display: flex;
             align-items: center;
-            gap: 6px;
-            border-left: 4px solid #dc3545;
+            gap: 5px;
+            border-left: 3px solid #dc3545;
             flex-shrink: 0;
         }
 
@@ -558,7 +563,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                 <?php foreach ($garnisons as $g): ?>
                                     <label class="item">
                                         <input type="checkbox" name="garnisons[]"
-                                            value="<?= htmlspecialchars($g['garnison']) ?>" class="garnison-input">
+                                            value="<?= htmlspecialchars($g['garnison']) ?>" class="garnison-input"
+                                            <?= in_array((string) $g['garnison'], $selected_garnisons, true) ? 'checked' : '' ?>>
                                         <!-- Ajout de la classe garnison-name pour mettre en gras -->
                                         <span class="item-name garnison-name"><?= htmlspecialchars($g['garnison']) ?></span>
                                         <span class="item-count"><?= $g['total'] ?></span>
@@ -624,6 +630,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         };
 
         let categoriesData = [];
+        const preselectedCategories = <?= json_encode(array_values($selected_categories), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?>;
 
         function loadCategories(garnisons) {
             const container = document.getElementById('categoriesContainer');
@@ -664,9 +671,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     } else {
                         let html = '';
                         data.forEach(cat => {
-                            // Ajout de la classe categorie-name pour mettre le nom en gras
+                            const isChecked = preselectedCategories.includes(cat.categorie) ? 'checked' : '';
                             html +=
-                                `<label class="item"><input type="checkbox" name="categories[]" value="${cat.categorie}" class="categorie-input"><span class="item-name categorie-name">${traductions[cat.categorie] || cat.categorie}</span><span class="item-count">${cat.total}</span></label>`;
+                                `<label class="item"><input type="checkbox" name="categories[]" value="${cat.categorie}" class="categorie-input" ${isChecked}><span class="item-name categorie-name">${traductions[cat.categorie] || cat.categorie}</span><span class="item-count">${cat.total}</span></label>`;
                         });
                         container.innerHTML = html;
                         document.querySelectorAll('.categorie-input').forEach(cb => cb.addEventListener('change',
@@ -768,6 +775,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         // Écouteur pour la recherche
         document.getElementById('searchGarnison')?.addEventListener('input', function(e) {
             filterGarnisons(e.target.value);
+        });
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const initialGarnisons = Array.from(document.querySelectorAll('.garnison-input:checked')).map(cb => cb.value);
+            if (initialGarnisons.length > 0) {
+                loadCategories(initialGarnisons);
+            }
+            updateCounters();
+            updateSummary();
         });
 
         document.getElementById('preferencesForm')?.addEventListener('submit', function(e) {

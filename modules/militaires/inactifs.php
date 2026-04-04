@@ -544,13 +544,6 @@ body {
     border-radius: 0 10px 10px 0;
 }
 
-.select-all-checkbox,
-.row-checkbox {
-    width: 18px;
-    height: 18px;
-    cursor: pointer;
-    accent-color: #2e7d32;
-}
 
 .categorie-badge {
     display: inline-block;
@@ -689,8 +682,7 @@ body {
 }
 
 .dataTables_scrollBody {
-    overflow-x: auto !important;
-    overflow-y: auto !important;
+    overflow: visible !important;
     border-radius: 10px;
 }
 
@@ -1203,7 +1195,6 @@ body {
                     <table id="table-militaires" class="table-militaires" style="width:100%">
                         <thead>
                             <tr>
-                                <th><input type="checkbox" class="select-all-checkbox" id="select-all"></th>
                                 <th>MATRICULE</th>
                                 <th>NOMS</th>
                                 <th>GRADE</th>
@@ -1337,7 +1328,7 @@ $(document).ready(function() {
                 d.statut = 0; // valeur fixe pour les inactifs
                 d.search_value = d.search.value;
                 d.grade_order = gradeOrder;
-                if (d.order && d.order[0] && d.order[0].column == 3) {
+                if (d.order && d.order[0] && d.order[0].column == 2) {
                     d.order[0].custom_order = 'grade_custom';
                 }
             },
@@ -1346,14 +1337,6 @@ $(document).ready(function() {
             }
         },
         columns: [{
-                data: null,
-                render: function(data, type, row) {
-                    return '<input type="checkbox" class="row-checkbox" value="' + escapeHtml(
-                        row.matricule) + '">';
-                },
-                orderable: false
-            },
-            {
                 data: 'matricule',
                 className: 'uppercase-text',
                 render: function(data) {
@@ -1444,14 +1427,19 @@ $(document).ready(function() {
             }
         ],
         order: [
-            [3, 'asc']
+            [2, 'asc']
         ],
+        columnDefs: [{
+            targets: [6, 7],
+            visible: false,
+            searchable: true
+        }],
         pageLength: 10,
         lengthMenu: [10, 25, 50, 100],
-        scrollX: true,
-        scrollY: '60vh',
-        scrollCollapse: true,
-        autoWidth: false,
+        scrollX: false,
+        scrollY: false,
+        scrollCollapse: false,
+        autoWidth: true,
         initComplete: function() {
             const filterDiv = $('.dataTables_filter');
 
@@ -1481,9 +1469,7 @@ $(document).ready(function() {
                     </div>
                 `);
         },
-        drawCallback: function() {
-            $('#select-all').prop('checked', false);
-        }
+        drawCallback: function() {}
     });
 
     function escapeHtml(text) {
@@ -1499,15 +1485,6 @@ $(document).ready(function() {
             return map[m];
         });
     }
-
-    $('#select-all').on('change', function() {
-        $('.row-checkbox').prop('checked', $(this).prop('checked'));
-    });
-
-    $(document).on('change', '.row-checkbox', function() {
-        const allChecked = $('.row-checkbox:checked').length === $('.row-checkbox').length;
-        $('#select-all').prop('checked', allChecked);
-    });
 
     $('#garnison-filter, #province-filter, #zdef-filter').on('change', function() {
         table.ajax.reload();
@@ -1531,9 +1508,7 @@ $(document).ready(function() {
                     zdef: $('#zdef-filter').val(),
                     statut: 0,
                     search: searchInput,
-                    selected: $('.row-checkbox:checked').map(function() {
-                        return $(this).val();
-                    }).get(),
+                    selected: [],
                     order_column: table.order()[0][0],
                     order_dir: table.order()[0][1],
                     grade_order: gradeOrder

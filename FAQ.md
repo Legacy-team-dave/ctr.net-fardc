@@ -34,7 +34,7 @@ Oui, via `require_login()` ou des vérifications directes de session.
 Non. Les menus masquent certaines entrées, mais certaines pages utilisent seulement `require_login()` sans contrôle de profil strict.
 
 ### Exemple concret de différence menu/protection ?
-Le menu « Litige » est prévu pour `ADMIN_IG` et `OPERATEUR`, mais les pages litige lues exigent surtout la connexion.
+Le menu de synchronisation est prévu pour `ADMIN_IG` et `OPERATEUR`, avec un accès protégé par session.
 
 ## 2) Connexion et session
 
@@ -120,19 +120,13 @@ Oui, plusieurs formats sont proposés depuis la liste.
 ### Les exports sont-ils tracés ?
 Oui, un appel AJAX enregistre une action `EXPORT`.
 
-## 5) Litiges
+## 5) Synchronisation
 
-### Peut-on créer des litiges dans l'application ?
-Oui, via le module `modules/litige`.
+### Quelles données sont synchronisées ?
+Uniquement les tables `equipes` et `controles`.
 
-### Peut-on lister et exporter les litiges ?
-Oui, la liste prévoit filtres, statistiques et exports.
-
-### Les litiges sont-ils triés comment ?
-Par `id` descendant, puis `date_controle` et `cree_le`.
-
-### L'application calcule-t-elle une ZDEF pour les litiges ?
-Oui, à partir de la province via une fonction de mapping.
+### Où arrive la synchronisation côté central ?
+Le point de réception actif est `api/api_receiver.php`.
 
 ## 6) Utilisateurs et profil
 
@@ -203,7 +197,7 @@ Oui.
 Toutes les 8 heures via une tâche planifiée Windows.
 
 ### Que contient une sauvegarde ZIP ?
-Une archive consolidée (`backup_consolide_latest.zip`) contenant l'état complet de `controles`, `litiges` et `non_vus` en CSV et XLSX.
+Une archive consolidée (`backup_consolide_latest.zip`) contenant l'état complet de `equipes`, `controles` et `non_vus` en CSV et XLSX.
 
 ### La sauvegarde se lance-t-elle sans visiter les pages ?
 Oui. Elle est exécutée par tâche planifiée (`run_backup_job.ps1` via `setup_backup_task.ps1/.bat`).
@@ -238,7 +232,7 @@ Oui (optionnel). Configurez `config/backup_mail.json` avec une adresse expédite
 Oui, notamment `preferences`, `remember_token`, `remember_token_expires` (si absentes).
 
 ### Quels objets majeurs sont manipulés ?
-`utilisateurs`, `militaires`, `controles`, `litiges`, `logs`.
+`utilisateurs`, `militaires`, `equipes`, `controles`, `logs`.
 
 ## 11) Erreurs fréquentes
 

@@ -10,6 +10,8 @@ if (!isset($_SESSION['user_id'])) {
 $user_id = $_SESSION['user_id'];
 $message = '';
 $error = '';
+$current_user_profile = strtoupper(trim((string) ($_SESSION['user_profil'] ?? '')));
+$can_edit_full_profile = ($current_user_profile === 'ADMIN_IG');
 
 // Récupérer les informations actuelles de l'utilisateur
 try {
@@ -34,25 +36,32 @@ $maxSize = 5 * 1024 * 1024; // 5 Mo
 
 // Traitement du formulaire de mise à jour
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $nom_complet = trim($_POST['nom_complet'] ?? '');
-    $email       = trim($_POST['email'] ?? '');
-    $avatar_url  = trim($_POST['avatar'] ?? '');   // champ URL (optionnel)
+    $requested_nom_complet = trim($_POST['nom_complet'] ?? '');
+    $requested_email = trim($_POST['email'] ?? '');
+    $avatar_url  = trim($_POST['avatar'] ?? '');
     $old_password = $_POST['old_password'] ?? '';
     $new_password = $_POST['new_password'] ?? '';
     $confirm_password = $_POST['confirm_password'] ?? '';
 
+    $nom_complet = $can_edit_full_profile ? $requested_nom_complet : (string) ($user['nom_complet'] ?? '');
+    $email = $can_edit_full_profile ? $requested_email : (string) ($user['email'] ?? '');
+
+    if (!$can_edit_full_profile) {
+        $old_password = '';
+        $new_password = '';
+        $confirm_password = '';
+    }
+
     // Gestion de l'avatar uploadé (prioritaire sur l'URL)
-    $avatar_filename = $user['avatar']; // conserver l'ancien par défaut
+    $avatar_filename = $user['avatar'];
 
     if (isset($_FILES['avatar_file']) && $_FILES['avatar_file']['error'] !== UPLOAD_ERR_NO_FILE) {
         $file = $_FILES['avatar_file'];
-        // Vérification des erreurs d'upload
         if ($file['error'] !== UPLOAD_ERR_OK) {
             $error = "Erreur lors de l'upload de l'avatar. Code : " . $file['error'];
         } elseif ($file['size'] > $maxSize) {
             $error = "L'avatar ne doit pas dépasser 5 Mo.";
         } else {
-            // Vérification du type MIME réel
             $finfo = finfo_open(FILEINFO_MIME_TYPE);
             $mime = finfo_file($finfo, $file['tmp_name']);
             finfo_close($finfo);
@@ -63,13 +72,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $newFilename = uniqid('avatar_', true) . '.' . $extension;
                 $destination = $uploadDir . $newFilename;
 
-                // Créer le dossier s'il n'existe pas
                 if (!is_dir($uploadDir)) {
                     mkdir($uploadDir, 0755, true);
                 }
 
                 if (move_uploaded_file($file['tmp_name'], $destination)) {
-                    // Supprimer l'ancien avatar si c'est un fichier local
                     if (!empty($user['avatar']) && file_exists($user['avatar']) && strpos($user['avatar'], $uploadDir) === 0) {
                         unlink($user['avatar']);
                     }
@@ -80,57 +87,64 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
         }
     } elseif (!empty($avatar_url)) {
-        // Si pas de fichier mais une URL saisie, on l'utilise
         $avatar_filename = $avatar_url;
     }
 
-    // Validation simple
-    if (empty($nom_complet) || empty($email)) {
-        $error = "Le nom et l'email sont obligatoires.";
-    } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-        $error = "L'email n'est pas valide.";
-    } elseif (!empty($new_password) && $new_password !== $confirm_password) {
-        $error = "Les mots de passe ne correspondent pas.";
-    } elseif (!empty($new_password)) {
-        // Vérification de l'ancien mot de passe
-        if (empty($old_password)) {
-            $error = "Veuillez saisir votre mot de passe actuel pour changer le mot de passe.";
-        } elseif (!password_verify($old_password, $user['mot_de_passe'])) {
-            $error = "L'ancien mot de passe est incorrect.";
+    if ($can_edit_full_profile) {
+        if (empty($nom_complet) || empty($email)) {
+            $error = "Le nom et l'email sont obligatoires.";
+        } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            $error = "L'email n'est pas valide.";
+        } elseif (!empty($new_password) && $new_password !== $confirm_password) {
+            $error = "Les mots de passe ne correspondent pas.";
+        } elseif (!empty($new_password)) {
+            if (empty($old_password)) {
+                $error = "Veuillez saisir votre mot de passe actuel pour changer le mot de passe.";
+            } elseif (!password_verify($old_password, $user['mot_de_passe'])) {
+                $error = "L'ancien mot de passe est incorrect.";
+            }
         }
     }
 
     if (empty($error)) {
         try {
-            // Vérifier que l'email n'est pas déjà utilisé par un autre compte
-            $stmt = $pdo->prepare("SELECT id_utilisateur FROM utilisateurs WHERE email = ? AND id_utilisateur != ?");
-            $stmt->execute([$email, $user_id]);
-            if ($stmt->fetch()) {
-                $error = "Cet email est déjà utilisé par un autre compte.";
-            } else {
-                // Construction de la requête de mise à jour
-                if (!empty($new_password)) {
-                    // Hacher le nouveau mot de passe
-                    $hashed_password = password_hash($new_password, PASSWORD_DEFAULT);
-                    $sql = "UPDATE utilisateurs SET nom_complet = ?, email = ?, avatar = ?, mot_de_passe = ? WHERE id_utilisateur = ?";
-                    $params = [$nom_complet, $email, $avatar_filename, $hashed_password, $user_id];
+            if ($can_edit_full_profile) {
+                $stmt = $pdo->prepare("SELECT id_utilisateur FROM utilisateurs WHERE email = ? AND id_utilisateur != ?");
+                $stmt->execute([$email, $user_id]);
+                if ($stmt->fetch()) {
+                    $error = "Cet email est déjà utilisé par un autre compte.";
                 } else {
-                    $sql = "UPDATE utilisateurs SET nom_complet = ?, email = ?, avatar = ? WHERE id_utilisateur = ?";
-                    $params = [$nom_complet, $email, $avatar_filename, $user_id];
+                    if (!empty($new_password)) {
+                        $hashed_password = password_hash($new_password, PASSWORD_DEFAULT);
+                        $sql = "UPDATE utilisateurs SET nom_complet = ?, email = ?, avatar = ?, mot_de_passe = ? WHERE id_utilisateur = ?";
+                        $params = [$nom_complet, $email, $avatar_filename, $hashed_password, $user_id];
+                    } else {
+                        $sql = "UPDATE utilisateurs SET nom_complet = ?, email = ?, avatar = ? WHERE id_utilisateur = ?";
+                        $params = [$nom_complet, $email, $avatar_filename, $user_id];
+                    }
+
+                    $stmt = $pdo->prepare($sql);
+                    $stmt->execute($params);
+
+                    $_SESSION['user_nom'] = $nom_complet;
+                    $_SESSION['user_email'] = $email;
+                    $_SESSION['user_avatar'] = $avatar_filename;
+
+                    log_action('MODIFICATION_PROFIL', 'utilisateurs', $user_id, 'Mise à jour complète du profil');
+                    $message = "Profil mis à jour avec succès.";
                 }
-                $stmt = $pdo->prepare($sql);
-                $stmt->execute($params);
+            } else {
+                $stmt = $pdo->prepare("UPDATE utilisateurs SET avatar = ? WHERE id_utilisateur = ?");
+                $stmt->execute([$avatar_filename, $user_id]);
 
-                // Mettre à jour la session
-                $_SESSION['user_nom'] = $nom_complet;
-                $_SESSION['user_email'] = $email;
                 $_SESSION['user_avatar'] = $avatar_filename;
-
-                // Journalisation
-                log_action('MODIFICATION_PROFIL', 'utilisateurs', $user_id, 'Mise à jour du profil');
-
-                $message = "Profil mis à jour avec succès.";
+                log_action('MODIFICATION_PROFIL', 'utilisateurs', $user_id, 'Mise à jour de l\'avatar du profil');
+                $message = "Avatar mis à jour avec succès.";
             }
+
+            $stmt = $pdo->prepare("SELECT login, nom_complet, email, avatar, mot_de_passe FROM utilisateurs WHERE id_utilisateur = ?");
+            $stmt->execute([$user_id]);
+            $user = $stmt->fetch() ?: $user;
         } catch (PDOException $e) {
             error_log("Erreur profil - mise à jour : " . $e->getMessage());
             $error = "Erreur technique, veuillez réessayer plus tard.";
@@ -260,10 +274,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
         .card-modern .card-body {
-            overflow-y: auto;
+            overflow-y: visible;
             padding-right: 4px;
-            scrollbar-width: thin;
-            scrollbar-color: var(--primary) var(--light);
+            scrollbar-width: none;
         }
 
         .card-modern .card-body::-webkit-scrollbar {
@@ -563,7 +576,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <div class="title">Informations personnelles</div>
                     <div class="subtitle">
                         <i class="fas fa-user-circle"></i>
-                        <span>Modifiez vos données</span>
+                        <span><?= $can_edit_full_profile ? 'Modifiez toutes vos données' : 'Vous pouvez uniquement mettre à jour l\'avatar' ?></span>
                     </div>
                 </div>
 
@@ -579,6 +592,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <div class="alert-modern error">
                         <i class="fas fa-exclamation-circle"></i>
                         <?= htmlspecialchars($error) ?>
+                    </div>
+                <?php endif; ?>
+
+                <?php if (!$can_edit_full_profile): ?>
+                    <div class="alert-modern info">
+                        <i class="fas fa-user-lock"></i>
+                        Seul le profil <strong>ADMIN_IG</strong> peut modifier le nom complet, l'email et le mot de passe. Pour votre profil, seule la mise à jour de l'avatar est autorisée.
                     </div>
                 <?php endif; ?>
 
@@ -610,14 +630,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             <div class="input-group-modern">
                                 <i class="fas fa-user input-icon"></i>
                                 <input type="text" name="nom_complet" class="form-control" placeholder="Nom complet"
-                                    value="<?= htmlspecialchars($user['nom_complet']) ?>" required>
+                                    value="<?= htmlspecialchars($user['nom_complet']) ?>" <?= $can_edit_full_profile ? 'required' : 'readonly' ?>>
+                                <?php if (!$can_edit_full_profile): ?><small>modifiable uniquement par ADMIN_IG</small><?php endif; ?>
                             </div>
 
                             <!-- Email -->
                             <div class="input-group-modern">
                                 <i class="fas fa-envelope input-icon"></i>
                                 <input type="email" name="email" class="form-control" placeholder="Email"
-                                    value="<?= htmlspecialchars($user['email']) ?>" required>
+                                    value="<?= htmlspecialchars($user['email']) ?>" <?= $can_edit_full_profile ? 'required' : 'readonly' ?>>
+                                <?php if (!$can_edit_full_profile): ?><small>modifiable uniquement par ADMIN_IG</small><?php endif; ?>
                             </div>
 
                             <!-- Avatar (URL) - maintenant en deuxième colonne à côté de l'email -->
@@ -628,50 +650,57 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                 <small>ou upload ci-dessus</small>
                             </div>
 
-                            <!-- Ancien mot de passe (full width) -->
-                            <div class="input-group-modern full-width" style="position: relative;">
-                                <i class="fas fa-lock input-icon"></i>
-                                <input type="password" name="old_password" id="old_password" class="form-control"
-                                    placeholder="Ancien mot de passe">
-                                <span class="password-toggle" onclick="togglePasswordVisibility('old_password', this)">
-                                    <i class="far fa-eye"></i>
-                                </span>
-                                <small>(requis pour changer le mot de passe)</small>
-                            </div>
-
-                            <!-- Nouveau mot de passe (colonne gauche) -->
-                            <div class="input-group-modern" style="position: relative;">
-                                <i class="fas fa-lock input-icon"></i>
-                                <input type="password" name="new_password" id="new_password" class="form-control"
-                                    placeholder="Nouveau mot de passe">
-                                <span class="password-toggle" onclick="togglePasswordVisibility('new_password', this)">
-                                    <i class="far fa-eye"></i>
-                                </span>
-                                <span id="passwordStrengthIcon" class="validation-icon"></span>
-                                <div class="password-strength">
-                                    <span class="strength-bar">
-                                        <span id="strengthBarFill" class="strength-bar-fill"></span>
+                            <?php if ($can_edit_full_profile): ?>
+                                <!-- Ancien mot de passe (full width) -->
+                                <div class="input-group-modern full-width" style="position: relative;">
+                                    <i class="fas fa-lock input-icon"></i>
+                                    <input type="password" name="old_password" id="old_password" class="form-control"
+                                        placeholder="Ancien mot de passe">
+                                    <span class="password-toggle" onclick="togglePasswordVisibility('old_password', this)">
+                                        <i class="far fa-eye"></i>
                                     </span>
-                                    <span id="strengthText" class="strength-text"></span>
+                                    <small>(requis pour changer le mot de passe)</small>
                                 </div>
-                            </div>
 
-                            <!-- Confirmation (colonne droite) -->
-                            <div class="input-group-modern" style="position: relative;">
-                                <i class="fas fa-check-circle input-icon"></i>
-                                <input type="password" name="confirm_password" id="confirm_password" class="form-control"
-                                    placeholder="Confirmer le mot de passe">
-                                <span class="password-toggle" onclick="togglePasswordVisibility('confirm_password', this)">
-                                    <i class="far fa-eye"></i>
-                                </span>
-                                <span id="confirmIcon" class="validation-icon"></span>
-                                <div id="confirmError" class="field-error"></div>
-                            </div>
+                                <!-- Nouveau mot de passe (colonne gauche) -->
+                                <div class="input-group-modern" style="position: relative;">
+                                    <i class="fas fa-lock input-icon"></i>
+                                    <input type="password" name="new_password" id="new_password" class="form-control"
+                                        placeholder="Nouveau mot de passe">
+                                    <span class="password-toggle" onclick="togglePasswordVisibility('new_password', this)">
+                                        <i class="far fa-eye"></i>
+                                    </span>
+                                    <span id="passwordStrengthIcon" class="validation-icon"></span>
+                                    <div class="password-strength">
+                                        <span class="strength-bar">
+                                            <span id="strengthBarFill" class="strength-bar-fill"></span>
+                                        </span>
+                                        <span id="strengthText" class="strength-text"></span>
+                                    </div>
+                                </div>
+
+                                <!-- Confirmation (colonne droite) -->
+                                <div class="input-group-modern" style="position: relative;">
+                                    <i class="fas fa-check-circle input-icon"></i>
+                                    <input type="password" name="confirm_password" id="confirm_password" class="form-control"
+                                        placeholder="Confirmer le mot de passe">
+                                    <span class="password-toggle" onclick="togglePasswordVisibility('confirm_password', this)">
+                                        <i class="far fa-eye"></i>
+                                    </span>
+                                    <span id="confirmIcon" class="validation-icon"></span>
+                                    <div id="confirmError" class="field-error"></div>
+                                </div>
+                            <?php else: ?>
+                                <div class="alert-modern info full-width">
+                                    <i class="fas fa-lock"></i>
+                                    Les champs du mot de passe sont réservés au profil <strong>ADMIN_IG</strong>.
+                                </div>
+                            <?php endif; ?>
                         </div> <!-- fin form-grid -->
 
                         <!-- Bouton d'enregistrement -->
                         <button type="submit" class="btn-primary full-width" id="submitBtn">
-                            <i class="fas fa-save"></i> Enregistrer
+                            <i class="fas fa-save"></i> <?= $can_edit_full_profile ? 'Enregistrer' : 'Mettre à jour l\'avatar' ?>
                         </button>
                     </form>
 
@@ -686,7 +715,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <!-- Footer -->
         <div class="profile-footer">
             <i class="fas fa-shield-alt"></i>
-            <span>IG - FARDC v1.1.0</span>
+            <span>IG-FARDC @ 2026</span>
         </div>
     </div>
 
@@ -765,6 +794,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
         function updatePasswordStrength() {
+            if (!passwordInput || !strengthBarFill || !strengthText || !passwordStrengthIcon) {
+                return;
+            }
+
             const password = passwordInput.value;
             const strength = evaluatePasswordStrength(password);
             let fillPercent = 0;
@@ -807,6 +840,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
         function updateConfirmation() {
+            if (!passwordInput || !confirmInput || !confirmIcon || !confirmError) {
+                return;
+            }
+
             const password = passwordInput.value;
             const confirm = confirmInput.value;
 

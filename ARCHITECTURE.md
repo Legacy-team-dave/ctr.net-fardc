@@ -32,8 +32,6 @@ ctr.net-fardc/
 - `modules/controles/`
   - Saisie et suivi des contrôles
   - Point clé : `modules/controles/ajouter.php`
-- `modules/litige/`
-  - Gestion des litiges
 - `modules/rapports/`
   - Rapports/statistiques
 

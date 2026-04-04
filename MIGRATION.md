@@ -6,7 +6,7 @@ Ce document décrit une migration **réaliste** pour ce dépôt tel qu'il existe
 
 - Pages racine : `index.php`, `login.php`, `logout.php`, `profil.php`
 - Fonctions transverses : `includes/functions.php`, `includes/auth.php`
-- Modules : `modules/administration`, `modules/militaires`, `modules/controles`, `modules/litige`, `modules/rapports`
+- Modules : `modules/administration`, `modules/militaires`, `modules/controles`, `modules/rapports`, `modules/synchronisation`
 - AJAX : `ajax/`
 
 ## Principes de migration recommandés

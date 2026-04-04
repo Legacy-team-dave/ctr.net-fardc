@@ -43,7 +43,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         log_action('AJOUT', 'militaires', $id, 'Ajout du militaire ' . $data['noms'] . ' - Matricule: ' . $data['matricule']);
         // --- FIN AJOUT LOG ---
 
-        mark_sync_dirty();
         redirect_with_flash('liste.php', 'success', 'Militaire ajouté avec succès.');
     } else {
         $error = "Erreur lors de l'ajout du militaire.";

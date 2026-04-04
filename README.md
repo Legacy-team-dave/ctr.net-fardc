@@ -32,7 +32,9 @@ Le flux utilise aussi les statuts :
 
 - `index.php`, `login.php`, `logout.php`, `profil.php`, `preferences.php`, `equipes.php`
 - `includes/` : auth, fonctions globales, header/footer
-- `modules/` : `administration`, `militaires`, `controles`, `litige`, `rapports`
+- `modules/` : `administration`, `militaires`, `controles`, `rapports`
+- synchronisation locale : `modules/controles/sync.php` pour l’envoi des `equipes` et `controles` vers l’instance centrale
+- logique DataTable unifiée : mêmes bases de recherche / pagination / colonnes masquées que `modules/controles/liste.php`
 - `ajax/` : endpoints AJAX
 - `api/` : API REST pour application mobile (auth, contrôles, profil, polling)
 - `config/` : configuration base de données, chiffrement
@@ -66,7 +68,7 @@ php bin/encrypt.php init
 # 2. Chiffrer fichiers sensibles
 php bin/encrypt.php encrypt
 
-# 3. Vérifier stato
+# 3. Vérifier le statut
 php bin/encrypt.php status
 ```
 
@@ -100,7 +102,7 @@ Pour une documentation complète et des exemples pratiques:
 - Format : CSV (Excel compatible) + XLSX
 - Mode : consolidé (ancienne + nouvelles données dans la même archive ZIP)
 - Archive principale : `backups/backup_consolide_latest.zip`
-- Sources : `controles`, `litiges`, `non_vus`
+- Sources principales : `equipes` et `controles` pour le périmètre actif, avec éventuels exports techniques selon l'environnement local
 - Scripts : `setup_backup_task.bat`, `setup_backup_task.ps1`, `run_backup_job.ps1`
 - Purge auto : suppression des doublons + conservation des 30 dernières archives non identiques
 - Purge auto paramétrable : `setup_backup_task.ps1 -MaxKeep 30` (ou `setup_backup_task.bat 30`)
@@ -117,7 +119,7 @@ Pour une documentation complète et des exemples pratiques:
 - Écran d'accueil : `http://127.0.0.1/ctr.net-fardc/splash_screen.php`
 - Connexion directe : `http://127.0.0.1/ctr.net-fardc/login.php`
 
-Selon la configuration Laragon, l'URL peut utiliser `localhost` et/ou un port spécifique.
+Avec **Laragon**, il n’est **pas obligatoire** de préciser un port tant qu’Apache utilise les ports par défaut (`80` en HTTP ou `443` en HTTPS). Le suffixe `:port` n’est nécessaire que si vous avez modifié la configuration Apache/Laragon.
 
 ## Base de données
 
@@ -129,10 +131,15 @@ Tables principales utilisées :
 - `logs`
 - `equipes`
 
-Script SQL de synchronisation centrale:
+## Synchronisation active
 
-- `sql/sync_init.sql`
-- `sql/sync_rollback.sql`
+- périmètre actuel : `equipes` et `controles` uniquement
+- test de connectivité : `api/test_sync_connection.php`
+- envoi local : `api/sync_controles.php`
+- réception centrale : `ctr-net-fardc_active_front_web/api/api_receiver.php`
+- regroupement côté central : les cartes et statistiques sont consolidées par libellé d’équipe/source afin d’éviter la séparation entre `equipes` et `controles` lorsqu’un identifiant technique de PC varie
+
+Les anciennes références liées aux litiges ne font plus partie du flux actif de synchronisation.
 
 ## Documentation liée
 

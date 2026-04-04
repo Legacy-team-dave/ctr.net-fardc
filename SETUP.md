@@ -123,7 +123,7 @@ run_cache_cleanup.bat 90
 	- PowerShell : `./run_backup_purge.ps1 -MaxKeep 30`
 	- CMD : `run_backup_purge.bat 30`
 
-Comportement de sauvegarde : mise à jour de l'archive consolidée `backups/backup_consolide_latest.zip` avec les données complètes (`controles`, `litiges`, `non_vus`).
+Comportement de sauvegarde : mise à jour de l'archive consolidée `backups/backup_consolide_latest.zip` avec les données complètes (`equipes`, `controles`, `non_vus`).
 
 Comportement de purge : suppression des archives ZIP identiques, puis conservation des 30 dernières archives non identiques (valeur ajustable via `MaxKeep`).
 

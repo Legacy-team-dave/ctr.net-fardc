@@ -650,7 +650,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <a href="" class="brand-link">
                 <img src="assets/img/logo-fardc.png" alt="FARDC Logo" class="brand-image"
                     onerror="this.style.display='none'">
-                <span class="brand-text">IG-FARDC</span>
+                <span class="brand-text">CTR.NET - FARDC</span>
             </a>
         </div>
 
@@ -701,7 +701,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         </div>
 
         <div class="login-footer">
-            <i class="fas fa-shield-alt"></i> CTR.NET-FARDC v1.1.0
+            <i class="fas fa-shield-alt"></i> IG-FARDC @ 2026
         </div>
     </div>
 

@@ -19,7 +19,7 @@ Contexte fonctionnel réel à respecter:
 - Profils: ADMIN_IG, OPERATEUR, CONTROLEUR
 - Mentions de contrôle: Présent, Favorable, Défavorable
 - Flux d'accès: ADMIN_IG vers dashboard, CONTROLEUR vers saisie de contrôle, OPERATEUR selon préférences
-- Modules principaux: Administration, Militaires, Contrôles, Litige, Rapports
+- Modules principaux: Administration, Militaires, Contrôles, Synchronisation, Tableau de bord
 - Sécurité: authentification, contrôle d'accès, journalisation des actions
 - 🔐 Chiffrement: Fichiers sensibles protégés par AES-256-CBC (v1.1.0+) - transparence applicative totale
 - Données: utilisateurs, militaires, contrôles, logs
@@ -34,7 +34,7 @@ Consignes de production:
    - Connexion
    - Navigation selon profil
    - Saisie d'un contrôle
-   - Consultation d'une liste (contrôles ou litiges)
+   - Consultation d'une liste (contrôles ou équipes synchronisées)
    - Exemple de log/audit
 4. Ajoute une section "Questions/Réponses" avec 10 questions probables et réponses courtes.
 5. Le ton doit être institutionnel, clair, sans jargon inutile.

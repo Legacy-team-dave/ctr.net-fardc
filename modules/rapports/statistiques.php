@@ -824,7 +824,7 @@ body {
 
 /* Tables modernes */
 .table-container {
-    overflow-x: auto;
+    overflow: visible;
     border-radius: 10px;
     margin-top: 15px;
 }

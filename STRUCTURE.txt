@@ -43,7 +43,7 @@ OUTILS DE CHIFFREMENT (v1.1.0+)
 
 DOSSIERS PRINCIPAUX
 - ajax/
-  - endpoints asynchrones (ex: get_categories.php, litiges.php)
+  - endpoints asynchrones (ex: get_categories.php, sync.php)
 - assets/
   - css/
   - js/
@@ -71,7 +71,6 @@ DOSSIERS PRINCIPAUX
   - administration/
   - militaires/
   - controles/
-  - litige/
   - rapports/
 
 ROLES

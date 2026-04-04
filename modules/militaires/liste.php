@@ -585,13 +585,6 @@ $timestamp = date('Y-m-d_H\hi');
         border-radius: 0 10px 10px 0;
     }
 
-    .select-all-checkbox,
-    .row-checkbox {
-        width: 18px;
-        height: 18px;
-        cursor: pointer;
-        accent-color: #2e7d32;
-    }
 
     .categorie-badge {
         display: inline-block;
@@ -732,8 +725,7 @@ $timestamp = date('Y-m-d_H\hi');
     }
 
     .dataTables_scrollBody {
-        overflow-x: auto !important;
-        overflow-y: auto !important;
+        overflow: visible !important;
         border-radius: 10px;
     }
 
@@ -1324,7 +1316,6 @@ $timestamp = date('Y-m-d_H\hi');
                     <table id="table-militaires" class="table-militaires" style="width:100%">
                         <thead>
                             <tr>
-                                <th><input type="checkbox" class="select-all-checkbox" id="select-all"></th>
                                 <th>MATRICULE</th>
                                 <th>NOMS</th>
                                 <th>GRADE</th>
@@ -1463,8 +1454,8 @@ $timestamp = date('Y-m-d_H\hi');
                     // Ajouter l'ordre personnalisé des grades pour le traitement côté serveur
                     d.grade_order = gradeOrder;
 
-                    // Si le tri est sur la colonne grade (index 3), utiliser l'ordre personnalisé
-                    if (d.order && d.order[0] && d.order[0].column == 3) {
+                    // Si le tri est sur la colonne grade (index 2), utiliser l'ordre personnalisé
+                    if (d.order && d.order[0] && d.order[0].column == 2) {
                         d.order[0].custom_order = 'grade_custom';
                     }
                 },
@@ -1474,14 +1465,6 @@ $timestamp = date('Y-m-d_H\hi');
                 }
             },
             columns: [{
-                    data: null,
-                    render: function(data, type, row) {
-                        return '<input type="checkbox" class="row-checkbox" value="' + escapeHtml(
-                            row.matricule) + '">';
-                    },
-                    orderable: false
-                },
-                {
                     data: 'matricule',
                     className: 'uppercase-text',
                     render: function(data) {
@@ -1572,14 +1555,19 @@ $timestamp = date('Y-m-d_H\hi');
                 }
             ],
             order: [
-                [3, 'asc'] // Tri par défaut sur la colonne grade en ordre ascendant
+                [2, 'asc'] // Tri par défaut sur la colonne grade en ordre ascendant
             ],
+            columnDefs: [{
+                targets: [6, 7],
+                visible: false,
+                searchable: true
+            }],
             pageLength: 10,
             lengthMenu: [10, 25, 50, 100],
-            scrollX: true,
-            scrollY: '60vh',
-            scrollCollapse: true,
-            autoWidth: false,
+            scrollX: false,
+            scrollY: false,
+            scrollCollapse: false,
+            autoWidth: true,
             initComplete: function() {
                 const filterDiv = $('.dataTables_filter');
 
@@ -1613,9 +1601,7 @@ $timestamp = date('Y-m-d_H\hi');
                 </div>
             `);
             },
-            drawCallback: function() {
-                $('#select-all').prop('checked', false);
-            }
+            drawCallback: function() {}
         });
 
         // Fonction pour échapper les caractères HTML
@@ -1632,16 +1618,6 @@ $timestamp = date('Y-m-d_H\hi');
                 return map[m];
             });
         }
-
-        // Cases à cocher
-        $('#select-all').on('change', function() {
-            $('.row-checkbox').prop('checked', $(this).prop('checked'));
-        });
-
-        $(document).on('change', '.row-checkbox', function() {
-            const allChecked = $('.row-checkbox:checked').length === $('.row-checkbox').length;
-            $('#select-all').prop('checked', allChecked);
-        });
 
         // Filtres
         $('#categorie-filter, #garnison-filter, #province-filter, #zdef-filter, #statut-filter').on('change',
@@ -1677,9 +1653,7 @@ $timestamp = date('Y-m-d_H\hi');
                         zdef: $('#zdef-filter').val(),
                         statut: $('#statut-filter').val(),
                         search: searchInput,
-                        selected: $('.row-checkbox:checked').map(function() {
-                            return $(this).val();
-                        }).get(),
+                        selected: [],
                         order_column: table.order()[0][0],
                         order_dir: table.order()[0][1],
                         grade_order: gradeOrder // Envoyer l'ordre des grades pour le tri côté serveur

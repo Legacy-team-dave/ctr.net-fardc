@@ -1240,8 +1240,9 @@ $export_fields = [
                     <div><strong>Grade :</strong> <span id="qrGrade"></span></div>
                     <div><strong>Date contrôle :</strong> <span id="qrDateControle"></span></div>
                     <div><strong>Mention :</strong> <span id="qrMention"></span></div>
-                    <canvas id="qrcodeCanvas" style="width: 300px; height: 300px; margin: 0 auto;"></canvas>
-                    <p class="mt-3 text-muted">Scannez ce code pour pré-remplir l’enrôlement mobile du militaire vivant.</p>
+                    <div class="small text-muted mt-2">QR standard : correction M (15%) · PNG · 1024 × 1024</div>
+                    <canvas id="qrcodeCanvas" style="width: min(320px, 100%); height: auto; aspect-ratio: 1 / 1; margin: 12px auto 0; display: block; background: #ffffff; border-radius: 12px;"></canvas>
+                    <p class="mt-3 text-muted">Scannez le QR complet avec sa marge blanche pour pré-remplir l’enrôlement mobile du militaire vivant.</p>
                     <details class="mt-3 text-start">
                         <summary><strong>Diagnostic QR échangé</strong></summary>
                         <div class="mt-2">
@@ -1615,9 +1616,14 @@ $(document).ready(function() {
         $('#qrSourcePayload').text(JSON.stringify(info, null, 2));
         $('#qrEncodedPayload').text(textToEncode);
 
-        // Génération du QR code avec qrcode-generator
-        const qr = qrcode(0, 'M'); // niveau de correction M
-        qr.addData(textToEncode);
+        // Génération du QR code avec paramètres standardisés (comme un vrai générateur QR)
+        const QR_ERROR_CORRECTION = 'M';
+        const QR_OUTPUT_SIZE = 1024;
+        const QR_FORMAT = 'image/png';
+        const QR_MARGIN_MODULES = 4;
+
+        const qr = qrcode(0, QR_ERROR_CORRECTION);
+        qr.addData(textToEncode, 'Byte');
         qr.make();
 
         // Récupérer le canvas
@@ -1627,21 +1633,39 @@ $(document).ready(function() {
             return;
         }
 
-        // Dimensions du canvas (ex: 300x300)
-        const size = 300;
-        canvas.width = size;
-        canvas.height = size;
-
         const ctx = canvas.getContext('2d');
-        const cellSize = size / qr.getModuleCount();
+        if (!ctx) {
+            console.error('Contexte 2D du canvas QR indisponible');
+            return;
+        }
 
-        // Dessiner le QR code
-        for (let row = 0; row < qr.getModuleCount(); row++) {
-            for (let col = 0; col < qr.getModuleCount(); col++) {
-                ctx.fillStyle = qr.isDark(row, col) ? '#000000' : '#ffffff';
-                ctx.fillRect(col * cellSize, row * cellSize, cellSize, cellSize);
+        const moduleCount = qr.getModuleCount();
+        const cellSize = Math.max(1, Math.floor(QR_OUTPUT_SIZE / (moduleCount + (QR_MARGIN_MODULES * 2))));
+        const qrDrawSize = cellSize * moduleCount;
+        const offset = Math.floor((QR_OUTPUT_SIZE - qrDrawSize) / 2);
+
+        canvas.width = QR_OUTPUT_SIZE;
+        canvas.height = QR_OUTPUT_SIZE;
+        canvas.style.width = 'min(320px, 100%)';
+        canvas.style.height = 'auto';
+
+        ctx.imageSmoothingEnabled = false;
+        ctx.clearRect(0, 0, QR_OUTPUT_SIZE, QR_OUTPUT_SIZE);
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, QR_OUTPUT_SIZE, QR_OUTPUT_SIZE);
+        ctx.fillStyle = '#000000';
+
+        for (let row = 0; row < moduleCount; row++) {
+            for (let col = 0; col < moduleCount; col++) {
+                if (qr.isDark(row, col)) {
+                    ctx.fillRect(offset + (col * cellSize), offset + (row * cellSize), cellSize, cellSize);
+                }
             }
         }
+
+        canvas.dataset.qrFormat = QR_FORMAT;
+        canvas.dataset.qrSize = String(QR_OUTPUT_SIZE);
+        canvas.dataset.qrErrorCorrection = `${QR_ERROR_CORRECTION} (15%)`;
 
         // Ouvrir le modal
         $('#qrCodeModal').modal('show');

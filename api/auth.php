@@ -1,7 +1,7 @@
 <?php
 
 /**
- * API Authentification pour l'application mobile CONTROLEUR
+ * API Authentification pour les applications mobiles CONTROLEUR / ENROLEUR
  * Endpoints: POST /api/auth.php?action=login|logout|check
  */
 header('Content-Type: application/json; charset=utf-8');
@@ -16,6 +16,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 
 session_start();
 require_once __DIR__ . '/../config/database.php';
+require_once __DIR__ . '/../includes/functions.php';
 
 $action = $_GET['action'] ?? '';
 
@@ -48,7 +49,7 @@ function handleLogin($pdo)
 
     if (empty($login) || empty($password)) {
         http_response_code(400);
-        echo json_encode(['success' => false, 'message' => 'Login et mot de passe requis']);
+        echo json_encode(['success' => false, 'message' => 'Veuillez saisir votre utilisateur et votre mot de passe.']);
         return;
     }
 
@@ -59,26 +60,26 @@ function handleLogin($pdo)
 
         if (!$user) {
             http_response_code(404);
-            echo json_encode(['success' => false, 'message' => 'Utilisateur non créé.']);
+            echo json_encode(['success' => false, 'message' => 'Utilisateur non créé dans la base de données.']);
             return;
         }
 
         if (empty($user['actif'])) {
             http_response_code(403);
-            echo json_encode(['success' => false, 'message' => 'Ce compte utilisateur est désactivé.']);
+            echo json_encode(['success' => false, 'message' => 'Ce compte existe mais il est en attente d\'activation.']);
             return;
         }
 
         if (!password_verify($password, $user['mot_de_passe'])) {
             http_response_code(401);
-            echo json_encode(['success' => false, 'message' => 'Utilisateur ou mot de passe incorrect.']);
+            echo json_encode(['success' => false, 'message' => 'Utilisateur ou mot de passe incorrects.']);
             return;
         }
 
-        // Vérifier que c'est un CONTROLEUR
-        if (strtoupper(trim($user['profil'])) !== 'CONTROLEUR') {
+        // Vérifier que c'est un profil mobile autorisé
+        if (!is_mobile_only_profile($user['profil'])) {
             http_response_code(403);
-            echo json_encode(['success' => false, 'message' => 'Cette application est réservée au profil CONTROLEUR']);
+            echo json_encode(['success' => false, 'message' => 'Ce compte n\'est pas autorisé sur cette application mobile.']);
             return;
         }
 
@@ -109,7 +110,7 @@ function handleLogin($pdo)
     } catch (PDOException $e) {
         error_log("API auth error: " . $e->getMessage());
         http_response_code(500);
-        echo json_encode(['success' => false, 'message' => 'Erreur serveur']);
+        echo json_encode(['success' => false, 'message' => 'Erreur serveur pendant la connexion. Veuillez réessayer.']);
     }
 }
 

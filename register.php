@@ -7,8 +7,11 @@ $error = null;
 $profils = [
     'ADMIN_IG'   => 'ADMIN_IG',
     'OPERATEUR' => 'OPERATEUR',
-    'CONTROLEUR' => 'CONTROLEUR'
+    'CONTROLEUR' => 'CONTROLEUR',
+    'ENROLEUR' => 'ENROLEUR'
 ];
+$defaultProfilePassword = '987654321';
+$profilsAvecMotDePasseParDefaut = ['OPERATEUR', 'CONTROLEUR', 'ENROLEUR'];
 
 // Configuration de l'upload d'avatar
 $uploadDir = 'assets/uploads/avatars/';
@@ -19,9 +22,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $login       = trim($_POST['login'] ?? '');
     $nom_complet = trim($_POST['nom_complet'] ?? '');
     $email       = trim($_POST['email'] ?? '');
-    $password    = $_POST['password'] ?? '';
-    $confirm     = $_POST['confirm_password'] ?? '';
-    $profil      = $_POST['profil'] ?? '';
+    $profil      = trim($_POST['profil'] ?? '');
+    $normalizedProfil = strtoupper($profil);
+    $useDefaultPassword = in_array($normalizedProfil, $profilsAvecMotDePasseParDefaut, true);
+    $password    = $useDefaultPassword ? $defaultProfilePassword : ($_POST['password'] ?? '');
+    $confirm     = $useDefaultPassword ? $defaultProfilePassword : ($_POST['confirm_password'] ?? '');
     $avatarPath  = null;
 
     // Validations de base
@@ -75,22 +80,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 } else {
                     // Hachage sécurisé du mot de passe
                     $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
+                    $actif = strtoupper(trim($profil)) === 'ADMIN_IG' ? 1 : 0;
 
-                    // Insertion avec actif = 0 (compte inactif en attente d'activation)
+                    // Seul ADMIN_IG est actif immédiatement, les autres profils attendent l'activation
                     $stmt = $pdo->prepare("INSERT INTO utilisateurs 
                         (login, nom_complet, email, mot_de_passe, avatar, profil, actif, reset_token, reset_expires, dernier_acces, preferences, created_at) 
-                        VALUES (?, ?, ?, ?, ?, ?, 1, NULL, NULL, NULL, NULL, NOW())");
-                    $stmt->execute([$login, $nom_complet, $email, $hashedPassword, $avatarPath, $profil]);
+                        VALUES (?, ?, ?, ?, ?, ?, ?, NULL, NULL, NULL, NULL, NOW())");
+                    $stmt->execute([$login, $nom_complet, $email, $hashedPassword, $avatarPath, $profil, $actif]);
 
                     $newUserId = $pdo->lastInsertId();
 
                     // --- AJOUT LOG : inscription d'un nouvel utilisateur ---
-                    audit_action('INSCRIPTION', 'utilisateurs', $newUserId, "Nouvel utilisateur inscrit : $login (profil : $profil)");
+                    audit_action('INSCRIPTION', 'utilisateurs', $newUserId, "Nouvel utilisateur inscrit : $login (profil : $profil, actif : $actif)");
                     // --- FIN LOG ---
 
                     $_SESSION['flash_message'] = [
                         'type' => 'success',
-                        'text' => 'Inscription réussie. Vous pouvez maintenant vous connecter.'
+                        'text' => $actif === 1
+                            ? 'Inscription réussie. Le compte ADMIN_IG est actif immédiatement.'
+                            : 'Inscription réussie. Le compte est créé avec le mot de passe par défaut 987654321 et reste en attente d\'activation par un administrateur.'
                     ];
                     header('Location: ' . app_url('login.php'));
                     exit;
@@ -615,6 +623,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     </span>
                     <span id="confirmIcon" class="validation-icon"></span>
                     <div id="confirmError" class="field-error"></div>
+                    <small id="passwordDefaultHint" style="display:block; margin-top:8px; color:#6c757d; font-size:0.78rem;">
+                        Pour OPERATEUR, CONTROLEUR et ENROLEUR, le mot de passe par défaut 987654321 est appliqué automatiquement.
+                    </small>
                 </div>
 
                 <div class="input-group-modern form-span-2">
@@ -673,6 +684,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         const fullNameInput = document.getElementById('nom_complet');
         const emailInput = document.getElementById('email');
         const profilInput = document.getElementById('profil');
+        const passwordDefaultHint = document.getElementById('passwordDefaultHint');
+        const DEFAULT_PROFILE_PASSWORD = '987654321';
+        const DEFAULT_PASSWORD_PROFILES = ['OPERATEUR', 'CONTROLEUR', 'ENROLEUR'];
         let emailManuallyEdited = false;
 
         function normalizeEmailName(value) {
@@ -707,8 +721,52 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             updateGeneratedEmail();
         }
 
+        function syncDefaultPasswordByProfile() {
+            if (!profilInput || !passwordInput || !confirmInput) {
+                return;
+            }
+
+            const selectedProfile = (profilInput.value || '').trim().toUpperCase();
+            const useDefaultPassword = DEFAULT_PASSWORD_PROFILES.includes(selectedProfile);
+
+            passwordInput.readOnly = useDefaultPassword;
+            confirmInput.readOnly = useDefaultPassword;
+
+            if (useDefaultPassword) {
+                passwordInput.value = DEFAULT_PROFILE_PASSWORD;
+                confirmInput.value = DEFAULT_PROFILE_PASSWORD;
+                passwordInput.dataset.autoDefault = '1';
+                confirmInput.dataset.autoDefault = '1';
+                passwordInput.placeholder = 'Mot de passe par défaut automatique';
+                confirmInput.placeholder = 'Confirmation automatique';
+                if (passwordDefaultHint) {
+                    passwordDefaultHint.textContent = 'Mot de passe par défaut appliqué automatiquement : 987654321';
+                }
+            } else {
+                if (passwordInput.dataset.autoDefault === '1') {
+                    passwordInput.value = '';
+                }
+                if (confirmInput.dataset.autoDefault === '1') {
+                    confirmInput.value = '';
+                }
+                passwordInput.dataset.autoDefault = '0';
+                confirmInput.dataset.autoDefault = '0';
+                passwordInput.placeholder = 'Mot de passe (min. 8)';
+                confirmInput.placeholder = 'Confirmer le mot de passe';
+                if (passwordDefaultHint) {
+                    passwordDefaultHint.textContent = 'Pour OPERATEUR, CONTROLEUR et ENROLEUR, le mot de passe par défaut 987654321 est appliqué automatiquement.';
+                }
+            }
+
+            updatePasswordStrength();
+            updateConfirmation();
+        }
+
         if (profilInput) {
-            profilInput.addEventListener('change', updateGeneratedEmail);
+            profilInput.addEventListener('change', function() {
+                updateGeneratedEmail();
+                syncDefaultPasswordByProfile();
+            });
         }
 
         function evaluatePasswordStrength(password) {
@@ -790,6 +848,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         updatePasswordStrength();
         updateConfirmation();
+        syncDefaultPasswordByProfile();
     </script>
 </body>
 

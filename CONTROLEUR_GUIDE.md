@@ -1,9 +1,9 @@
 # Guide Contrôleur FARDC
 
-> **⚠️ Important — Depuis la version 1.4.0, le profil CONTROLEUR est réservé exclusivement à l'application mobile CTR.NET Mobile.**
+> **⚠️ Important — Depuis la version 1.4.0, le profil CONTROLEUR est réservé exclusivement à l'application mobile `CTR.NET`.**
 > La connexion web est bloquée pour ce profil. Pour la documentation complète du contrôleur, consultez la documentation du projet mobile `ctr-net-mobile`.
 
-## Saisie de Contrôles sur le Terrain (via CTR.NET Mobile)
+## Saisie de Contrôles sur le Terrain (via `CTR.NET`)
 
 ---
 
@@ -52,9 +52,9 @@ L'interface CONTROLEUR est spécialement conçue pour **tablettes et smartphones
 
 ### Connexion
 
-> **Le profil CONTROLEUR n'accède plus au web.** Utilisez l'application mobile CTR.NET Mobile installée sur votre appareil Android.
+> **Le profil CONTROLEUR n'accède plus au web.** Utilisez l'application mobile `CTR.NET` installée sur votre appareil Android.
 
-1. Lancez l'application **CTR.NET Mobile** sur votre smartphone/tablette
+1. Lancez l'application **CTR.NET** sur votre smartphone/tablette
 2. Si nécessaire, ouvrez la page **Configurer le serveur** et saisissez manuellement l'adresse IP du serveur
 3. Entrez votre **login** et **mot de passe**
 4. Vous accédez directement à l'onglet **Contrôle**

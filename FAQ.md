@@ -5,13 +5,13 @@ FAQ opérationnelle basée sur le comportement réel du code.
 ## 1) Profils et accès
 
 ### Quels profils existent dans l'application ?
-Trois profils sont utilisés : `ADMIN_IG`, `OPERATEUR`, `CONTROLEUR` (mobile uniquement).
+Quatre profils sont utilisés : `ADMIN_IG`, `OPERATEUR`, `CONTROLEUR` (mobile `CTR.NET`) et `ENROLEUR` (mobile `ENROL.NET`).
 
 ### Quel profil voit le tableau de bord (`index.php`) ?
 `ADMIN_IG` et `OPERATEUR` uniquement.
 
-### Pourquoi un `CONTROLEUR` ne peut pas se connecter sur le web ?
-Le profil `CONTROLEUR` est désormais réservé exclusivement à l'application mobile CTR.NET Mobile. La connexion web est bloquée.
+### Pourquoi un `CONTROLEUR` ou un `ENROLEUR` ne peut pas se connecter sur le web ?
+Ces deux profils sont réservés exclusivement aux applications mobiles `CTR.NET` et `ENROL.NET`. La connexion web est bloquée.
 
 ### Où va un `OPERATEUR` juste après connexion ?
 - vers `preferences.php` → `equipes.php` → `index.php` si aucune préférence n'est enregistrée,
@@ -134,10 +134,10 @@ Le point de réception actif est `api/api_receiver.php`.
 Le module administration est conçu pour `ADMIN_IG`.
 
 ### Peut-on créer un compte `CONTROLEUR` ?
-Oui, le formulaire d'ajout utilisateur propose ce profil. Il est utilisé exclusivement via l'application mobile CTR.NET Mobile.
+Oui. Les formulaires d’ajout utilisateur proposent les profils `CONTROLEUR` et `ENROLEUR`, utilisés exclusivement via les applications mobiles `CTR.NET` et `ENROL.NET`.
 
-### Le mot de passe minimal à la création d'un utilisateur est de combien ?
-6 caractères.
+### Quel mot de passe est appliqué à la création d'un utilisateur ?
+Pour `OPERATEUR`, `CONTROLEUR` et `ENROLEUR`, le mot de passe par défaut appliqué par `register.php` est `987654321`. Pour `ADMIN_IG`, il reste saisi manuellement.
 
 ### Peut-on désactiver un utilisateur ?
 Oui, l'état actif/inactif est géré dans la table des utilisateurs.

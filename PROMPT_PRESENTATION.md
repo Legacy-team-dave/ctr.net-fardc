@@ -16,9 +16,9 @@ Objectif de la présentation:
 - Donner les points de vigilance et les recommandations
 
 Contexte fonctionnel réel à respecter:
-- Profils: ADMIN_IG, OPERATEUR, CONTROLEUR
+- Profils: ADMIN_IG, OPERATEUR, CONTROLEUR, ENROLEUR
 - Mentions de contrôle: Présent, Favorable, Défavorable
-- Flux d'accès: ADMIN_IG vers dashboard, CONTROLEUR vers saisie de contrôle, OPERATEUR selon préférences
+- Flux d'accès: ADMIN_IG vers dashboard, OPERATEUR selon préférences, CONTROLEUR via `CTR.NET`, ENROLEUR via `ENROL.NET`
 - Modules principaux: Administration, Militaires, Contrôles, Synchronisation, Tableau de bord
 - Sécurité: authentification, contrôle d'accès, journalisation des actions
 - 🔐 Chiffrement: Fichiers sensibles protégés par AES-256-CBC (v1.1.0+) - transparence applicative totale

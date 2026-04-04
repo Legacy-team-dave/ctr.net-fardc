@@ -65,16 +65,18 @@ Statuts de contexte utilisés :
 
 ## API REST Mobile (v1.2.0+)
 
-Endpoints dédiés à l'application mobile CTR.NET (Ionic/Angular) :
+Endpoints dédiés aux applications mobiles `CTR.NET` et `ENROL.NET` :
 
 ```text
 api/
-├── auth.php            ← Authentification token Bearer (login, logout, check)
-├── controles.php       ← Recherche militaire, validation contrôle + GPS, historique
-├── profil.php          ← Lecture et mise à jour du profil utilisateur
+├── auth.php            ← Authentification token Bearer (`CONTROLEUR` / `ENROLEUR`)
+├── controles.php       ← Recherche militaire, validation contrôle, historique, `enroll_vivant`
+├── profil.php          ← Lecture et mise à jour du profil utilisateur mobile
 ├── controles_poll.php  ← Polling temps réel (détection nouveaux contrôles)
 └── .htaccess           ← CORS + sécurité
 ```
+
+Le backend prend aussi en charge la table `enrollements_vivants` pour les soumissions issues d’`ENROL.NET`.
 
 ### Auto-refresh et Notifications
 

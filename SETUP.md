@@ -77,14 +77,16 @@ Consulter [ENCRYPTION.md](ENCRYPTION.md) pour :
 
 - `ADMIN_IG`
 - `OPERATEUR`
-- `CONTROLEUR` (mobile uniquement — non accessible côté web)
+- `CONTROLEUR` (mobile uniquement via `CTR.NET`)
+- `ENROLEUR` (mobile uniquement via `ENROL.NET`)
 
 ## Vérification minimale après setup
 
 - Connexion utilisateur possible
 - Accès à `index.php` pour `ADMIN_IG` / `OPERATEUR`
-- Connexion `CONTROLEUR` côté web bloquée (profil réservé à l'app mobile)
+- Connexion web bloquée pour `CONTROLEUR` et `ENROLEUR`
 - Enregistrement d'un contrôle fonctionnel
+- Vérification de l’activation des comptes non-admin créés par défaut à `actif = 0`
 
 ## Mentions à valider en test
 

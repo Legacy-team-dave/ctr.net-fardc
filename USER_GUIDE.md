@@ -4,7 +4,8 @@
 
 - `ADMIN_IG` : gestion globale
 - `OPERATEUR` : militaires + contrôles
-- `CONTROLEUR` : réservé à l'application mobile CTR.NET Mobile (non accessible côté web)
+- `CONTROLEUR` : réservé à l'application mobile `CTR.NET` (non accessible côté web)
+- `ENROLEUR` : réservé à l'application mobile `ENROL.NET` (non accessible côté web)
 
 ## Connexion
 

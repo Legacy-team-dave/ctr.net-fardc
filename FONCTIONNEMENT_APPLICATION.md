@@ -21,6 +21,9 @@ Profils effectivement utilisés :
 - `ADMIN_IG`
 - `OPERATEUR`
 - `CONTROLEUR`
+- `ENROLEUR`
+
+Les profils `CONTROLEUR` et `ENROLEUR` sont réservés aux applications mobiles `CTR.NET` et `ENROL.NET`.
 
 ### Droits observés
 
@@ -37,7 +40,10 @@ Profils effectivement utilisés :
   - Passage par `preferences.php` si filtres non définis
 
 - `CONTROLEUR`
-  - Profil réservé à l'application mobile CTR.NET Mobile
+  - Profil réservé à l'application mobile `CTR.NET`
+  - Connexion web bloquée (v1.4.0)
+- `ENROLEUR`
+  - Profil réservé à l'application mobile `ENROL.NET`
   - Connexion web bloquée (v1.4.0)
 
 ## 3. Authentification et session
@@ -55,7 +61,7 @@ Profils effectivement utilisés :
 
 - `ADMIN_IG` -> `index.php`
 - `OPERATEUR` -> `preferences.php` si pas de préférences, sinon `modules/controles/ajouter.php`
-- `CONTROLEUR` -> **bloqué côté web** (profil réservé à l'application mobile CTR.NET Mobile)
+- `CONTROLEUR` / `ENROLEUR` -> **bloqués côté web** (profils réservés aux applications mobiles `CTR.NET` et `ENROL.NET`)
 
 ## 3.2 Se souvenir de moi
 

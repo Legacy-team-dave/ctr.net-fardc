@@ -1,5 +1,15 @@
 # Versioning - CTR.NET-FARDC
 
+## 1.6.0 (2026-04-04)
+
+### 📚 Documentation, enrôlement et comptes mobiles
+
+- ajout du rôle `ENROLEUR` dans la documentation fonctionnelle ;
+- documentation alignée sur les deux applications mobiles `CTR.NET` et `ENROL.NET` ;
+- rappel des règles de création de compte : `987654321` pour `OPERATEUR`, `CONTROLEUR`, `ENROLEUR` ;
+- comptes non-admin créés inactifs par défaut ;
+- messages de connexion mobile clarifiés côté API.
+
 ## 1.5.0 (2026-03-24)
 
 ### 🧹 Nettoyage automatique des caches
@@ -24,7 +34,7 @@
 - Connexion web bloquée pour le profil `CONTROLEUR` (3 points d'entrée sécurisés)
 - Suppression du layout `layout-top-nav` et du mode contrôleur (`controleur-mode`)
 - Suppression de `CONTROLEUR` des routes protégées web
-- API REST conservée pour l'application mobile CTR.NET Mobile
+- API REST conservée pour l'application mobile `CTR.NET`
 - Badge profil `CONTROLEUR` renommé "Mobile" dans l'administration
 - Documentation mise à jour (9 fichiers)
 

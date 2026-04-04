@@ -15,9 +15,9 @@
 - Vérifier le profil dans `utilisateurs`
 - Vérifier la règle `check_profil(...)` dans la page
 
-## 4) Le CONTROLEUR ne peut pas se connecter au web
+## 4) Le CONTROLEUR ou l’ENROLEUR ne peut pas se connecter au web
 
-Comportement normal : le profil `CONTROLEUR` est désormais réservé à l'application mobile CTR.NET Mobile. La connexion web est bloquée.
+Comportement normal : les profils `CONTROLEUR` et `ENROLEUR` sont réservés aux applications mobiles `CTR.NET` et `ENROL.NET`. La connexion web est bloquée.
 
 ## 5) Mentions inattendues
 

@@ -21,6 +21,13 @@ Exemple : `check_profil(['ADMIN_IG'])`.
 - `ADMIN_IG`
 - `OPERATEUR`
 - `CONTROLEUR`
+- `ENROLEUR`
+
+### Règles actuelles de création de compte
+
+- `ADMIN_IG` : actif immédiatement et mot de passe saisi manuellement ;
+- `OPERATEUR`, `CONTROLEUR`, `ENROLEUR` : mot de passe par défaut `987654321` ;
+- ces trois profils sont créés **inactifs** jusqu’à activation par un administrateur.
 
 ## Mentions de contrôle à connaître
 

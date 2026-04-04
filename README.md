@@ -2,6 +2,15 @@
 
 Application PHP de contrôle des effectifs militaires.
 
+## Mise à jour Avril 2026
+
+L’écosystème comporte désormais **deux applications mobiles distinctes** :
+
+- `CTR.NET` pour le profil **`CONTROLEUR`** ;
+- `ENROL.NET` pour le profil **`ENROLEUR`**.
+
+Les comptes `OPERATEUR`, `CONTROLEUR` et `ENROLEUR` sont créés avec le mot de passe par défaut **`987654321`** et restent **inactifs** tant qu’un `ADMIN_IG` ne les a pas activés.
+
 ## Profils
 
 - `ADMIN_IG`
@@ -12,7 +21,10 @@ Application PHP de contrôle des effectifs militaires.
   - Saisie de contrôles
   - Accès au tableau de bord opérateur
 - `CONTROLEUR`
-  - Profil réservé à l'application mobile CTR.NET Mobile
+  - Profil réservé à l'application mobile `CTR.NET`
+  - Non accessible côté web (connexion bloquée)
+- `ENROLEUR`
+  - Profil réservé à l'application mobile `ENROL.NET`
   - Non accessible côté web (connexion bloquée)
 
 ## Mentions de contrôle (réelles)
@@ -156,11 +168,11 @@ Les anciennes références liées aux litiges ne font plus partie du flux actif 
 - `PRESENTATION_CTR_NET_FARDC.md`
 - `PROMPT_PRESENTATION.md`
 
-## Application mobile associée
+## Applications mobiles associées
 
-- Projet : `ctr-net-mobile/` (Ionic 8.0.0 + Angular 20.0.0 + Capacitor 8.2.0)
-- Profil unique : CONTROLEUR
+- `ctr-net-mobile/` → application `CTR.NET` pour le profil `CONTROLEUR`
+- `ctr-net-enrollement-mobile/` → application `ENROL.NET` pour le profil `ENROLEUR`
 - Build APK automatique via GitHub Actions
-- Documentation : `ctr-net-mobile/README.md`
-- Fonctionnement combiné : `ctr-net-mobile/FONCTIONNEMENT_COMPLET_WEB_MOBILE.md`
+- Documentation contrôle : `ctr-net-mobile/README.md`
+- Documentation enrôlement : `ctr-net-enrollement-mobile/README.md`
 

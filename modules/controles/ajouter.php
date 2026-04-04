@@ -183,13 +183,21 @@ if ($action === 'valider' && $matricule && $mention) {
 
         mark_sync_dirty('controles', (int) $controle_id);
 
-        // Stocker le message de succès en session et ouvrir directement le QR dans la liste
+        // N'ouvrir le QR automatiquement que pour un contrôle vivant / militaire
+        $qr_eligible = ($type_controle === 'Militaire');
         $_SESSION['toast_message'] = "Contrôle enregistré avec succès pour : <strong>" . $militaire_info['noms'] . "</strong>";
         $_SESSION['toast_type'] = 'success';
-        $_SESSION['success_message'] = 'Contrôle enregistré avec succès pour : ' . $militaire_info['noms'];
-        $_SESSION['open_qr_controle_id'] = (string) $controle_id;
+        $_SESSION['success_message'] = $qr_eligible
+            ? 'Contrôle enregistré avec succès pour : ' . $militaire_info['noms'] . ' | QR prêt pour l’enrôlement.'
+            : 'Contrôle enregistré avec succès pour : ' . $militaire_info['noms'] . ' | Pas de QR généré pour un contrôle marqué décédé.';
 
-        header('Location: liste.php?open_qr=' . urlencode((string) $controle_id));
+        if ($qr_eligible) {
+            $_SESSION['open_qr_controle_id'] = (string) $controle_id;
+            header('Location: liste.php?open_qr=' . urlencode((string) $controle_id));
+        } else {
+            unset($_SESSION['open_qr_controle_id']);
+            header('Location: liste.php');
+        }
         exit;
     } catch (Exception $e) {
         $error = $e->getMessage();

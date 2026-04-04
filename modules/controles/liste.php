@@ -1094,12 +1094,18 @@ $export_fields = [
                                     $observations = $c['observations'] ?? '';
                                     $ancien_beneficiaire = $c['nom_beneficiaire'] ?? '';
                                     $date_controle_brut = $c['date_controle'] ?? '';
+                                    $qr_eligible = (($c['type_controle'] ?? '') === 'Militaire');
+                                    $qr_reason = $qr_eligible
+                                        ? 'QR disponible pour l’enrôlement du militaire vivant.'
+                                        : 'QR indisponible : contrôle marqué décédé / bénéficiaire.';
 
                                     // Données pour le QR code
                                     $qrData = [
                                         'source'           => 'ctr.net-fardc',
                                         'payload_version'  => 2,
                                         'controle_id'      => (int) ($c['id'] ?? 0),
+                                        'qr_eligible'      => $qr_eligible,
+                                        'qr_reason'        => $qr_reason,
                                         'matricule'        => $c['matricule'],
                                         'noms'             => $c['nom_militaire'],
                                         'grade'            => $grade,
@@ -1144,11 +1150,19 @@ $export_fields = [
                                     <td><?= !empty($observations) ? htmlspecialchars($observations) : '' ?></td>
                                     <td><?= $zdef['value'] ?></td>
                                     <td class="text-center">
-                                        <button type="button" class="btn btn-sm btn-outline-success btn-qr-code"
-                                            data-controle-id="<?= htmlspecialchars((string) ($c['id'] ?? '')) ?>"
-                                            data-info='<?= htmlspecialchars(json_encode($qrData, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES), ENT_QUOTES) ?>'>
-                                            <i class="fas fa-qrcode"></i>
-                                        </button>
+                                        <?php if ($qr_eligible): ?>
+                                            <button type="button" class="btn btn-sm btn-outline-success btn-qr-code"
+                                                title="<?= htmlspecialchars($qr_reason) ?>"
+                                                data-controle-id="<?= htmlspecialchars((string) ($c['id'] ?? '')) ?>"
+                                                data-info='<?= htmlspecialchars(json_encode($qrData, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES), ENT_QUOTES) ?>'>
+                                                <i class="fas fa-qrcode"></i>
+                                            </button>
+                                        <?php else: ?>
+                                            <button type="button" class="btn btn-sm btn-outline-secondary" disabled
+                                                title="<?= htmlspecialchars($qr_reason) ?>">
+                                                <i class="fas fa-ban"></i>
+                                            </button>
+                                        <?php endif; ?>
                                     </td>
                                     <td style="display:none;"><?= htmlspecialchars($date_controle_brut) ?></td>
                                 </tr>
@@ -1590,6 +1604,16 @@ $(document).ready(function() {
 
         if (!info || typeof info !== 'object') {
             console.error("Aucune donnée trouvée dans data-info");
+            return;
+        }
+
+        if (info.qr_eligible === false) {
+            Swal.fire({
+                icon: 'info',
+                title: 'QR non disponible',
+                text: info.qr_reason || 'Le QR code n’est généré que pour les contrôles marqués vivants.',
+                confirmButtonText: 'OK'
+            });
             return;
         }
 

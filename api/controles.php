@@ -199,6 +199,12 @@ function handleQrLookup($pdo)
             return;
         }
 
+        if (($record['type_controle'] ?? '') !== 'Militaire') {
+            http_response_code(409);
+            echo json_encode(['success' => false, 'message' => 'QR refusé : seuls les militaires contrôlés vivants peuvent être enrôlés.']);
+            return;
+        }
+
         echo json_encode([
             'success' => true,
             'data' => [
@@ -394,8 +400,9 @@ function handleEnrollVivant($pdo, $user)
     $empreinte_gauche_data = trim($input['empreinte_gauche_data'] ?? '');
     $empreinte_droite_data = trim($input['empreinte_droite_data'] ?? '');
     $device_label = substr(trim($input['device_label'] ?? ($_SERVER['HTTP_USER_AGENT'] ?? 'Tablette')), 0, 255);
-    $qr_payload = !empty($input['qr_payload'])
-        ? json_encode($input['qr_payload'], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES)
+    $qr_payload_array = is_array($input['qr_payload'] ?? null) ? $input['qr_payload'] : null;
+    $qr_payload = !empty($qr_payload_array)
+        ? json_encode($qr_payload_array, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES)
         : null;
 
     if ($matricule === '' || $noms === '') {
@@ -413,6 +420,12 @@ function handleEnrollVivant($pdo, $user)
     if ($empreinte_gauche_data === '' && $empreinte_droite_data === '') {
         http_response_code(400);
         echo json_encode(['success' => false, 'message' => 'Au moins une empreinte doit être capturée']);
+        return;
+    }
+
+    if (is_array($qr_payload_array) && !empty($qr_payload_array['type_controle']) && $qr_payload_array['type_controle'] !== 'Militaire') {
+        http_response_code(409);
+        echo json_encode(['success' => false, 'message' => 'QR refusé : seuls les militaires contrôlés vivants peuvent être enrôlés.']);
         return;
     }
 

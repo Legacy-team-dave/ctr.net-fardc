@@ -1096,6 +1096,8 @@ $export_fields = [
 
                                     // Données pour le QR code
                                     $qrData = [
+                                        'source'         => 'ctr.net-fardc',
+                                        'payload_version'=> 1,
                                         'matricule'      => $c['matricule'],
                                         'noms'           => $c['nom_militaire'],
                                         'grade'          => $grade,
@@ -1568,12 +1570,20 @@ $(document).ready(function() {
             return;
         }
 
-        // Construction de la chaîne à encoder
-        const textToEncode = `Matricule : ${info.matricule || ''}\n` +
-            `Noms : ${info.noms || ''}\n` +
-            `Grade : ${info.grade || ''}\n` +
-            `Date contrôle : ${info.date_controle || ''}\n` +
-            `Mention : ${info.mention || ''}`;
+        // Construction de la chaîne à encoder pour ENROL.NET / CTR.NET mobile
+        const textToEncode = `CTR.NET:${JSON.stringify({
+            source: info.source || 'ctr.net-fardc',
+            payload_version: info.payload_version || 1,
+            matricule: info.matricule || '',
+            noms: info.noms || '',
+            grade: info.grade || '',
+            unite: info.unite || '',
+            garnison: info.garnison || '',
+            province: info.province || '',
+            categorie: info.categorie || '',
+            date_controle: info.date_controle || '',
+            mention: info.mention || ''
+        })}`;
 
         // Génération du QR code avec qrcode-generator
         const qr = qrcode(0, 'M'); // niveau de correction M

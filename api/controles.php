@@ -1,7 +1,7 @@
 <?php
 
 /**
- * API Contrôles pour l'application mobile CONTROLEUR
+ * API Contrôles pour les applications mobiles CONTROLEUR / ENROLEUR
  * Endpoints: GET/POST /api/controles.php?action=search|valider|historique|enroll_vivant
  */
 header('Content-Type: application/json; charset=utf-8');
@@ -31,6 +31,9 @@ switch ($action) {
     case 'search':
         handleSearch($pdo);
         break;
+    case 'militaire':
+        handleMilitaire($pdo);
+        break;
     case 'valider':
         handleValider($pdo, $user);
         break;
@@ -54,7 +57,7 @@ function authenticateToken($pdo)
         $stmt = $pdo->prepare("SELECT id_utilisateur, login, nom_complet, profil FROM utilisateurs WHERE remember_token = ? AND remember_token_expires > NOW() AND actif = true");
         $stmt->execute([$token]);
         $user = $stmt->fetch();
-        if ($user && strtoupper(trim($user['profil'])) === 'CONTROLEUR') {
+        if ($user && is_mobile_only_profile($user['profil'])) {
             return $user;
         }
     } catch (PDOException $e) {
@@ -99,6 +102,46 @@ function handleSearch($pdo)
         echo json_encode($resultats);
     } catch (PDOException $e) {
         error_log("API search error: " . $e->getMessage());
+        http_response_code(500);
+        echo json_encode(['success' => false, 'message' => 'Erreur serveur']);
+    }
+}
+
+function handleMilitaire($pdo)
+{
+    $matricule = trim($_GET['matricule'] ?? '');
+    if ($matricule === '') {
+        http_response_code(400);
+        echo json_encode(['success' => false, 'message' => 'Matricule requis']);
+        return;
+    }
+
+    try {
+        $stmt = $pdo->prepare("SELECT matricule, noms, grade, unite, garnison, province, statut, categorie, beneficiaire
+                               FROM militaires
+                               WHERE matricule = ?
+                               LIMIT 1");
+        $stmt->execute([$matricule]);
+        $militaire = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        if (!$militaire) {
+            http_response_code(404);
+            echo json_encode(['success' => false, 'message' => 'Militaire introuvable']);
+            return;
+        }
+
+        $check = $pdo->prepare("SELECT id FROM controles WHERE matricule = ? LIMIT 1");
+        $check->execute([$matricule]);
+
+        $militaire['age'] = calculerAge($matricule);
+        $militaire['deja_controle'] = (bool) $check->fetch(PDO::FETCH_ASSOC);
+
+        echo json_encode([
+            'success' => true,
+            'data' => $militaire,
+        ]);
+    } catch (PDOException $e) {
+        error_log("API militaire error: " . $e->getMessage());
         http_response_code(500);
         echo json_encode(['success' => false, 'message' => 'Erreur serveur']);
     }

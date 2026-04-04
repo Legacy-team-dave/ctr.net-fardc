@@ -1,0 +1,20 @@
+# Config sensibles
+.env
+config/parts/
+
+# Fichiers temporaires
+*.log
+*.tmp
+*.bak
+
+# Uploads runtime
+assets/uploads/avatars/*
+!assets/uploads/avatars/default-avatar.jpg
+
+# Backups runtime
+backups/
+
+# IDE
+/.vscode
+/.idea
+.phpactor.json

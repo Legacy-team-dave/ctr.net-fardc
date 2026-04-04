@@ -1099,6 +1099,10 @@ $export_fields = [
                                         'matricule'      => $c['matricule'],
                                         'noms'           => $c['nom_militaire'],
                                         'grade'          => $grade,
+                                        'unite'          => $unite,
+                                        'garnison'       => $garnison,
+                                        'province'       => $province,
+                                        'categorie'      => $c['militaire_categorie'] ?? '',
                                         'date_controle'  => $date_controle_brut,
                                         'mention'        => $c['mention']
                                     ];
@@ -1206,7 +1210,7 @@ $export_fields = [
                     <div><strong>Noms :</strong> <span id="qrNoms"></span></div>
                     <div><strong>Grade :</strong> <span id="qrGrade"></span></div>
                     <canvas id="qrcodeCanvas" style="width: 300px; height: 300px; margin: 0 auto;"></canvas>
-                    <p class="mt-3 text-muted">Scannez ce code pour obtenir les informations du militaire.</p>
+                    <p class="mt-3 text-muted">Scannez ce code pour pré-remplir l’enrôlement mobile du militaire vivant.</p>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>

@@ -2,7 +2,7 @@
 
 /**
  * API Contrôles pour l'application mobile CONTROLEUR
- * Endpoints: GET/POST /api/controles.php?action=search|valider|historique
+ * Endpoints: GET/POST /api/controles.php?action=search|valider|historique|enroll_vivant
  */
 header('Content-Type: application/json; charset=utf-8');
 header('Access-Control-Allow-Origin: *');
@@ -36,6 +36,9 @@ switch ($action) {
         break;
     case 'historique':
         handleHistorique($pdo);
+        break;
+    case 'enroll_vivant':
+        handleEnrollVivant($pdo, $user);
         break;
     default:
         http_response_code(400);
@@ -239,6 +242,143 @@ function handleValider($pdo, $user)
         http_response_code(500);
         echo json_encode(['success' => false, 'message' => $e->getMessage()]);
     }
+}
+
+function handleEnrollVivant($pdo, $user)
+{
+    if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+        http_response_code(405);
+        echo json_encode(['success' => false, 'message' => 'Méthode POST requise']);
+        return;
+    }
+
+    $input = json_decode(file_get_contents('php://input'), true);
+    if (!is_array($input)) {
+        http_response_code(400);
+        echo json_encode(['success' => false, 'message' => 'Payload JSON invalide']);
+        return;
+    }
+
+    $matricule = trim($input['matricule'] ?? '');
+    $noms = trim($input['noms'] ?? '');
+    $grade = trim($input['grade'] ?? '');
+    $unite = trim($input['unite'] ?? '');
+    $garnison = trim($input['garnison'] ?? '');
+    $province = trim($input['province'] ?? '');
+    $observations = trim($input['observations'] ?? '');
+    $photo_data = trim($input['photo_data'] ?? '');
+    $empreinte_gauche_data = trim($input['empreinte_gauche_data'] ?? '');
+    $empreinte_droite_data = trim($input['empreinte_droite_data'] ?? '');
+    $device_label = substr(trim($input['device_label'] ?? ($_SERVER['HTTP_USER_AGENT'] ?? 'Tablette')), 0, 255);
+    $qr_payload = !empty($input['qr_payload'])
+        ? json_encode($input['qr_payload'], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES)
+        : null;
+
+    if ($matricule === '' || $noms === '') {
+        http_response_code(400);
+        echo json_encode(['success' => false, 'message' => 'Matricule et noms du militaire requis']);
+        return;
+    }
+
+    if ($photo_data === '') {
+        http_response_code(400);
+        echo json_encode(['success' => false, 'message' => 'La photo du militaire est obligatoire']);
+        return;
+    }
+
+    if ($empreinte_gauche_data === '' && $empreinte_droite_data === '') {
+        http_response_code(400);
+        echo json_encode(['success' => false, 'message' => 'Au moins une empreinte doit être capturée']);
+        return;
+    }
+
+    try {
+        ensureEnrollementsVivantsTable($pdo);
+
+        $stmt = $pdo->prepare("SELECT noms, grade, unite, garnison, province, categorie FROM militaires WHERE matricule = ? LIMIT 1");
+        $stmt->execute([$matricule]);
+        $militaire = $stmt->fetch(PDO::FETCH_ASSOC) ?: [];
+
+        $noms = $noms ?: ($militaire['noms'] ?? '');
+        $grade = $grade ?: ($militaire['grade'] ?? '');
+        $unite = $unite ?: ($militaire['unite'] ?? '');
+        $garnison = $garnison ?: ($militaire['garnison'] ?? '');
+        $province = $province ?: ($militaire['province'] ?? '');
+        $categorie = trim($militaire['categorie'] ?? 'ACTIF');
+
+        $insert = $pdo->prepare("INSERT INTO enrollements_vivants (
+            matricule, noms, grade, unite, garnison, province, categorie,
+            qr_payload, photo_data, empreinte_gauche_data, empreinte_droite_data,
+            observations, appareil_id, cree_le, sync_status
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), 'local')");
+
+        $insert->execute([
+            $matricule,
+            $noms,
+            $grade ?: null,
+            $unite ?: null,
+            $garnison ?: null,
+            $province ?: null,
+            $categorie ?: null,
+            $qr_payload,
+            $photo_data,
+            $empreinte_gauche_data ?: null,
+            $empreinte_droite_data ?: null,
+            $observations ?: null,
+            $device_label
+        ]);
+
+        $enrollement_id = (int) $pdo->lastInsertId();
+
+        $details = "Enrôlement vivant mobile | Matricule: {$matricule} | Nom: {$noms}";
+        $logStmt = $pdo->prepare("INSERT INTO logs (id_utilisateur, action, table_concernee, id_enregistrement, details, ip_address, user_agent) VALUES (?, 'ENROLLEMENT_MOBILE', 'enrollements_vivants', ?, ?, ?, ?)");
+        $logStmt->execute([
+            $user['id_utilisateur'],
+            $enrollement_id,
+            $details,
+            $_SERVER['REMOTE_ADDR'] ?? 'mobile',
+            $_SERVER['HTTP_USER_AGENT'] ?? 'Mobile App'
+        ]);
+
+        if (function_exists('mark_sync_dirty')) {
+            mark_sync_dirty('enrollements_vivants', $enrollement_id);
+        }
+
+        echo json_encode([
+            'success' => true,
+            'message' => 'Enrôlement du militaire vivant enregistré avec succès',
+            'data' => ['enrollement_id' => $enrollement_id]
+        ]);
+    } catch (Exception $e) {
+        error_log("API enroll_vivant error: " . $e->getMessage());
+        http_response_code(500);
+        echo json_encode(['success' => false, 'message' => 'Erreur lors de l’enrôlement mobile']);
+    }
+}
+
+function ensureEnrollementsVivantsTable($pdo)
+{
+    $pdo->exec("CREATE TABLE IF NOT EXISTS enrollements_vivants (
+        id INT NOT NULL AUTO_INCREMENT,
+        matricule VARCHAR(20) NOT NULL,
+        noms VARCHAR(150) NOT NULL,
+        grade VARCHAR(80) DEFAULT NULL,
+        unite VARCHAR(150) DEFAULT NULL,
+        garnison VARCHAR(150) DEFAULT NULL,
+        province VARCHAR(100) DEFAULT NULL,
+        categorie VARCHAR(80) DEFAULT NULL,
+        qr_payload LONGTEXT DEFAULT NULL,
+        photo_data LONGTEXT NOT NULL,
+        empreinte_gauche_data LONGTEXT DEFAULT NULL,
+        empreinte_droite_data LONGTEXT DEFAULT NULL,
+        observations TEXT DEFAULT NULL,
+        appareil_id VARCHAR(255) DEFAULT NULL,
+        cree_le DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        sync_status ENUM('local', 'synced') NOT NULL DEFAULT 'local',
+        PRIMARY KEY (id),
+        KEY idx_enrol_matricule (matricule),
+        KEY idx_enrol_date (cree_le)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
 }
 
 function handleHistorique($pdo)

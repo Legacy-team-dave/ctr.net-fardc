@@ -1223,6 +1223,17 @@ $export_fields = [
                     <div><strong>Mention :</strong> <span id="qrMention"></span></div>
                     <canvas id="qrcodeCanvas" style="width: 300px; height: 300px; margin: 0 auto;"></canvas>
                     <p class="mt-3 text-muted">Scannez ce code pour pré-remplir l’enrôlement mobile du militaire vivant.</p>
+                    <details class="mt-3 text-start">
+                        <summary><strong>Diagnostic QR échangé</strong></summary>
+                        <div class="mt-2">
+                            <div><strong>Payload source web :</strong></div>
+                            <pre id="qrSourcePayload" class="p-2 bg-light border rounded small text-wrap"></pre>
+                        </div>
+                        <div class="mt-2">
+                            <div><strong>Texte encodé dans le QR :</strong></div>
+                            <pre id="qrEncodedPayload" class="p-2 bg-light border rounded small text-wrap"></pre>
+                        </div>
+                    </details>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
@@ -1590,7 +1601,7 @@ $(document).ready(function() {
         $('#qrMention').text(info.mention || '');
 
         // Construction d'un QR compact mais complet, compatible avec l'affichage mobile hors ligne
-        const textToEncode = `CTR.NET:${JSON.stringify({
+        const compactPayload = {
             s: info.source || 'ctr.net-fardc',
             v: Number(info.payload_version || 2),
             id: Number(info.controle_id || 0) || undefined,
@@ -1608,7 +1619,11 @@ $(document).ready(function() {
             d: info.date_controle || '',
             mn: info.mention || '',
             o: info.observations || ''
-        })}`;
+        };
+        const textToEncode = `CTR.NET:${JSON.stringify(compactPayload)}`;
+
+        $('#qrSourcePayload').text(JSON.stringify(info, null, 2));
+        $('#qrEncodedPayload').text(textToEncode);
 
         // Génération du QR code avec qrcode-generator
         const qr = qrcode(0, 'M'); // niveau de correction M

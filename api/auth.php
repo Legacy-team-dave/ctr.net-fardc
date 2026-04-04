@@ -53,13 +53,25 @@ function handleLogin($pdo)
     }
 
     try {
-        $stmt = $pdo->prepare("SELECT * FROM utilisateurs WHERE (login = ? OR nom_complet = ? OR email = ?) AND actif = true");
+        $stmt = $pdo->prepare("SELECT * FROM utilisateurs WHERE (login = ? OR nom_complet = ? OR email = ?) LIMIT 1");
         $stmt->execute([$login, $login, $login]);
         $user = $stmt->fetch();
 
-        if (!$user || !password_verify($password, $user['mot_de_passe'])) {
+        if (!$user) {
+            http_response_code(404);
+            echo json_encode(['success' => false, 'message' => 'Utilisateur non créé.']);
+            return;
+        }
+
+        if (empty($user['actif'])) {
+            http_response_code(403);
+            echo json_encode(['success' => false, 'message' => 'Ce compte utilisateur est désactivé.']);
+            return;
+        }
+
+        if (!password_verify($password, $user['mot_de_passe'])) {
             http_response_code(401);
-            echo json_encode(['success' => false, 'message' => 'Identifiants incorrects']);
+            echo json_encode(['success' => false, 'message' => 'Utilisateur ou mot de passe incorrect.']);
             return;
         }
 

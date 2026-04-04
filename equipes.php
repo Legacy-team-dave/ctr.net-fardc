@@ -687,7 +687,7 @@ $display_membres = $membres;
             border-collapse: separate;
             border-spacing: 0 6px;
             font-size: 0.8rem;
-            table-layout: auto;
+            table-layout: fixed !important;
             background: transparent;
         }
 
@@ -1125,13 +1125,20 @@ $display_membres = $membres;
 
                     const teamTable = $('#team-members-table').DataTable({
                         language: {
-                            url: '//cdn.datatables.net/plug-ins/1.11.5/i18n/fr-FR.json',
                             search: '<i class="fas fa-search"></i>',
                             lengthMenu: 'Afficher _MENU_ éléments',
                             info: 'Affichage de _START_ à _END_ sur _TOTAL_ éléments',
-                            infoEmpty: 'Aucune ligne',
-                            zeroRecords: 'Aucune ligne correspondante'
+                            infoEmpty: 'Aucun élément',
+                            infoFiltered: '(filtré de _MAX_ éléments)',
+                            zeroRecords: 'Aucun enregistrement correspondant',
+                            paginate: {
+                                first: 'Premier',
+                                previous: 'Précédent',
+                                next: 'Suivant',
+                                last: 'Dernier'
+                            }
                         },
+                        dom: 'rt<"datatable-bottom d-flex justify-content-between align-items-center flex-wrap gap-2 mt-3"ip>',
                         pageLength: 10,
                         lengthMenu: [10, 25, 50, 100],
                         autoWidth: false,
@@ -1156,6 +1163,7 @@ $display_membres = $membres;
                             });
                         },
                         initComplete: function() {
+                            this.api().columns.adjust();
                             const filterDiv = $('#team-members-table_filter');
                             filterDiv.css({
                                 display: 'flex',

@@ -40,6 +40,15 @@ Le flux utilise aussi les statuts :
 - `Vivant`
 - `Décédé`
 
+## QR d’enrôlement mobile
+
+Le QR destiné à `ENROL.NET` est généré dans `modules/controles/liste.php` avec les règles suivantes :
+
+- **QR disponible uniquement** pour un contrôle marqué **vivant** (`type_controle = Militaire`) ;
+- **aucun QR** pour un contrôle marqué **décédé / bénéficiaire** ;
+- le mobile `ENROL.NET` résout ensuite les détails via `api/controles.php?action=qr_lookup` ;
+- le projet `ctr-net-mobile` n’est **pas impacté fonctionnellement** par cette règle : il reste dédié au contrôle terrain du profil `CONTROLEUR`.
+
 ## Structure réelle
 
 - `index.php`, `login.php`, `logout.php`, `profil.php`, `preferences.php`, `equipes.php`

@@ -18,8 +18,71 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'log_export') {
 }
 // --- Fin AJAX ---
 
-$success_message = $_SESSION['success_message'] ?? null;
-unset($_SESSION['success_message'], $_SESSION['open_qr_controle_id']);
+// --- AJAX : sauvegarde locale du QR généré ---
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && (($_POST['ajax'] ?? '') === 'save_qr')) {
+    header('Content-Type: application/json');
+
+    try {
+        $csrfToken = $_POST['csrf_token'] ?? '';
+        if (!verify_csrf_token($csrfToken)) {
+            http_response_code(403);
+            echo json_encode(['success' => false, 'message' => 'Jeton CSRF invalide.']);
+            exit;
+        }
+
+        $imageData = trim((string) ($_POST['image'] ?? ''));
+        $controleId = (int) ($_POST['controle_id'] ?? 0);
+        $matricule = trim((string) ($_POST['matricule'] ?? ''));
+
+        if ($imageData === '' || !preg_match('#^data:image/png;base64,#', $imageData)) {
+            throw new RuntimeException('Image QR PNG invalide ou manquante.');
+        }
+
+        $binaryData = base64_decode(substr($imageData, strpos($imageData, ',') + 1), true);
+        if ($binaryData === false) {
+            throw new RuntimeException('Impossible de décoder le QR code.');
+        }
+
+        $qrDirectory = __DIR__ . '/../../assets/uploads/qr';
+        if (!is_dir($qrDirectory) && !mkdir($qrDirectory, 0775, true) && !is_dir($qrDirectory)) {
+            throw new RuntimeException('Impossible de créer le dossier de stockage des QR.');
+        }
+
+        $safeMatricule = preg_replace('/[^A-Za-z0-9_-]+/', '-', $matricule);
+        $safeMatricule = trim((string) $safeMatricule, '-_');
+        if ($safeMatricule === '') {
+            $safeMatricule = 'sans-matricule';
+        }
+
+        $fileName = ($controleId > 0 ? 'controle-' . $controleId . '-' : 'qr-') . $safeMatricule . '.png';
+        $filePath = $qrDirectory . DIRECTORY_SEPARATOR . $fileName;
+
+        if (file_put_contents($filePath, $binaryData) === false) {
+            throw new RuntimeException('Échec de l’enregistrement du QR code sur le disque.');
+        }
+
+        echo json_encode([
+            'success' => true,
+            'path' => 'assets/uploads/qr/' . $fileName,
+            'fileName' => $fileName
+        ]);
+        exit;
+    } catch (Throwable $e) {
+        http_response_code(500);
+        echo json_encode([
+            'success' => false,
+            'message' => $e->getMessage()
+        ]);
+        exit;
+    }
+}
+// --- Fin AJAX sauvegarde QR ---
+
+unset(
+    $_SESSION['success_message'],
+    $_SESSION['success_type'],
+    $_SESSION['open_qr_controle_id']
+);
 $user_profil = $_SESSION['user_profil'] ?? '';
 $csrf_token = generate_csrf_token();
 
@@ -927,12 +990,6 @@ $export_fields = [
 <div class="toast-container" id="mobile-toast-container"></div>
 
 <div class="container-fluid py-3">
-    <?php if ($success_message): ?>
-    <div class="alert alert-success alert-dismissible fade show" role="alert">
-        <i class="fas fa-check-circle me-2"></i> <?= htmlspecialchars($success_message) ?>
-        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-    </div>
-    <?php endif; ?>
 
     <!-- Statistiques -->
     <div class="stats-container">
@@ -1238,22 +1295,7 @@ $export_fields = [
                     <div><strong>Matricule :</strong> <span id="qrMatricule"></span></div>
                     <div><strong>Noms :</strong> <span id="qrNoms"></span></div>
                     <div><strong>Grade :</strong> <span id="qrGrade"></span></div>
-                    <div><strong>Date contrôle :</strong> <span id="qrDateControle"></span></div>
-                    <div><strong>Mention :</strong> <span id="qrMention"></span></div>
-                    <div class="small text-muted mt-2">QR standard : correction M (15%) · PNG · 1024 × 1024</div>
                     <canvas id="qrcodeCanvas" style="width: min(320px, 100%); height: auto; aspect-ratio: 1 / 1; margin: 12px auto 0; display: block; background: #ffffff; border-radius: 12px;"></canvas>
-                    <p class="mt-3 text-muted">Scannez le QR complet avec sa marge blanche pour pré-remplir l’enrôlement mobile du militaire vivant.</p>
-                    <details class="mt-3 text-start">
-                        <summary><strong>Diagnostic QR échangé</strong></summary>
-                        <div class="mt-2">
-                            <div><strong>Payload source web :</strong></div>
-                            <pre id="qrSourcePayload" class="p-2 bg-light border rounded small text-wrap"></pre>
-                        </div>
-                        <div class="mt-2">
-                            <div><strong>Texte encodé dans le QR :</strong></div>
-                            <pre id="qrEncodedPayload" class="p-2 bg-light border rounded small text-wrap"></pre>
-                        </div>
-                    </details>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
@@ -1316,21 +1358,6 @@ $(document).ready(function() {
         }
     };
 
-    <?php if ($success_message): ?>
-    Swal.fire({
-        icon: 'success',
-        title: 'Succès',
-        text: '<?= addslashes($success_message) ?>',
-        timer: 2000,
-        showConfirmButton: false,
-        position: 'top-end',
-        toast: true,
-        background: '#28a745',
-        color: '#ffffff',
-        iconColor: '#ffffff',
-        timerProgressBar: true
-    });
-    <?php endif; ?>
 
     let searchTerm = '';
 
@@ -1557,8 +1584,47 @@ $(document).ready(function() {
         });
     });
 
+    async function saveGeneratedQrToServer(imageDataUrl, info) {
+        const $storageInfo = $('#qrStorageInfo');
+
+        $storageInfo
+            .removeClass('text-success text-danger')
+            .addClass('text-muted')
+            .text('Enregistrement du QR dans assets/uploads/qr/...');
+
+        try {
+            const response = await $.ajax({
+                url: window.location.pathname,
+                method: 'POST',
+                dataType: 'json',
+                data: {
+                    ajax: 'save_qr',
+                    csrf_token: '<?= addslashes($csrf_token) ?>',
+                    image: imageDataUrl,
+                    controle_id: info.controle_id || '',
+                    matricule: info.matricule || ''
+                }
+            });
+
+            if (response && response.success) {
+                $storageInfo
+                    .removeClass('text-muted text-danger')
+                    .addClass('text-success')
+                    .text(`QR enregistré dans ${response.path}`);
+            } else {
+                throw new Error(response && response.message ? response.message : 'Enregistrement impossible.');
+            }
+        } catch (error) {
+            console.error('Erreur sauvegarde QR :', error);
+            $storageInfo
+                .removeClass('text-muted text-success')
+                .addClass('text-danger')
+                .text('QR affiché, mais non enregistré dans assets/uploads/qr/.');
+        }
+    }
+
     // Gestion du QR Code avec qrcode-generator
-    $(document).on('click', '.btn-qr-code', function() {
+    $(document).on('click', '.btn-qr-code', async function() {
         const rawInfo = $(this).attr('data-info') || '';
         let info = null;
 
@@ -1588,8 +1654,6 @@ $(document).ready(function() {
         $('#qrMatricule').text(info.matricule || '');
         $('#qrNoms').text(info.noms || '');
         $('#qrGrade').text(info.grade || '');
-        $('#qrDateControle').text(info.date_controle || '');
-        $('#qrMention').text(info.mention || '');
 
         // Construction d'un QR compact mais complet, compatible avec l'affichage mobile hors ligne
         const compactPayload = {
@@ -1613,8 +1677,6 @@ $(document).ready(function() {
         };
         const textToEncode = `CTR.NET:${JSON.stringify(compactPayload)}`;
 
-        $('#qrSourcePayload').text(JSON.stringify(info, null, 2));
-        $('#qrEncodedPayload').text(textToEncode);
 
         // Génération du QR code avec paramètres standardisés (comme un vrai générateur QR)
         const QR_ERROR_CORRECTION = 'M';
@@ -1667,8 +1729,11 @@ $(document).ready(function() {
         canvas.dataset.qrSize = String(QR_OUTPUT_SIZE);
         canvas.dataset.qrErrorCorrection = `${QR_ERROR_CORRECTION} (15%)`;
 
-        // Ouvrir le modal
+        const qrImageDataUrl = canvas.toDataURL(QR_FORMAT);
+
+        // Ouvrir le modal puis enregistrer le PNG en arrière-plan
         $('#qrCodeModal').modal('show');
+        void saveGeneratedQrToServer(qrImageDataUrl, info);
     });
 
     // Fonctions d'export (inchangées)

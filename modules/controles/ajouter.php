@@ -183,16 +183,19 @@ if ($action === 'valider' && $matricule && $mention) {
 
         mark_sync_dirty('controles', (int) $controle_id);
 
-        // Le QR éventuel reste disponible dans la liste, sans ouverture automatique.
-        $qr_eligible = ($type_controle === 'Militaire');
-        $_SESSION['toast_message'] = "Contrôle enregistré avec succès pour : <strong>" . $militaire_info['noms'] . "</strong>";
-        $_SESSION['toast_type'] = 'success';
-        $_SESSION['success_message'] = $qr_eligible
-            ? 'Contrôle enregistré avec succès pour : ' . $militaire_info['noms'] . ' | QR disponible dans la liste des contrôles.'
-            : 'Contrôle enregistré avec succès pour : ' . $militaire_info['noms'] . ' | Pas de QR généré pour un contrôle marqué décédé.';
+        // Message local sur la page d'ajout, sans redirection vers la liste.
+        $nom_militaire_label = trim((string) ($militaire_info['noms'] ?? ''));
+        if ($nom_militaire_label === '') {
+            $nom_militaire_label = $matricule;
+        }
 
-        unset($_SESSION['open_qr_controle_id']);
-        header('Location: liste.php');
+        $_SESSION['toast_message'] = 'Contrôle enregistré avec succès pour : <strong>'
+            . htmlspecialchars($nom_militaire_label, ENT_QUOTES, 'UTF-8')
+            . '</strong>';
+        $_SESSION['toast_type'] = 'success';
+
+        unset($_SESSION['success_message'], $_SESSION['success_type'], $_SESSION['swal'], $_SESSION['open_qr_controle_id']);
+        header('Location: ajouter.php');
         exit;
     } catch (Exception $e) {
         $error = $e->getMessage();
@@ -1085,17 +1088,30 @@ include '../../includes/header.php';
             }, 3500);
         }
 
+        function resetControleState() {
+            clickedMention = null;
+            $('#search-section').show();
+            $('#search-input').val('');
+            $('.statut-checkbox').prop('checked', false);
+            $('input[name="lien"]').prop('checked', false);
+            $('input[name="new_beneficiaire"], textarea[name="observations"]').val('');
+            $('.militaire-info').hide();
+            $('.statut-temp').hide();
+            $('#controle-section').hide().removeClass('loading');
+            $('#loading-icon').addClass('d-none');
+            $('#status-text').text('Modification temps réel');
+            $('#titre-icon').removeClass('fa-users').addClass('fa-user');
+            $('#titre-texte').text('Contrôle du militaire');
+            window.history.replaceState({}, '', window.location.pathname);
+        }
+
         function bindStaticHandlers() {
             // Gestionnaires statiques - liés UNE SEULE FOIS (jamais re-liés)
             $('.statut-checkbox').on('change', handleStatutChange);
             $('#btn-new-search').on('click', function(e) {
                 e.preventDefault();
-                $('#search-section').show();
-                $('.militaire-info').hide();
-                $('.statut-temp').hide();
-                $('#controle-section').hide();
-                window.history.pushState({}, '', window.location.pathname);
-                $('#search-input').val('').focus();
+                resetControleState();
+                $('#search-input').focus();
             });
 
             // Délégation d'événements pour le contenu dynamique (rechargé par AJAX)
@@ -1179,7 +1195,7 @@ include '../../includes/header.php';
                         $('.militaire-info').show();
                     }
 
-                    window.history.pushState({}, '', window.location.pathname + '?' + params);
+                    window.history.replaceState({}, '', window.location.pathname + '?' + params);
                     $('#status-text').text('Modification temps réel');
                 },
                 error: () => {
@@ -1266,7 +1282,8 @@ include '../../includes/header.php';
                 }).then((result) => {
                     if (result.isConfirmed && '<?= $_SESSION['swal']['confirmButtonText'] ?>' ===
                         'Nouvelle recherche') {
-                        window.location.href = window.location.pathname;
+                        resetControleState();
+                        $('#search-input').focus();
                     }
                 });
                 <?php unset($_SESSION['swal']); ?>

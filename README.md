@@ -48,6 +48,7 @@ Le QR destiné à `ENROL.NET` est généré dans `modules/controles/liste.php` a
 - **aucun QR** pour un contrôle marqué **décédé / bénéficiaire** ;
 - le QR reste accessible manuellement dans `modules/controles/liste.php` mais **n’est plus ouvert automatiquement** après chaque enregistrement ;
 - le mobile `ENROL.NET` résout ensuite les détails via `api/controles.php?action=qr_lookup` ;
+- côté terrain, `ENROL.NET` suit le parcours **capture de la carte → empreintes via capteur → scan QR professionnel → validation** ;
 - le projet `ctr-net-mobile` n’est **pas impacté fonctionnellement** par cette règle : il reste dédié au contrôle terrain du profil `CONTROLEUR`.
 
 ## Synchronisation locale → central

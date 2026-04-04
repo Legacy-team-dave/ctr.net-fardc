@@ -19,7 +19,8 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'log_export') {
 // --- Fin AJAX ---
 
 $success_message = $_SESSION['success_message'] ?? null;
-unset($_SESSION['success_message']);
+$open_qr_controle_id = $_GET['open_qr'] ?? ($_SESSION['open_qr_controle_id'] ?? '');
+unset($_SESSION['success_message'], $_SESSION['open_qr_controle_id']);
 $user_profil = $_SESSION['user_profil'] ?? '';
 $csrf_token = generate_csrf_token();
 
@@ -1096,17 +1097,20 @@ $export_fields = [
 
                                     // Données pour le QR code
                                     $qrData = [
-                                        'source'         => 'ctr.net-fardc',
-                                        'payload_version'=> 1,
-                                        'matricule'      => $c['matricule'],
-                                        'noms'           => $c['nom_militaire'],
-                                        'grade'          => $grade,
-                                        'unite'          => $unite,
-                                        'garnison'       => $garnison,
-                                        'province'       => $province,
-                                        'categorie'      => $c['militaire_categorie'] ?? '',
-                                        'date_controle'  => $date_controle_brut,
-                                        'mention'        => $c['mention']
+                                        'source'          => 'ctr.net-fardc',
+                                        'payload_version' => 2,
+                                        'controle_id'     => (int) ($c['id'] ?? 0),
+                                        'matricule'       => $c['matricule'],
+                                        'noms'            => $c['nom_militaire'],
+                                        'grade'           => $grade,
+                                        'unite'           => $unite,
+                                        'garnison'        => $garnison,
+                                        'province'        => $province,
+                                        'categorie'       => $c['militaire_categorie'] ?? '',
+                                        'type_controle'   => $c['type_controle'] ?? '',
+                                        'lien_parente'    => $lien_parente,
+                                        'date_controle'   => $date_controle_brut,
+                                        'mention'         => $c['mention']
                                     ];
                                 ?>
                                 <tr data-zone="<?= $zdef['code'] ?>"
@@ -1138,7 +1142,8 @@ $export_fields = [
                                     <td><?= $zdef['value'] ?></td>
                                     <td class="text-center">
                                         <button type="button" class="btn btn-sm btn-outline-success btn-qr-code"
-                                            data-info='<?= htmlspecialchars(json_encode($qrData), ENT_QUOTES) ?>'>
+                                            data-controle-id="<?= htmlspecialchars((string) ($c['id'] ?? '')) ?>"
+                                            data-info='<?= htmlspecialchars(json_encode($qrData, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES), ENT_QUOTES) ?>'>
                                             <i class="fas fa-qrcode"></i>
                                         </button>
                                     </td>
@@ -1211,6 +1216,8 @@ $export_fields = [
                     <div><strong>Matricule :</strong> <span id="qrMatricule"></span></div>
                     <div><strong>Noms :</strong> <span id="qrNoms"></span></div>
                     <div><strong>Grade :</strong> <span id="qrGrade"></span></div>
+                    <div><strong>Date contrôle :</strong> <span id="qrDateControle"></span></div>
+                    <div><strong>Mention :</strong> <span id="qrMention"></span></div>
                     <canvas id="qrcodeCanvas" style="width: 300px; height: 300px; margin: 0 auto;"></canvas>
                     <p class="mt-3 text-muted">Scannez ce code pour pré-remplir l’enrôlement mobile du militaire vivant.</p>
                 </div>
@@ -1243,6 +1250,7 @@ $(document).ready(function() {
     const syncEndpoint = <?= json_encode(app_url('api/sync_controles.php')) ?>;
     const testSyncEndpoint = <?= json_encode(app_url('api/test_sync_connection.php')) ?>;
     const syncCsrfToken = <?= json_encode($csrf_token) ?>;
+    const autoOpenQrId = <?= json_encode((string) $open_qr_controle_id) ?>;
 
     const getTimestamp = () => {
         const d = new Date();
@@ -1556,7 +1564,20 @@ $(document).ready(function() {
 
     // Gestion du QR Code avec qrcode-generator
     $(document).on('click', '.btn-qr-code', function() {
-        const info = $(this).data('info');
+        const rawInfo = $(this).attr('data-info') || '';
+        let info = null;
+
+        try {
+            info = typeof rawInfo === 'string' ? JSON.parse(rawInfo) : rawInfo;
+        } catch (error) {
+            console.error('Payload QR invalide dans data-info', error, rawInfo);
+            return;
+        }
+
+        if (!info || typeof info !== 'object') {
+            console.error("Aucune donnée trouvée dans data-info");
+            return;
+        }
 
         // Remplir les champs d'informations dans la modal
         $('#qrMatricule').text(info.matricule || '');
@@ -1565,24 +1586,14 @@ $(document).ready(function() {
         $('#qrDateControle').text(info.date_controle || '');
         $('#qrMention').text(info.mention || '');
 
-        if (!info) {
-            console.error("Aucune donnée trouvée dans data-info");
-            return;
-        }
-
-        // Construction de la chaîne à encoder pour ENROL.NET / CTR.NET mobile
+        // Construction d'un QR léger: l'app mobile récupère ensuite le détail depuis CTR.NET-FARDC
         const textToEncode = `CTR.NET:${JSON.stringify({
             source: info.source || 'ctr.net-fardc',
-            payload_version: info.payload_version || 1,
+            payload_version: info.payload_version || 2,
+            controle_id: Number(info.controle_id || 0) || undefined,
             matricule: info.matricule || '',
             noms: info.noms || '',
-            grade: info.grade || '',
-            unite: info.unite || '',
-            garnison: info.garnison || '',
-            province: info.province || '',
-            categorie: info.categorie || '',
-            date_controle: info.date_controle || '',
-            mention: info.mention || ''
+            grade: info.grade || ''
         })}`;
 
         // Génération du QR code avec qrcode-generator
@@ -1616,6 +1627,14 @@ $(document).ready(function() {
         // Ouvrir le modal
         $('#qrCodeModal').modal('show');
     });
+
+    if (autoOpenQrId) {
+        const $autoOpenButton = $(`.btn-qr-code[data-controle-id="${autoOpenQrId}"]`).first();
+        if ($autoOpenButton.length) {
+            $autoOpenButton.closest('tr').addClass('table-warning');
+            setTimeout(() => $autoOpenButton.trigger('click'), 300);
+        }
+    }
 
     // Fonctions d'export (inchangées)
     function getZoneFilterLabel(zones) {

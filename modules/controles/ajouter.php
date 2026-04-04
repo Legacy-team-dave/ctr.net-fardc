@@ -183,11 +183,13 @@ if ($action === 'valider' && $matricule && $mention) {
 
         mark_sync_dirty('controles', (int) $controle_id);
 
-        // Stocker le message de succès en session pour l'afficher après redirection
+        // Stocker le message de succès en session et ouvrir directement le QR dans la liste
         $_SESSION['toast_message'] = "Contrôle enregistré avec succès pour : <strong>" . $militaire_info['noms'] . "</strong>";
         $_SESSION['toast_type'] = 'success';
+        $_SESSION['success_message'] = 'Contrôle enregistré avec succès pour : ' . $militaire_info['noms'];
+        $_SESSION['open_qr_controle_id'] = (string) $controle_id;
 
-        header('Location: ajouter.php');
+        header('Location: liste.php?open_qr=' . urlencode((string) $controle_id));
         exit;
     } catch (Exception $e) {
         $error = $e->getMessage();

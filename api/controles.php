@@ -34,6 +34,9 @@ switch ($action) {
     case 'militaire':
         handleMilitaire($pdo);
         break;
+    case 'qr_lookup':
+        handleQrLookup($pdo);
+        break;
     case 'valider':
         handleValider($pdo, $user);
         break;
@@ -142,6 +145,84 @@ function handleMilitaire($pdo)
         ]);
     } catch (PDOException $e) {
         error_log("API militaire error: " . $e->getMessage());
+        http_response_code(500);
+        echo json_encode(['success' => false, 'message' => 'Erreur serveur']);
+    }
+}
+
+function handleQrLookup($pdo)
+{
+    $controleId = (int) ($_GET['controle_id'] ?? 0);
+    $matricule = trim($_GET['matricule'] ?? '');
+
+    if ($controleId <= 0 && $matricule === '') {
+        http_response_code(400);
+        echo json_encode(['success' => false, 'message' => 'Identifiant QR requis']);
+        return;
+    }
+
+    try {
+        if ($controleId > 0 && $matricule !== '') {
+            $stmt = $pdo->prepare("SELECT c.id AS controle_id, c.matricule, c.type_controle, c.nom_beneficiaire, c.new_beneficiaire,
+                                          c.lien_parente, c.date_controle, c.mention, c.observations,
+                                          m.noms, m.grade, m.unite, m.garnison, m.province, m.categorie
+                                   FROM controles c
+                                   INNER JOIN militaires m ON c.matricule = m.matricule
+                                   WHERE c.id = ? AND c.matricule = ?
+                                   LIMIT 1");
+            $stmt->execute([$controleId, $matricule]);
+        } elseif ($controleId > 0) {
+            $stmt = $pdo->prepare("SELECT c.id AS controle_id, c.matricule, c.type_controle, c.nom_beneficiaire, c.new_beneficiaire,
+                                          c.lien_parente, c.date_controle, c.mention, c.observations,
+                                          m.noms, m.grade, m.unite, m.garnison, m.province, m.categorie
+                                   FROM controles c
+                                   INNER JOIN militaires m ON c.matricule = m.matricule
+                                   WHERE c.id = ?
+                                   LIMIT 1");
+            $stmt->execute([$controleId]);
+        } else {
+            $stmt = $pdo->prepare("SELECT c.id AS controle_id, c.matricule, c.type_controle, c.nom_beneficiaire, c.new_beneficiaire,
+                                          c.lien_parente, c.date_controle, c.mention, c.observations,
+                                          m.noms, m.grade, m.unite, m.garnison, m.province, m.categorie
+                                   FROM controles c
+                                   INNER JOIN militaires m ON c.matricule = m.matricule
+                                   WHERE c.matricule = ?
+                                   ORDER BY c.date_controle DESC, c.id DESC
+                                   LIMIT 1");
+            $stmt->execute([$matricule]);
+        }
+
+        $record = $stmt->fetch(PDO::FETCH_ASSOC);
+        if (!$record) {
+            http_response_code(404);
+            echo json_encode(['success' => false, 'message' => 'QR ou contrôle introuvable']);
+            return;
+        }
+
+        echo json_encode([
+            'success' => true,
+            'data' => [
+                'source' => 'ctr.net-fardc',
+                'payload_version' => 2,
+                'controle_id' => (int) ($record['controle_id'] ?? 0),
+                'matricule' => $record['matricule'] ?? '',
+                'noms' => $record['noms'] ?? '',
+                'grade' => $record['grade'] ?? '',
+                'unite' => $record['unite'] ?? '',
+                'garnison' => $record['garnison'] ?? '',
+                'province' => $record['province'] ?? '',
+                'categorie' => $record['categorie'] ?? '',
+                'type_controle' => $record['type_controle'] ?? '',
+                'lien_parente' => $record['lien_parente'] ?? '',
+                'nom_beneficiaire' => $record['nom_beneficiaire'] ?? '',
+                'new_beneficiaire' => $record['new_beneficiaire'] ?? '',
+                'date_controle' => $record['date_controle'] ?? '',
+                'mention' => $record['mention'] ?? '',
+                'observations' => $record['observations'] ?? '',
+            ]
+        ]);
+    } catch (PDOException $e) {
+        error_log("API qr_lookup error: " . $e->getMessage());
         http_response_code(500);
         echo json_encode(['success' => false, 'message' => 'Erreur serveur']);
     }

@@ -13,7 +13,7 @@ if (!isset($_SESSION['user_id']) && isset($_COOKIE['remember_token'])) {
             // En mode central, seul ADMIN_IG est autorisé
             if (is_central_mode() && strtoupper(trim((string)$user['profil'])) !== 'ADMIN_IG') {
                 setcookie('remember_token', '', time() - 3600, '/', '', false, true);
-            } elseif ($user['profil'] === 'CONTROLEUR') {
+            } elseif (is_mobile_only_profile($user['profil'])) {
                 setcookie('remember_token', '', time() - 3600, '/', '', false, true);
             } else {
                 session_regenerate_id(true);
@@ -75,8 +75,8 @@ if (isset($_SESSION['user_id']) && !isset($_GET['success'])) {
     } elseif ($profil === 'ADMIN_IG') {
         header('Location: index.php');
         exit;
-    } elseif ($profil === 'CONTROLEUR') {
-        // CONTROLEUR réservé au mobile — forcer déconnexion web
+    } elseif (is_mobile_only_profile($profil)) {
+        // CONTROLEUR / ENROLEUR réservés au mobile — forcer déconnexion web
         session_destroy();
         header('Location: login.php');
         exit;
@@ -110,9 +110,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if (is_central_mode() && strtoupper(trim((string)$user['profil'])) !== 'ADMIN_IG') {
                 audit_action('ECHEC_CONNEXION', 'utilisateurs', $user['id_utilisateur'], 'Tentative connexion hors ADMIN_IG en mode central');
                 $error = "La plateforme centrale est réservée au profil ADMIN_IG.";
-            } elseif ($user['profil'] === 'CONTROLEUR') {
-                audit_action('ECHEC_CONNEXION', 'utilisateurs', $user['id_utilisateur'], 'Tentative connexion web profil CONTROLEUR');
-                $error = "Le profil CONTROLEUR est réservé à l'application mobile.";
+            } elseif (is_mobile_only_profile($user['profil'])) {
+                audit_action('ECHEC_CONNEXION', 'utilisateurs', $user['id_utilisateur'], 'Tentative connexion web profil mobile réservé');
+                $error = "Les profils CONTROLEUR et ENROLEUR sont réservés aux applications mobiles.";
             } else {
                 session_regenerate_id(true);
 

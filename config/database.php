@@ -13,7 +13,7 @@ require_once __DIR__ . '/load_config.php';
 // -------------------------------------------------------------------
 $host = 'localhost';
 $port = '3306';
-$dbname = 'ctr.net-fardc';
+$dbname = 'ctr.net-fardc-1';
 $user = 'root';         // À modifier selon votre environnement
 
 try {

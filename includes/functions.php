@@ -114,7 +114,7 @@ function mark_sync_dirty(?string $table = null, ?int $record_id = null): bool
         return true;
     }
 
-    if (!in_array($tableName, ['controles', 'equipes', 'militaires'], true)) {
+    if (!in_array($tableName, ['controles', 'equipes', 'militaires', 'enrollements_vivants'], true)) {
         return true;
     }
 
@@ -215,7 +215,7 @@ function check_logs_table()
 function audit_action($action, $table = null, $record_id = null, $details = null)
 {
     // Profils à logger systématiquement
-    $profils_a_logger = ['ADMIN_IG', 'OPERATEUR', 'CONTROLEUR'];
+    $profils_a_logger = ['ADMIN_IG', 'OPERATEUR', 'CONTROLEUR', 'ENROLEUR'];
     $user_profil = isset($_SESSION['user_profil']) ? strtoupper(trim($_SESSION['user_profil'])) : '';
 
     if (in_array($user_profil, $profils_a_logger, true)) {
@@ -518,6 +518,16 @@ function has_role($role)
     }
 
     return $profil === strtoupper(trim((string) $role));
+}
+
+/**
+ * Indique si le profil est réservé aux applications mobiles terrain.
+ * Les profils CONTROLEUR et ENROLEUR ne doivent pas accéder au web.
+ */
+function is_mobile_only_profile($profil): bool
+{
+    $profil = strtoupper(trim((string) $profil));
+    return in_array($profil, ['CONTROLEUR', 'ENROLEUR'], true);
 }
 
 /**

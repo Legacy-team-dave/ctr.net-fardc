@@ -180,6 +180,8 @@ Insertion dans `controles` avec date/heure (`NOW()`), puis audit `AJOUT`.
 - Calcul de statistiques (présents, favorables, défavorables)
 - Filtres et exports
 - Journalisation des exports (`EXPORT`)
+- QR d’enrôlement disponible uniquement pour les contrôles vivants, **sans ouverture automatique** après l’enregistrement
+- Présentation des listes simplifiée : la barre DataTables redondante est retirée sur `liste.php`, `actifs.php` et `inactifs.php`
 
 ## 7. Synchronisation des données
 
@@ -189,6 +191,8 @@ Le flux actif échange désormais uniquement :
 - les enregistrements de `controles`
 
 Le point de réception central est `api/api_receiver.php` et les journaux sont conservés dans la table `synchronisation`.
+
+> Utiliser l’**IP/URL du serveur central** (par exemple `http://IP/ctr-net-fardc_active_front_web`) et non l’URL locale de la page `modules/controles/sync.php`. L’étape à **55%** correspond à la phase d’envoi vers ce point de réception.
 
 ## 8. Dashboard (`index.php`)
 

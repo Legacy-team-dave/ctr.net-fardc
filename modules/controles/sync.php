@@ -815,6 +815,19 @@ include '../../includes/header.php';
             setSyncButtonsState(true);
             updateSyncProgress({
                 percentage: 8,
+                step: 'Vérification du point de réception central...',
+                sent: {
+                    equipes: pendingEquipesCount,
+                    controles: pendingControlesCount
+                }
+            });
+
+            await fetchJsonWithCsrf(testSyncEndpoint, {
+                server_ip: serverIp
+            });
+
+            updateSyncProgress({
+                percentage: 18,
                 step: 'Préparation des données locales à synchroniser...',
                 sent: {
                     equipes: pendingEquipesCount,

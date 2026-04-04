@@ -63,6 +63,53 @@ function append_server_receiver_candidates(array &$urls, string $baseUrl, string
     $urls[] = $baseUrl . '/' . $normalizedPath . '/recevoir.php';
 }
 
+function decode_server_receiver_payload($responseBody): ?array
+{
+    if (!is_string($responseBody) || trim($responseBody) === '') {
+        return null;
+    }
+
+    $payload = trim($responseBody);
+    $decoded = json_decode($payload, true);
+    if (is_array($decoded)) {
+        return $decoded;
+    }
+
+    $jsonStart = strpos($payload, '{');
+    $jsonEnd = strrpos($payload, '}');
+    if ($jsonStart !== false && $jsonEnd !== false && $jsonEnd >= $jsonStart) {
+        $candidate = substr($payload, $jsonStart, $jsonEnd - $jsonStart + 1);
+        $decoded = json_decode($candidate, true);
+        if (is_array($decoded)) {
+            return $decoded;
+        }
+    }
+
+    return null;
+}
+
+function should_retry_server_receiver_candidate($responseBody, int $httpCode): bool
+{
+    if ($responseBody === false || $httpCode === 0 || $httpCode === 404) {
+        return true;
+    }
+
+    $decoded = decode_server_receiver_payload((string) $responseBody);
+    if ($decoded === null) {
+        $trimmed = ltrim((string) $responseBody);
+        return $trimmed === ''
+            || stripos($trimmed, '<!DOCTYPE html') === 0
+            || stripos($trimmed, '<html') === 0;
+    }
+
+    $message = strtolower(trim((string) ($decoded['message'] ?? '')));
+
+    return str_contains($message, 'endpoint réservé au serveur central')
+        || str_contains($message, 'endpoint reserve au serveur central')
+        || str_contains($message, 'action non autorisée en mode central')
+        || str_contains($message, 'action non autorisee en mode central');
+}
+
 function probe_server_receiver_connection(string $serverAddress, int $timeout = 5): array
 {
     $serverUrls = build_server_receiver_urls($serverAddress);
@@ -70,6 +117,7 @@ function probe_server_receiver_connection(string $serverAddress, int $timeout = 
     $transportError = '';
     $httpCode = 0;
     $targetUrl = '';
+    $parsedBody = null;
 
     foreach ($serverUrls as $serverUrl) {
         $targetUrl = $serverUrl;
@@ -104,16 +152,23 @@ function probe_server_receiver_connection(string $serverAddress, int $timeout = 
                 : 0;
         }
 
-        if (($responseBody !== false || $httpCode > 0) && $httpCode !== 404) {
-            break;
+        $parsedBody = decode_server_receiver_payload($responseBody);
+
+        if (should_retry_server_receiver_candidate($responseBody, $httpCode)) {
+            continue;
         }
+
+        break;
     }
 
-    $success = ($responseBody !== false || $httpCode > 0) && $httpCode !== 404;
+    $success = is_array($parsedBody)
+        ? (bool) ($parsedBody['success'] ?? false)
+        : (($responseBody !== false || $httpCode > 0) && $httpCode >= 200 && $httpCode < 300);
 
     return [
         'success' => $success,
         'body' => $responseBody,
+        'parsed_body' => $parsedBody,
         'http_code' => $httpCode,
         'transport_error' => $transportError,
         'target_url' => $targetUrl,
@@ -171,6 +226,7 @@ function forward_sync_payload_to_server(string $serverAddress, string $rawPayloa
     $transportError = '';
     $httpCode = 0;
     $targetUrl = '';
+    $parsedBody = null;
 
     foreach ($serverUrls as $serverUrl) {
         $targetUrl = $serverUrl;
@@ -208,13 +264,18 @@ function forward_sync_payload_to_server(string $serverAddress, string $rawPayloa
                 : 0;
         }
 
-        if (($responseBody !== false || $httpCode > 0) && $httpCode !== 404) {
-            break;
+        $parsedBody = decode_server_receiver_payload($responseBody);
+
+        if (should_retry_server_receiver_candidate($responseBody, $httpCode)) {
+            continue;
         }
+
+        break;
     }
 
     return [
         'body' => $responseBody,
+        'parsed_body' => $parsedBody,
         'http_code' => $httpCode,
         'transport_error' => $transportError,
         'target_url' => $targetUrl,

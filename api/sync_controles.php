@@ -126,8 +126,10 @@ sync_progress_event('progress', [
     ],
 ]);
 
+$syncTimeout = min(max(15, (int) ($config['timeout'] ?? 30)), 120);
+
 try {
-    $forwardResponse = forward_sync_payload_to_server($serverIp, $payloadJson, min(max(5, (int) $config['timeout']), 30));
+    $forwardResponse = forward_sync_payload_to_server($serverIp, $payloadJson, $syncTimeout);
 } catch (InvalidArgumentException $exception) {
     sync_json_response(false, $exception->getMessage(), 400, 'SERVER_ADDRESS_INVALID');
 }
@@ -163,7 +165,15 @@ if (!($remote['success'] ?? false)) {
         'remote_response' => $remote,
     ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
 
-    sync_json_response(false, (string) ($remote['message'] ?? 'Le serveur a rejeté la synchronisation.'), 409, 'REMOTE_REJECTED', [
+    $remoteMessage = (string) ($remote['message'] ?? 'Le serveur a rejeté la synchronisation.');
+    if (
+        stripos($remoteMessage, 'serveur central') !== false
+        || stripos($remoteMessage, 'mode central') !== false
+    ) {
+        $remoteMessage = 'Le serveur saisi ne correspond pas au point de réception central. Utilisez l\'IP/URL du serveur central, par exemple http://IP/ctr-net-fardc_active_front_web.';
+    }
+
+    sync_json_response(false, $remoteMessage, 409, 'REMOTE_REJECTED', [
         'target_url' => $forwardResponse['target_url'],
         'remote_response' => $remote,
     ]);

@@ -56,10 +56,22 @@ if ($probe['success']) {
     exit;
 }
 
+$remoteMessage = trim((string) ($probe['parsed_body']['message'] ?? ''));
+if ($remoteMessage === '') {
+    $remoteMessage = 'Connexion impossible avec le serveur distant.';
+}
+
+if (
+    stripos($remoteMessage, 'serveur central') !== false
+    || stripos($remoteMessage, 'mode central') !== false
+) {
+    $remoteMessage = 'Le serveur saisi ne correspond pas au point de réception central. Utilisez l\'IP/URL du serveur central, par exemple http://IP/ctr-net-fardc_active_front_web.';
+}
+
 http_response_code(502);
 echo json_encode([
     'success' => false,
-    'message' => 'Connexion impossible avec le serveur distant.',
+    'message' => $remoteMessage,
     'remote_http_code' => $probe['http_code'],
     'target_url' => $probe['target_url'],
     'transport_error' => $probe['transport_error']

@@ -5,8 +5,8 @@
 require_once '../../includes/functions.php';
 require_login();
 
-// === MODIFICATION : ajout du profil CONTROLEUR ===
-$profils = ['ADMIN_IG', 'OPERATEUR', 'CONTROLEUR'];
+// === MODIFICATION : ajout des profils mobiles CONTROLEUR / ENROLEUR ===
+$profils = ['ADMIN_IG', 'OPERATEUR', 'CONTROLEUR', 'ENROLEUR'];
 $error = null;
 
 // Génération du jeton CSRF (valable pour le formulaire)
@@ -21,7 +21,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $nom_complet = trim($_POST['nom_complet']);
         $email       = trim($_POST['email']) ?: null;
         $profil      = $_POST['profil'];
-        $actif       = isset($_POST['actif']) ? 1 : 0;
+        $actif       = strtoupper(trim((string) $profil)) === 'ADMIN_IG' ? 1 : 0;
         $mot_de_passe = $_POST['mot_de_passe'];
 
         if (empty($login) || empty($nom_complet) || empty($mot_de_passe)) {
@@ -33,10 +33,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             try {
                 $stmt = $pdo->prepare("INSERT INTO utilisateurs (login, mot_de_passe, nom_complet, email, profil, actif) VALUES (?, ?, ?, ?, ?, ?)");
                 $stmt->execute([$login, $hash, $nom_complet, $email, $profil, $actif]);
-                log_action('AJOUT_UTILISATEUR', 'utilisateurs', $pdo->lastInsertId(), 'Ajout utilisateur ' . $login);
+                log_action('AJOUT_UTILISATEUR', 'utilisateurs', $pdo->lastInsertId(), 'Ajout utilisateur ' . $login . ' (actif=' . $actif . ')');
 
                 // Message flash et redirection
-                redirect_with_flash('liste.php', 'success', 'Utilisateur ajouté avec succès.');
+                $message = $actif === 1
+                    ? 'Utilisateur ajouté avec succès et activé automatiquement.'
+                    : 'Utilisateur ajouté avec succès. Le compte reste inactif en attente d\'activation.';
+                redirect_with_flash('liste.php', 'success', $message);
             } catch (PDOException $e) {
                 $error = "Erreur : le login existe peut-être déjà.";
             }
@@ -533,13 +536,13 @@ include '../../includes/header.php';
                 <?php endif; ?>
 
                 <!-- Carte d'information sur les profils (compacte) -->
-                <!-- === MODIFICATION : Ajout du badge CONTROLEUR === -->
                 <div class="info-card">
                     <i class="fas fa-info-circle" style="color: var(--primary);"></i>
                     <strong>Profils :</strong>
                     <span class="profile-badge" style="background:#2e7d32; color:white;">ADMIN_IG</span> Admin
                     <span class="profile-badge" style="background:#17a2b8; color:white;">OPERATEUR</span> Gestion
-                    <span class="profile-badge" style="background:#ffc107; color:#212529;">CONTROLEUR</span> Mobile
+                    <span class="profile-badge" style="background:#ffc107; color:#212529;">CONTROLEUR</span> Mobile contrôle
+                    <span class="profile-badge" style="background:#6f42c1; color:white;">ENROLEUR</span> Mobile enrôlement
                 </div>
 
                 <form method="post" id="userForm">
@@ -616,11 +619,14 @@ include '../../includes/header.php';
                         </div>
                         <div class="form-check-modern">
                             <input type="checkbox" name="actif" id="actif" class="form-check-input"
-                                <?= (isset($_POST['actif']) && $_POST['actif']) ? 'checked' : 'checked' ?>>
+                                <?= (isset($_POST['profil']) && strtoupper((string) $_POST['profil']) === 'ADMIN_IG') ? 'checked' : '' ?> disabled>
                             <label for="actif">
-                                <i class="fas fa-check-circle"></i> Compte actif
+                                <i class="fas fa-check-circle"></i> Actif automatique selon le profil
                             </label>
                         </div>
+                        <small id="actifHelp" class="text-muted d-block mt-1">
+                            Seul le profil ADMIN_IG est activé à la création.
+                        </small>
                     </div>
 
                     <!-- Boutons d'action -->
@@ -905,12 +911,27 @@ include '../../includes/header.php';
         this.value = this.value.toLowerCase().replace(/[^a-z0-9._-]/g, '');
     });
 
+    function syncActifWithProfil() {
+        const profil = (document.getElementById('profil').value || '').trim().toUpperCase();
+        const actifCheckbox = document.getElementById('actif');
+        const actifHelp = document.getElementById('actifHelp');
+        const isAdmin = profil === 'ADMIN_IG';
+
+        actifCheckbox.checked = isAdmin;
+        actifHelp.textContent = isAdmin
+            ? 'Le compte sera créé actif (1) pour le profil ADMIN_IG.'
+            : 'Le compte sera créé inactif (0) et devra être activé ultérieurement.';
+    }
+
+    document.getElementById('profil').addEventListener('change', syncActifWithProfil);
+
     // Attacher la validation au formulaire
     document.getElementById('userForm').addEventListener('submit', validateForm);
 
     // Initialisation au chargement
     updatePasswordStrength();
     updateConfirmation();
+    syncActifWithProfil();
 </script>
 
 <?php include '../../includes/footer.php'; ?>

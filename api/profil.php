@@ -1,7 +1,7 @@
 <?php
 
 /**
- * API Profil pour l'application mobile CONTROLEUR
+ * API Profil pour les applications mobiles CONTROLEUR / ENROLEUR
  * Endpoints: GET/POST /api/profil.php?action=get|update
  */
 header('Content-Type: application/json; charset=utf-8');
@@ -15,6 +15,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 }
 
 require_once __DIR__ . '/../config/database.php';
+require_once __DIR__ . '/../includes/functions.php';
 
 $user = authenticateToken($pdo);
 if (!$user) {
@@ -126,7 +127,7 @@ function authenticateToken($pdo)
         $stmt = $pdo->prepare("SELECT id_utilisateur, login, nom_complet, profil FROM utilisateurs WHERE remember_token = ? AND remember_token_expires > NOW() AND actif = true");
         $stmt->execute([$token]);
         $user = $stmt->fetch();
-        if ($user && strtoupper(trim($user['profil'])) === 'CONTROLEUR') {
+        if ($user && is_mobile_only_profile($user['profil'])) {
             return $user;
         }
     } catch (PDOException $e) {

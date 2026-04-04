@@ -1191,6 +1191,15 @@ body {
                         </div>
                     </div>
 
+                    <div class="table-toolbar-actions mb-3 d-flex justify-content-end gap-2 flex-wrap">
+                        <a href="ajouter.php" class="btn-modern btn-primary-modern">
+                            <i class="fas fa-user-plus"></i> Nouveau
+                        </a>
+                        <a href="importer.php" class="btn-modern btn-secondary-modern">
+                            <i class="fas fa-file-import"></i> Importer
+                        </a>
+                    </div>
+
                     <!-- Tableau -->
                     <table id="table-militaires" class="table-militaires" style="width:100%">
                         <thead>
@@ -1426,6 +1435,7 @@ $(document).ready(function() {
                 }
             }
         ],
+        dom: 'rt<"datatable-bottom d-flex justify-content-between align-items-center flex-wrap gap-2 mt-3"ip>',
         order: [
             [2, 'asc']
         ],
@@ -1441,33 +1451,9 @@ $(document).ready(function() {
         scrollCollapse: false,
         autoWidth: true,
         initComplete: function() {
-            const filterDiv = $('.dataTables_filter');
-
-            filterDiv.css({
-                'display': 'flex',
-                'align-items': 'center',
-                'gap': '10px',
-                'float': 'right'
+            $('.datatable-bottom').css({
+                'row-gap': '10px'
             });
-
-            const searchLabel = filterDiv.find('label');
-            searchLabel.css({
-                'display': 'flex',
-                'align-items': 'center',
-                'margin-bottom': '0',
-                'flex': '0 1 auto'
-            });
-
-            filterDiv.append(`
-                    <div class="action-buttons">
-                        <a href="ajouter.php" class="btn-modern btn-primary-modern">
-                            <i class="fas fa-user-plus"></i> Nouveau
-                        </a>
-                        <a href="importer.php" class="btn-modern btn-secondary-modern">
-                            <i class="fas fa-file-import"></i> Importer
-                        </a>
-                    </div>
-                `);
         },
         drawCallback: function() {}
     });

@@ -46,8 +46,21 @@ Le QR destiné à `ENROL.NET` est généré dans `modules/controles/liste.php` a
 
 - **QR disponible uniquement** pour un contrôle marqué **vivant** (`type_controle = Militaire`) ;
 - **aucun QR** pour un contrôle marqué **décédé / bénéficiaire** ;
+- le QR reste accessible manuellement dans `modules/controles/liste.php` mais **n’est plus ouvert automatiquement** après chaque enregistrement ;
 - le mobile `ENROL.NET` résout ensuite les détails via `api/controles.php?action=qr_lookup` ;
 - le projet `ctr-net-mobile` n’est **pas impacté fonctionnellement** par cette règle : il reste dédié au contrôle terrain du profil `CONTROLEUR`.
+
+## Synchronisation locale → central
+
+Pour la synchronisation, l’adresse à saisir doit pointer vers le **serveur central** de réception, par exemple :
+
+- `http://IP-DU-SERVEUR/ctr-net-fardc_active_front_web`
+
+Éviter d’utiliser l’URL locale de la page de synchronisation elle-même comme :
+
+- `http://127.0.0.1/ctr.net-fardc/modules/controles/sync.php`
+
+sauf si le central est réellement hébergé sur cette même machine. La phase affichée à **55%** correspond à l’envoi/réception réseau ; le délai autorisé a été élargi pour les synchronisations plus lourdes.
 
 ## Structure réelle
 

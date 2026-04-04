@@ -155,7 +155,7 @@ if (!is_array($protectedRouteRoles)) {
 // DÉTERMINATION DES CLASSES DU BODY
 // ------------------------------------------------------------
 $bodyClass = 'hold-transition';
-if ($user_profil === 'CONTROLEUR') {
+if (function_exists('is_mobile_only_profile') && is_mobile_only_profile($user_profil)) {
     $bodyClass .= ' layout-top-nav';
 } else {
     $bodyClass .= ' sidebar-mini layout-fixed';
@@ -1102,7 +1102,7 @@ if (isset($_SESSION['user_id'])) {
         <!-- Navbar (HEADER) -->
         <nav class="main-header navbar navbar-expand navbar-white navbar-light">
             <ul class="navbar-nav">
-                <?php if ($user_profil !== 'CONTROLEUR'): ?>
+                <?php if (!(function_exists('is_mobile_only_profile') && is_mobile_only_profile($user_profil))): ?>
                     <li class="nav-item">
                         <a class="nav-link" data-widget="pushmenu" href="#" role="button"><i class="fas fa-bars"></i></a>
                     </li>
@@ -1157,7 +1157,7 @@ if (isset($_SESSION['user_id'])) {
         </nav>
 
         <!-- Sidebar -->
-        <?php if ($user_profil !== 'CONTROLEUR'): ?>
+        <?php if (!(function_exists('is_mobile_only_profile') && is_mobile_only_profile($user_profil))): ?>
             <aside class="main-sidebar sidebar-dark-primary elevation-4">
                 <a href="/ctr.net-fardc/index.php" class="brand-link">
                     <img src="/ctr.net-fardc/assets/img/logo-fardc.png" alt="FARDC Logo"

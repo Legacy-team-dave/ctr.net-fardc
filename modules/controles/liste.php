@@ -19,7 +19,6 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'log_export') {
 // --- Fin AJAX ---
 
 $success_message = $_SESSION['success_message'] ?? null;
-$open_qr_controle_id = $_GET['open_qr'] ?? ($_SESSION['open_qr_controle_id'] ?? '');
 unset($_SESSION['success_message'], $_SESSION['open_qr_controle_id']);
 $user_profil = $_SESSION['user_profil'] ?? '';
 $csrf_token = generate_csrf_token();
@@ -1068,6 +1067,12 @@ $export_fields = [
                         <!-- Tags des filtres actifs -->
                         <div class="filtre-tags mb-3" style="display: none;"></div>
 
+                        <div class="table-toolbar-actions mb-3 d-flex justify-content-end gap-2 flex-wrap">
+                            <a href="ajouter.php" class="btn-modern btn-primary-modern">
+                                <i class="fas fa-user-plus"></i> Nouveau
+                            </a>
+                        </div>
+
                         <!-- Tableau avec une colonne cachée pour la date -->
                         <table id="table-controles" class="table-militaires" style="width:100%">
                             <thead>
@@ -1278,7 +1283,6 @@ $(document).ready(function() {
     const syncEndpoint = <?= json_encode(app_url('api/sync_controles.php')) ?>;
     const testSyncEndpoint = <?= json_encode(app_url('api/test_sync_connection.php')) ?>;
     const syncCsrfToken = <?= json_encode($csrf_token) ?>;
-    const autoOpenQrId = <?= json_encode((string) $open_qr_controle_id) ?>;
 
     const getTimestamp = () => {
         const d = new Date();
@@ -1376,6 +1380,7 @@ $(document).ready(function() {
                 last: "Dernier"
             }
         },
+        dom: 'rt<"datatable-bottom d-flex justify-content-between align-items-center flex-wrap gap-2 mt-3"ip>',
         order: [
             [8, 'desc']
         ], // Tri par date (colonne cachée, index 8)
@@ -1404,48 +1409,9 @@ $(document).ready(function() {
             }
         },
         initComplete: function() {
-            const filterDiv = $('.dataTables_filter');
-
-            filterDiv.css({
-                'display': 'flex',
-                'align-items': 'center',
-                'gap': '10px',
-                'float': 'right'
+            $('.datatable-bottom').css({
+                'row-gap': '10px'
             });
-
-            // Ajouter l'icône de recherche avant le champ (en dehors du label)
-            filterDiv.prepend(
-                '<i class="fas fa-search search-icon" style="color: #2e7d32; font-size: 1rem;"></i>'
-            );
-
-            const searchLabel = filterDiv.find('label');
-            searchLabel.css({
-                'display': 'flex',
-                'align-items': 'center',
-                'margin-bottom': '0',
-                'flex': '0 1 auto'
-            });
-
-            // Supprimer l'icône existante dans le label (celle de language.search)
-            searchLabel.find('i').remove();
-
-            // Supprimer le texte "Rechercher :"
-            searchLabel.contents().filter(function() {
-                return this.nodeType === 3;
-            }).remove();
-
-            // Ajout du bouton "Nouveau contrôle"
-            filterDiv.append(`
-            <div class="action-buttons">
-                <a href="ajouter.php" class="btn-modern btn-primary-modern">
-                    <i class="fas fa-user-plus"></i> Nouveau
-                </a>
-            </div>
-        `);
-
-            $('.dataTables_filter label').contents().filter(function() {
-                return this.nodeType === 3;
-            }).remove();
         }
     });
 
@@ -1680,14 +1646,6 @@ $(document).ready(function() {
         // Ouvrir le modal
         $('#qrCodeModal').modal('show');
     });
-
-    if (autoOpenQrId) {
-        const $autoOpenButton = $(`.btn-qr-code[data-controle-id="${autoOpenQrId}"]`).first();
-        if ($autoOpenButton.length) {
-            $autoOpenButton.closest('tr').addClass('table-warning');
-            setTimeout(() => $autoOpenButton.trigger('click'), 300);
-        }
-    }
 
     // Fonctions d'export (inchangées)
     function getZoneFilterLabel(zones) {

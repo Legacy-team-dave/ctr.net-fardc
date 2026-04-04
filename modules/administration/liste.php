@@ -231,6 +231,14 @@ $timestamp = date('Y-m-d_H\hi');
         background: linear-gradient(135deg, var(--success) 0%, #218838 100%);
     }
 
+    .badge-profil-controleur {
+        background: linear-gradient(135deg, #0d6efd 0%, #0b5ed7 100%);
+    }
+
+    .badge-profil-enroleur {
+        background: linear-gradient(135deg, #6f42c1 0%, #59359c 100%);
+    }
+
     .badge-statut {
         display: inline-block;
         padding: 3px 10px;
@@ -475,6 +483,10 @@ $timestamp = date('Y-m-d_H\hi');
                                             $profil_class = 'badge-profil-admin';
                                         } elseif ($u['profil'] === 'OPERATEUR') {
                                             $profil_class = 'badge-profil-operateur';
+                                        } elseif ($u['profil'] === 'CONTROLEUR') {
+                                            $profil_class = 'badge-profil-controleur';
+                                        } elseif ($u['profil'] === 'ENROLEUR') {
+                                            $profil_class = 'badge-profil-enroleur';
                                         }
                                         ?>
                                         <span class="badge-profil <?= $profil_class ?>">

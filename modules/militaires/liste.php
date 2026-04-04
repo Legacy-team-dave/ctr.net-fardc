@@ -1312,6 +1312,15 @@ $timestamp = date('Y-m-d_H\hi');
                         </div>
                     </div>
 
+                    <div class="table-toolbar-actions mb-3 d-flex justify-content-end gap-2 flex-wrap">
+                        <a href="ajouter.php" class="btn-modern btn-primary-modern">
+                            <i class="fas fa-user-plus"></i> Nouveau
+                        </a>
+                        <a href="importer.php" class="btn-modern btn-secondary-modern">
+                            <i class="fas fa-file-import"></i> Importer
+                        </a>
+                    </div>
+
                     <!-- Tableau -->
                     <table id="table-militaires" class="table-militaires" style="width:100%">
                         <thead>
@@ -1554,6 +1563,7 @@ $timestamp = date('Y-m-d_H\hi');
                     }
                 }
             ],
+            dom: 'rt<"datatable-bottom d-flex justify-content-between align-items-center flex-wrap gap-2 mt-3"ip>',
             order: [
                 [2, 'asc'] // Tri par défaut sur la colonne grade en ordre ascendant
             ],
@@ -1569,37 +1579,9 @@ $timestamp = date('Y-m-d_H\hi');
             scrollCollapse: false,
             autoWidth: true,
             initComplete: function() {
-                const filterDiv = $('.dataTables_filter');
-
-                // S'assurer que le conteneur a le bon style
-                filterDiv.css({
-                    'display': 'flex',
-                    'align-items': 'center',
-                    'justify-content': 'flex-end',
-                    'gap': '10px',
-                    'flex-wrap': 'nowrap'
+                $('.datatable-bottom').css({
+                    'row-gap': '10px'
                 });
-
-                // Style pour le label de recherche
-                const searchLabel = filterDiv.find('label');
-                searchLabel.css({
-                    'display': 'flex',
-                    'align-items': 'center',
-                    'margin-bottom': '0',
-                    'flex': '0 1 auto'
-                });
-
-                // Ajouter les boutons après la recherche
-                filterDiv.append(`
-                <div class="action-buttons">
-                    <a href="ajouter.php" class="btn-modern btn-primary-modern">
-                        <i class="fas fa-user-plus"></i> Nouveau
-                    </a>
-                    <a href="importer.php" class="btn-modern btn-secondary-modern">
-                        <i class="fas fa-file-import"></i> Importer
-                    </a>
-                </div>
-            `);
             },
             drawCallback: function() {}
         });

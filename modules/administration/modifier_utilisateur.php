@@ -6,7 +6,7 @@ require_once '../../includes/functions.php';
 require_login();
 
 $error = null;
-$profils = ['ADMIN_IG', 'OPERATEUR'];
+$profils = ['ADMIN_IG', 'OPERATEUR', 'CONTROLEUR', 'ENROLEUR'];
 
 // Récupération de l'ID
 $id = isset($_GET['id']) ? (int)$_GET['id'] : 0;

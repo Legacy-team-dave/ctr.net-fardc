@@ -206,7 +206,7 @@ CREATE TABLE `utilisateurs` (
   `avatar` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT 'Nom du fichier avatar',
   `reset_token` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT 'Token de réinitialisation',
   `reset_expires` datetime DEFAULT NULL COMMENT 'Expiration du token',
-  `profil` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT 'Rôle (ADMIN_IG, GESTIONNAIRE, CONTROLEUR)',
+  `profil` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT 'Rôle (ADMIN_IG, OPERATEUR, CONTROLEUR, ENROLEUR)',
   `actif` tinyint(1) DEFAULT '1' COMMENT '1 = actif, 0 = inactif',
   `dernier_acces` datetime DEFAULT NULL COMMENT 'Dernière connexion',
   `preferences` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,

@@ -42,8 +42,7 @@ if ($isProgressRequest) {
     header('X-Accel-Buffering: no');
 }
 
-$config = sync_config();
-$serverIp = trim((string) ($input['server_ip'] ?? $input['server_url'] ?? ($config['central_url'] ?? '')));
+$serverIp = trim((string) ($input['server_ip'] ?? $input['server_url'] ?? ''));
 if ($serverIp === '') {
     sync_json_response(false, 'Adresse du serveur manquante.', 400, 'SERVER_ADDRESS_MISSING');
 }
@@ -54,6 +53,7 @@ if (!is_valid_server_address($serverIp)) {
 
 $_SESSION['sync_server_ip'] = $serverIp;
 
+$config = sync_config();
 ensure_equipes_sync_columns($pdo);
 ensure_sync_log_table($pdo);
 $selectedGarnisons = function_exists('preferred_garnison_labels') ? preferred_garnison_labels() : [];
@@ -66,10 +66,6 @@ $pendingControles = $pdo->query("SELECT * FROM controles WHERE COALESCE(sync_sta
 $equipesRows = $pdo->query("SELECT * FROM equipes WHERE COALESCE(sync_status, 'local') <> 'synced' ORDER BY id ASC")->fetchAll(PDO::FETCH_ASSOC);
 $sourceInstance = sync_build_source_instance((string) ($config['instance_id'] ?? ''));
 $sourceLabel = sync_build_source_label($baseSourceLabel, $sourceInstance);
-$siteContext = sync_build_site_context($config, $baseSourceLabel, $sourceInstance, $sourceLabel);
-$equipesPayloadRows = sync_prepare_sync_rows($equipesRows, $siteContext['site_timezone'], ['sync_date']);
-$controlesPayloadRows = sync_prepare_sync_rows($pendingControles, $siteContext['site_timezone'], ['date_controle', 'cree_le', 'sync_date']);
-$syncBatch = sync_build_batch_context($sourceInstance, $equipesPayloadRows, $controlesPayloadRows);
 
 if (empty($pendingControles) && empty($equipesRows)) {
     sync_json_response(true, 'Aucune donnée à synchroniser.', 200, null, [
@@ -105,24 +101,14 @@ $payload = [
     'source_instance' => $sourceInstance,
     'source_label' => $sourceLabel,
     'sent_at' => gmdate('c'),
-    'sent_at_local' => sync_current_site_timestamp($siteContext['site_timezone']),
-    'batch_id' => $syncBatch['batch_id'],
-    'equipes' => $equipesPayloadRows,
-    'controles' => $controlesPayloadRows,
+    'equipes' => $equipesRows,
+    'controles' => $pendingControles,
     'meta' => [
         'app_mode' => app_mode(),
         'sync_type' => 'equipes_controles',
-        'total_records' => count($equipesPayloadRows) + count($controlesPayloadRows),
+        'total_records' => count($equipesRows) + count($pendingControles),
         'source_label' => $sourceLabel,
         'origin_instance_id' => (string) ($config['instance_id'] ?? ''),
-        'site_code' => $siteContext['site_code'],
-        'site_name' => $siteContext['site_name'],
-        'site_region' => $siteContext['site_region'],
-        'site_timezone' => $siteContext['site_timezone'],
-        'hostname' => $siteContext['hostname'],
-        'target_server_region' => trim((string) ($config['server_region'] ?? '')),
-        'batch_id' => $syncBatch['batch_id'],
-        'records_fingerprint' => $syncBatch['records_fingerprint'],
     ],
 ];
 
@@ -130,17 +116,6 @@ $payloadJson = json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLA
 if ($payloadJson === false) {
     sync_json_response(false, 'Impossible de préparer les données à envoyer.', 500, 'PAYLOAD_BUILD_FAILED');
 }
-
-$payloadHash = hash('sha256', $payloadJson);
-$forwardHeaders = [
-    'X-Sync-Batch-Id: ' . $syncBatch['batch_id'],
-    'X-Idempotency-Key: ' . $syncBatch['idempotency_key'],
-    'X-Sync-Site-Code: ' . $siteContext['site_code'],
-    'X-Sync-Site-Name: ' . sync_header_safe_value($siteContext['site_name']),
-    'X-Sync-Site-Timezone: ' . $siteContext['site_timezone'],
-    'X-Sync-Sent-At: ' . $payload['sent_at'],
-    'X-Sync-Payload-Hash: ' . $payloadHash,
-];
 
 sync_progress_event('progress', [
     'percentage' => 55,
@@ -152,13 +127,7 @@ sync_progress_event('progress', [
 ]);
 
 try {
-    $forwardResponse = forward_sync_payload_to_server($serverIp, $payloadJson, [
-        'timeout' => min(max(10, (int) ($config['timeout'] ?? 45)), 120),
-        'connect_timeout' => min(max(3, (int) ($config['connect_timeout'] ?? 10)), 45),
-        'max_retries' => min(max(1, (int) ($config['max_retries'] ?? 3)), 5),
-        'retry_delay_ms' => max(250, (int) ($config['retry_delay_ms'] ?? 1200)),
-        'headers' => $forwardHeaders,
-    ]);
+    $forwardResponse = forward_sync_payload_to_server($serverIp, $payloadJson, min(max(5, (int) $config['timeout']), 30));
 } catch (InvalidArgumentException $exception) {
     sync_json_response(false, $exception->getMessage(), 400, 'SERVER_ADDRESS_INVALID');
 }
@@ -169,12 +138,6 @@ if ($forwardResponse['body'] === false) {
         'target_url' => $forwardResponse['target_url'],
         'attempted_urls' => $forwardResponse['attempted_urls'],
         'error' => $forwardResponse['transport_error'],
-        'batch_id' => $syncBatch['batch_id'],
-        'idempotency_key' => $syncBatch['idempotency_key'],
-        'site' => $siteContext,
-        'attempt_count' => $forwardResponse['attempt_count'] ?? 0,
-        'duration_ms' => $forwardResponse['duration_ms'] ?? null,
-        'retry_delay_ms_total' => $forwardResponse['retry_delay_ms_total'] ?? null,
     ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
 
     sync_json_response(false, 'Impossible de joindre le service de synchronisation.', 502, 'REMOTE_CONNECTION_FAILED', [
@@ -186,12 +149,10 @@ if ($forwardResponse['body'] === false) {
 $cleanRemoteBody = sync_extract_json_payload((string) ($forwardResponse['body'] ?? ''));
 $remote = json_decode($cleanRemoteBody, true);
 if (!is_array($remote)) {
-    sync_json_response(false, 'Réponse invalide du serveur distant : le serveur a répondu avec un contenu non JSON.', 502, 'REMOTE_INVALID_RESPONSE', [
+    sync_json_response(false, 'Réponse invalide du serveur distant.', 502, 'REMOTE_INVALID_RESPONSE', [
         'target_url' => $forwardResponse['target_url'],
-        'raw_response' => mb_substr($cleanRemoteBody !== '' ? $cleanRemoteBody : (string) $forwardResponse['body'], 0, 800),
+        'raw_response' => mb_substr($cleanRemoteBody !== '' ? $cleanRemoteBody : (string) $forwardResponse['body'], 0, 500),
         'json_error' => json_last_error_msg(),
-        'transport_error' => $forwardResponse['transport_error'] ?? '',
-        'attempted_urls' => $forwardResponse['attempted_urls'] ?? [],
     ]);
 }
 
@@ -200,11 +161,6 @@ if (!($remote['success'] ?? false)) {
         'server_ip' => $serverIp,
         'target_url' => $forwardResponse['target_url'],
         'remote_response' => $remote,
-        'batch_id' => $syncBatch['batch_id'],
-        'idempotency_key' => $syncBatch['idempotency_key'],
-        'site' => $siteContext,
-        'attempt_count' => $forwardResponse['attempt_count'] ?? 0,
-        'duration_ms' => $forwardResponse['duration_ms'] ?? null,
     ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
 
     sync_json_response(false, (string) ($remote['message'] ?? 'Le serveur a rejeté la synchronisation.'), 409, 'REMOTE_REJECTED', [
@@ -244,19 +200,13 @@ if (!empty($pendingControles)) {
     $summaryParts[] = sprintf('%d contrôle(s)', count($pendingControles));
 }
 
-$summary = 'Synchronisation distante effectuée depuis ' . ($siteContext['site_name'] !== '' ? $siteContext['site_name'] : $sourceInstance) . ' vers ' . $serverIp . ' : ' . implode(' et ', $summaryParts) . '.';
+$summary = 'Synchronisation effectuée : ' . implode(' et ', $summaryParts) . ' envoyé(s) vers ' . $serverIp . '.';
 
 log_sync_attempt($pdo, $controleIds, $equipeIds, 'succes', json_encode([
     'server_ip' => $serverIp,
     'target_url' => $forwardResponse['target_url'],
     'remote_response' => $remote,
     'summary' => $summary,
-    'batch_id' => $syncBatch['batch_id'],
-    'idempotency_key' => $syncBatch['idempotency_key'],
-    'site' => $siteContext,
-    'attempt_count' => $forwardResponse['attempt_count'] ?? 0,
-    'duration_ms' => $forwardResponse['duration_ms'] ?? null,
-    'retry_delay_ms_total' => $forwardResponse['retry_delay_ms_total'] ?? null,
 ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
 
 audit_action('SYNC_CONTROLES', 'synchronisation', null, $summary);
@@ -274,16 +224,6 @@ sync_json_response(true, 'Synchronisation terminée avec succès.', 200, null, [
     'summary' => $summary,
     'sync_state' => 'completed',
     'target_url' => $forwardResponse['target_url'],
-    'batch_id' => $syncBatch['batch_id'],
-    'remote_status' => $remote['status'] ?? 'success',
-    'deduplicated' => (bool) ($remote['deduplicated'] ?? false),
-    'site' => $siteContext,
-    'transport' => [
-        'attempt_count' => $forwardResponse['attempt_count'] ?? 0,
-        'duration_ms' => $forwardResponse['duration_ms'] ?? null,
-        'retry_used' => (bool) ($forwardResponse['retry_used'] ?? false),
-        'retry_delay_ms_total' => $forwardResponse['retry_delay_ms_total'] ?? null,
-    ],
     'sent' => [
         'equipes' => count($equipesRows),
         'controles' => count($pendingControles),
@@ -372,36 +312,10 @@ function sync_extract_json_payload(string $body): string
         return $body;
     }
 
-    foreach (['{"success"', '{"status"', '{"message"', '{"error"', '[{"success"'] as $needle) {
-        $jsonStart = strpos($body, $needle);
-        if ($jsonStart === false) {
-            continue;
-        }
-
-        $candidate = substr($body, $jsonStart);
-        $jsonEnd = max(
-            strrpos($candidate, '}') === false ? -1 : strrpos($candidate, '}'),
-            strrpos($candidate, ']') === false ? -1 : strrpos($candidate, ']')
-        );
-
-        if ($jsonEnd >= 0) {
-            $candidate = substr($candidate, 0, $jsonEnd + 1);
-        }
-
-        $decoded = json_decode($candidate, true);
-        if (is_array($decoded)) {
-            return $candidate;
-        }
-    }
-
     $jsonStart = strpos($body, '{');
     $jsonEnd = strrpos($body, '}');
     if ($jsonStart !== false && $jsonEnd !== false && $jsonEnd >= $jsonStart) {
-        $candidate = substr($body, $jsonStart, $jsonEnd - $jsonStart + 1);
-        $decoded = json_decode($candidate, true);
-        if (is_array($decoded)) {
-            return $candidate;
-        }
+        return substr($body, $jsonStart, $jsonEnd - $jsonStart + 1);
     }
 
     return $body;
@@ -512,111 +426,4 @@ function log_sync_attempt(PDO $pdo, array $controleIds, array $equipeIds, string
         $details,
         $_SESSION['user_id'] ?? null,
     ]);
-}
-
-function sync_build_site_context(array $config, string $baseSourceLabel, string $sourceInstance, string $sourceLabel): array
-{
-    $siteCode = trim((string) ($config['site_code'] ?? $sourceInstance));
-    if ($siteCode === '') {
-        $siteCode = $sourceInstance !== '' ? $sourceInstance : 'remote-site';
-    }
-
-    $siteName = trim((string) ($config['site_name'] ?? ''));
-    if ($siteName === '') {
-        $siteName = trim($baseSourceLabel) !== '' ? trim($baseSourceLabel) : $sourceLabel;
-    }
-
-    $siteRegion = trim((string) ($config['site_region'] ?? ''));
-    $siteTimezone = trim((string) ($config['site_timezone'] ?? ''));
-    if ($siteTimezone === '') {
-        $siteTimezone = date_default_timezone_get() ?: 'UTC';
-    }
-
-    return [
-        'site_code' => substr($siteCode, 0, 80),
-        'site_name' => mb_substr($siteName, 0, 150),
-        'site_region' => mb_substr($siteRegion, 0, 120),
-        'site_timezone' => substr($siteTimezone, 0, 80),
-        'hostname' => substr((string) (php_uname('n') ?: $sourceInstance), 0, 120),
-    ];
-}
-
-function sync_prepare_sync_rows(array $rows, string $timezone, array $dateFields = []): array
-{
-    $prepared = [];
-
-    foreach ($rows as $row) {
-        if (!is_array($row)) {
-            continue;
-        }
-
-        foreach ($dateFields as $field) {
-            if (array_key_exists($field, $row) && $row[$field] !== null && $row[$field] !== '') {
-                $row[$field] = sync_export_datetime_for_remote($row[$field], $timezone);
-            }
-        }
-
-        $prepared[] = $row;
-    }
-
-    return $prepared;
-}
-
-function sync_export_datetime_for_remote($value, string $timezone): string
-{
-    try {
-        $tz = new DateTimeZone($timezone !== '' ? $timezone : 'UTC');
-        return (new DateTime((string) $value, $tz))->format(DateTimeInterface::ATOM);
-    } catch (Throwable $e) {
-        return (string) $value;
-    }
-}
-
-function sync_build_batch_context(string $sourceInstance, array $equipesRows, array $controlesRows): array
-{
-    $signature = [
-        'equipes' => array_map(static function (array $row): array {
-            return [
-                'id' => (int) ($row['id'] ?? 0),
-                'id_source' => (int) ($row['id_source'] ?? $row['id'] ?? 0),
-                'matricule' => (string) ($row['matricule'] ?? ''),
-                'sync_version' => (int) ($row['sync_version'] ?? 1),
-            ];
-        }, $equipesRows),
-        'controles' => array_map(static function (array $row): array {
-            return [
-                'id' => (int) ($row['id'] ?? 0),
-                'id_source' => (int) ($row['id_source'] ?? $row['id'] ?? 0),
-                'matricule' => (string) ($row['matricule'] ?? ''),
-                'date_controle' => (string) ($row['date_controle'] ?? ''),
-                'sync_version' => (int) ($row['sync_version'] ?? 1),
-            ];
-        }, $controlesRows),
-    ];
-
-    $fingerprintPayload = json_encode($signature, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?: uniqid($sourceInstance, true);
-    $recordsFingerprint = hash('sha256', $fingerprintPayload);
-    $safeInstance = preg_replace('/[^a-zA-Z0-9_-]+/', '-', strtolower($sourceInstance)) ?: 'client';
-    $safeInstance = trim($safeInstance, '-_') ?: 'client';
-    $batchId = substr($safeInstance, 0, 30) . '-' . gmdate('YmdHis') . '-' . substr($recordsFingerprint, 0, 10);
-
-    return [
-        'batch_id' => substr($batchId, 0, 120),
-        'idempotency_key' => hash('sha256', $safeInstance . '|' . $recordsFingerprint),
-        'records_fingerprint' => $recordsFingerprint,
-    ];
-}
-
-function sync_current_site_timestamp(string $timezone): string
-{
-    try {
-        return (new DateTime('now', new DateTimeZone($timezone !== '' ? $timezone : 'UTC')))->format(DateTimeInterface::ATOM);
-    } catch (Throwable $e) {
-        return gmdate('c');
-    }
-}
-
-function sync_header_safe_value(string $value): string
-{
-    return trim(str_replace(["\r", "\n"], ' ', $value));
 }

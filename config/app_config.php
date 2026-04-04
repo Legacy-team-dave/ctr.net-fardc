@@ -128,16 +128,8 @@ if (!function_exists('sync_config')) {
             'instance_id' => sync_instance_id(),
             'central_url' => rtrim((string) app_env('SYNC_CENTRAL_URL', ''), '/'),
             'shared_token' => trim((string) app_env('SYNC_SHARED_TOKEN', '')),
-            'timeout' => max(10, (int) app_env('SYNC_TIMEOUT', 45)),
-            'connect_timeout' => max(3, (int) app_env('SYNC_CONNECT_TIMEOUT', 10)),
-            'max_retries' => min(5, max(1, (int) app_env('SYNC_MAX_RETRIES', 3))),
-            'retry_delay_ms' => max(250, (int) app_env('SYNC_RETRY_DELAY_MS', 1200)),
+            'timeout' => max(5, (int) app_env('SYNC_TIMEOUT', 30)),
             'require_https' => app_bool_env('SYNC_REQUIRE_HTTPS', true),
-            'site_code' => trim((string) app_env('SYNC_SITE_CODE', sync_instance_id())),
-            'site_name' => trim((string) app_env('SYNC_SITE_NAME', '')),
-            'site_region' => trim((string) app_env('SYNC_SITE_REGION', '')),
-            'site_timezone' => trim((string) app_env('SYNC_SITE_TIMEZONE', date_default_timezone_get() ?: 'UTC')),
-            'server_region' => trim((string) app_env('SYNC_SERVER_REGION', 'NEW YORK')),
             'allowed_tables' => ['equipes', 'controles']
         ];
     }

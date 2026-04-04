@@ -28,12 +28,7 @@ if (!verify_csrf_token($csrfToken)) {
 }
 
 $input = json_decode(file_get_contents('php://input'), true);
-if (!is_array($input)) {
-    $input = [];
-}
-
-$config = sync_config();
-$serverIp = trim((string) ($input['server_ip'] ?? $input['server_url'] ?? ($config['central_url'] ?? '')));
+$serverIp = trim((string) ($input['server_ip'] ?? ''));
 
 if ($serverIp === '') {
     http_response_code(400);
@@ -44,7 +39,7 @@ if ($serverIp === '') {
 $_SESSION['sync_server_ip'] = $serverIp;
 
 try {
-    $probe = probe_server_receiver_connection($serverIp, min(max(5, (int) ($config['connect_timeout'] ?? 10)), 20));
+    $probe = probe_server_receiver_connection($serverIp, 5);
 } catch (InvalidArgumentException $exception) {
     http_response_code(400);
     echo json_encode(['success' => false, 'message' => $exception->getMessage()]);

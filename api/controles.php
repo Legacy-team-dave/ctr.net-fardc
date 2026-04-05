@@ -395,11 +395,14 @@ function handleEnrollVivant($pdo, $user)
     $unite = trim($input['unite'] ?? '');
     $garnison = trim($input['garnison'] ?? '');
     $province = trim($input['province'] ?? '');
+    $categorie_input = trim($input['categorie'] ?? '');
     $observations = trim($input['observations'] ?? '');
     $photo_data = trim($input['photo_data'] ?? '');
     $empreinte_gauche_data = trim($input['empreinte_gauche_data'] ?? '');
     $empreinte_droite_data = trim($input['empreinte_droite_data'] ?? '');
-    $device_label = substr(trim($input['device_label'] ?? ($_SERVER['HTTP_USER_AGENT'] ?? 'Tablette')), 0, 255);
+    $appareil_id = substr(trim($input['appareil_id'] ?? ($input['device_label'] ?? ($_SERVER['HTTP_USER_AGENT'] ?? 'Tablette'))), 0, 255);
+    $cree_le_input = trim($input['cree_le'] ?? '');
+    $sync_status = strtolower(trim($input['sync_status'] ?? 'local')) === 'synced' ? 'synced' : 'local';
     $qr_payload_array = is_array($input['qr_payload'] ?? null) ? $input['qr_payload'] : null;
     $qr_payload = !empty($qr_payload_array)
         ? json_encode($qr_payload_array, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES)
@@ -441,13 +444,16 @@ function handleEnrollVivant($pdo, $user)
         $unite = $unite ?: ($militaire['unite'] ?? '');
         $garnison = $garnison ?: ($militaire['garnison'] ?? '');
         $province = $province ?: ($militaire['province'] ?? '');
-        $categorie = trim($militaire['categorie'] ?? 'ACTIF');
+        $categorie = $categorie_input ?: trim($militaire['categorie'] ?? 'ACTIF');
+        $cree_le = $cree_le_input !== '' && strtotime($cree_le_input) !== false
+            ? date('Y-m-d H:i:s', strtotime($cree_le_input))
+            : date('Y-m-d H:i:s');
 
         $insert = $pdo->prepare("INSERT INTO enrollements_vivants (
             matricule, noms, grade, unite, garnison, province, categorie,
             qr_payload, photo_data, empreinte_gauche_data, empreinte_droite_data,
             observations, appareil_id, cree_le, sync_status
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), 'local')");
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
 
         $insert->execute([
             $matricule,
@@ -462,7 +468,9 @@ function handleEnrollVivant($pdo, $user)
             $empreinte_gauche_data ?: null,
             $empreinte_droite_data ?: null,
             $observations ?: null,
-            $device_label
+            $appareil_id,
+            $cree_le,
+            $sync_status
         ]);
 
         $enrollement_id = (int) $pdo->lastInsertId();
@@ -489,7 +497,7 @@ function handleEnrollVivant($pdo, $user)
     } catch (Exception $e) {
         error_log("API enroll_vivant error: " . $e->getMessage());
         http_response_code(500);
-        echo json_encode(['success' => false, 'message' => 'Erreur lors de l’enrôlement mobile']);
+        echo json_encode(['success' => false, 'message' => $e->getMessage()]);
     }
 }
 
@@ -516,6 +524,27 @@ function ensureEnrollementsVivantsTable($pdo)
         KEY idx_enrol_matricule (matricule),
         KEY idx_enrol_date (cree_le)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+
+    $requiredColumns = [
+        'categorie' => "ALTER TABLE enrollements_vivants ADD COLUMN categorie VARCHAR(80) DEFAULT NULL AFTER province",
+        'qr_payload' => "ALTER TABLE enrollements_vivants ADD COLUMN qr_payload LONGTEXT DEFAULT NULL AFTER categorie",
+        'photo_data' => "ALTER TABLE enrollements_vivants ADD COLUMN photo_data LONGTEXT NOT NULL AFTER qr_payload",
+        'empreinte_gauche_data' => "ALTER TABLE enrollements_vivants ADD COLUMN empreinte_gauche_data LONGTEXT DEFAULT NULL AFTER photo_data",
+        'empreinte_droite_data' => "ALTER TABLE enrollements_vivants ADD COLUMN empreinte_droite_data LONGTEXT DEFAULT NULL AFTER empreinte_gauche_data",
+        'observations' => "ALTER TABLE enrollements_vivants ADD COLUMN observations TEXT DEFAULT NULL AFTER empreinte_droite_data",
+        'appareil_id' => "ALTER TABLE enrollements_vivants ADD COLUMN appareil_id VARCHAR(255) DEFAULT NULL AFTER observations",
+        'cree_le' => "ALTER TABLE enrollements_vivants ADD COLUMN cree_le DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP AFTER appareil_id",
+        'sync_status' => "ALTER TABLE enrollements_vivants ADD COLUMN sync_status ENUM('local', 'synced') NOT NULL DEFAULT 'local' AFTER cree_le"
+    ];
+
+    foreach ($requiredColumns as $columnName => $alterSql) {
+        $stmt = $pdo->prepare("SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'enrollements_vivants' AND COLUMN_NAME = ?");
+        $stmt->execute([$columnName]);
+        $columnExists = (int) $stmt->fetchColumn() > 0;
+        if (!$columnExists) {
+            $pdo->exec($alterSql);
+        }
+    }
 }
 
 function handleHistorique($pdo)

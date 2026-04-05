@@ -134,7 +134,7 @@ CREATE TABLE `logs_actions` (
 --
 
 CREATE TABLE `enrollements_vivants` (
-  `id` int NOT NULL COMMENT 'Identifiant unique de l’enrôlement',
+  `id` int NOT NULL AUTO_INCREMENT COMMENT 'Identifiant unique de l’enrôlement',
   `matricule` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT 'Matricule du militaire',
   `noms` varchar(150) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT 'Nom complet du militaire',
   `grade` varchar(80) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT 'Grade du militaire',
@@ -142,7 +142,6 @@ CREATE TABLE `enrollements_vivants` (
   `garnison` varchar(150) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT 'Garnison',
   `province` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT 'Province',
   `categorie` varchar(80) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT 'Catégorie militaire',
-  `qr_payload` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci COMMENT 'Données JSON issues du QR code',
   `photo_data` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT 'Photo encodée du militaire',
   `empreinte_gauche_data` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci COMMENT 'Empreinte gauche encodée',
   `empreinte_droite_data` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci COMMENT 'Empreinte droite encodée',

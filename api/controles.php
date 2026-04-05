@@ -404,9 +404,6 @@ function handleEnrollVivant($pdo, $user)
     $cree_le_input = trim($input['cree_le'] ?? '');
     $sync_status = strtolower(trim($input['sync_status'] ?? 'local')) === 'synced' ? 'synced' : 'local';
     $qr_payload_array = is_array($input['qr_payload'] ?? null) ? $input['qr_payload'] : null;
-    $qr_payload = !empty($qr_payload_array)
-        ? json_encode($qr_payload_array, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES)
-        : null;
 
     if ($matricule === '' || $noms === '') {
         http_response_code(400);
@@ -451,9 +448,9 @@ function handleEnrollVivant($pdo, $user)
 
         $insert = $pdo->prepare("INSERT INTO enrollements_vivants (
             matricule, noms, grade, unite, garnison, province, categorie,
-            qr_payload, photo_data, empreinte_gauche_data, empreinte_droite_data,
+            photo_data, empreinte_gauche_data, empreinte_droite_data,
             observations, appareil_id, cree_le, sync_status
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
 
         $insert->execute([
             $matricule,
@@ -463,7 +460,6 @@ function handleEnrollVivant($pdo, $user)
             $garnison ?: null,
             $province ?: null,
             $categorie ?: null,
-            $qr_payload,
             $photo_data,
             $empreinte_gauche_data ?: null,
             $empreinte_droite_data ?: null,
@@ -512,7 +508,6 @@ function ensureEnrollementsVivantsTable($pdo)
         garnison VARCHAR(150) DEFAULT NULL,
         province VARCHAR(100) DEFAULT NULL,
         categorie VARCHAR(80) DEFAULT NULL,
-        qr_payload LONGTEXT DEFAULT NULL,
         photo_data LONGTEXT NOT NULL,
         empreinte_gauche_data LONGTEXT DEFAULT NULL,
         empreinte_droite_data LONGTEXT DEFAULT NULL,
@@ -527,8 +522,7 @@ function ensureEnrollementsVivantsTable($pdo)
 
     $requiredColumns = [
         'categorie' => "ALTER TABLE enrollements_vivants ADD COLUMN categorie VARCHAR(80) DEFAULT NULL AFTER province",
-        'qr_payload' => "ALTER TABLE enrollements_vivants ADD COLUMN qr_payload LONGTEXT DEFAULT NULL AFTER categorie",
-        'photo_data' => "ALTER TABLE enrollements_vivants ADD COLUMN photo_data LONGTEXT NOT NULL AFTER qr_payload",
+        'photo_data' => "ALTER TABLE enrollements_vivants ADD COLUMN photo_data LONGTEXT NOT NULL AFTER categorie",
         'empreinte_gauche_data' => "ALTER TABLE enrollements_vivants ADD COLUMN empreinte_gauche_data LONGTEXT DEFAULT NULL AFTER photo_data",
         'empreinte_droite_data' => "ALTER TABLE enrollements_vivants ADD COLUMN empreinte_droite_data LONGTEXT DEFAULT NULL AFTER empreinte_gauche_data",
         'observations' => "ALTER TABLE enrollements_vivants ADD COLUMN observations TEXT DEFAULT NULL AFTER empreinte_droite_data",

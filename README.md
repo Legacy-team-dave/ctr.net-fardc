@@ -63,11 +63,19 @@ Pour la synchronisation, l’adresse à saisir doit pointer vers le **serveur ce
 
 sauf si le central est réellement hébergé sur cette même machine. La phase affichée à **55%** correspond à l’envoi/réception réseau ; le délai autorisé a été élargi pour les synchronisations plus lourdes.
 
+## Parcours opérateur actuel
+
+- premier accès : `preferences.php` → `modules/equipes/index.php` → `modules/controles/ajouter.php`
+- connexions suivantes : ouverture directe de `modules/controles/ajouter.php` si les préférences existent déjà
+- déconnexion : retour systématique vers `login.php`
+- tableaux unifiés : colonnes `QR` masquées, `Observation(s)` abrégé en `OBN` et bordures d’en-tête harmonisées
+
 ## Structure réelle
 
-- `index.php`, `login.php`, `logout.php`, `profil.php`, `preferences.php`, `equipes.php`
+- `index.php`, `login.php`, `logout.php`, `profil.php`, `preferences.php`
 - `includes/` : auth, fonctions globales, header/footer
-- `modules/` : `administration`, `militaires`, `controles`, `rapports`
+- `modules/` : `administration`, `militaires`, `equipes`, `controles`, `rapports`
+- point d’entrée équipe : `modules/equipes/index.php`
 - synchronisation locale : `modules/controles/sync.php` pour l’envoi des `equipes` et `controles` vers l’instance centrale
 - logique DataTable unifiée : mêmes bases de recherche / pagination / colonnes masquées que `modules/controles/liste.php`
 - `ajax/` : endpoints AJAX
@@ -89,6 +97,17 @@ sauf si le central est réellement hébergé sur cette même machine. La phase a
 ## Sauvegarde automatique consolidée
 
 Les sauvegardes sont effectuées via un job Windows planifié, avec mise à jour d'une archive ZIP consolidée unique et rotation automatique.
+
+Le mode internet est désormais durci par :
+
+- des en-têtes HTTP de sécurité et le blocage direct des fichiers sensibles via `.htaccess` ;
+- une limitation anti-bruteforce sur les connexions web et mobiles (verrouillage temporaire après plusieurs échecs depuis la même IP) ;
+- des cookies de session `HttpOnly` / `SameSite` et `Secure` dès que l'application passe en HTTPS.
+
+La sauvegarde se déclenche maintenant :
+
+- par la tâche planifiée Windows toutes les 8 heures ;
+- automatiquement en arrière-plan lorsqu'un nouveau contrôle est saisi après expiration du délai de 8h.
 
 ## 🔐 Système de Chiffrement
 
@@ -139,6 +158,7 @@ Pour une documentation complète et des exemples pratiques:
 - Archive principale : `backups/backup_consolide_latest.zip`
 - Sources principales : `equipes` et `controles` pour le périmètre actif, avec éventuels exports techniques selon l'environnement local
 - Scripts : `setup_backup_task.bat`, `setup_backup_task.ps1`, `run_backup_job.ps1`
+- Auto-relance métier : déclenchée par `mark_sync_dirty()` si de nouvelles données de contrôle arrivent après 8h
 - Purge auto : suppression des doublons + conservation des 30 dernières archives non identiques
 - Purge auto paramétrable : `setup_backup_task.ps1 -MaxKeep 30` (ou `setup_backup_task.bat 30`)
 - Envoi e-mail (optionnel) : configurer config/backup_mail.json (adresse expéditeur + destinataire + SMTP)
@@ -193,9 +213,9 @@ Les anciennes références liées aux litiges ne font plus partie du flux actif 
 
 ## Applications mobiles associées
 
-- `ctr-net-mobile/` → application `CTR.NET` pour le profil `CONTROLEUR`
-- `ctr-net-enrollement-mobile/` → application `ENROL.NET` pour le profil `ENROLEUR`
-- Build APK automatique via GitHub Actions
-- Documentation contrôle : `ctr-net-mobile/README.md`
-- Documentation enrôlement : `ctr-net-enrollement-mobile/README.md`
+- `ctr-net-mobile/` → base historique de contrôle terrain `CTR.NET`
+- `ctr-net-mobile-control-enrollement/` → APK terrain active **`CTR Opérations`** pour `CONTROLEUR` et `ENROLEUR`
+- build APK automatique via GitHub Actions sur le dépôt mobile unifié
+- documentation contrôle + enrôlement : `ctr-net-mobile-control-enrollement/README.md`
+- guides terrain : `ctr-net-mobile-control-enrollement/CONTROLEUR_GUIDE.md` et `ctr-net-mobile-control-enrollement/ENROLEUR_GUIDE.md`
 

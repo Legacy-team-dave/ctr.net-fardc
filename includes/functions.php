@@ -5,8 +5,27 @@
  * Description : Fonctions utilitaires pour l'application
  */
 
-// Démarrer la session si ce n'est pas déjà fait
+// Démarrer la session si ce n'est pas déjà fait avec des cookies durcis
 if (session_status() === PHP_SESSION_NONE) {
+    $sessionSecure = (!empty($_SERVER['HTTPS']) && strtolower((string) $_SERVER['HTTPS']) !== 'off')
+        || ((int) ($_SERVER['SERVER_PORT'] ?? 0) === 443)
+        || (!empty($_SERVER['HTTP_X_FORWARDED_PROTO']) && stripos((string) $_SERVER['HTTP_X_FORWARDED_PROTO'], 'https') !== false);
+
+    ini_set('session.use_only_cookies', '1');
+    ini_set('session.use_strict_mode', '1');
+    ini_set('session.cookie_httponly', '1');
+    if ($sessionSecure) {
+        ini_set('session.cookie_secure', '1');
+    }
+
+    session_name('CTRNETSESSID');
+    session_set_cookie_params([
+        'lifetime' => 0,
+        'path' => '/',
+        'secure' => $sessionSecure,
+        'httponly' => true,
+        'samesite' => 'Lax'
+    ]);
     session_start();
 }
 
@@ -47,6 +66,168 @@ function app_url($path = '')
     $path = ltrim((string) $path, '/');
 
     return $path === '' ? $base_path : $base_path . '/' . $path;
+}
+
+function is_https_request(): bool
+{
+    return (!empty($_SERVER['HTTPS']) && strtolower((string) $_SERVER['HTTPS']) !== 'off')
+        || ((int) ($_SERVER['SERVER_PORT'] ?? 0) === 443)
+        || (!empty($_SERVER['HTTP_X_FORWARDED_PROTO']) && stripos((string) $_SERVER['HTTP_X_FORWARDED_PROTO'], 'https') !== false);
+}
+
+function get_client_ip_address(): string
+{
+    $candidates = [
+        $_SERVER['HTTP_CF_CONNECTING_IP'] ?? null,
+        $_SERVER['HTTP_X_FORWARDED_FOR'] ?? null,
+        $_SERVER['HTTP_CLIENT_IP'] ?? null,
+        $_SERVER['REMOTE_ADDR'] ?? null,
+    ];
+
+    foreach ($candidates as $candidate) {
+        if (!is_string($candidate) || trim($candidate) === '') {
+            continue;
+        }
+
+        $parts = preg_split('/\s*,\s*/', $candidate);
+        foreach ($parts as $part) {
+            $ip = trim((string) $part);
+            if ($ip !== '' && filter_var($ip, FILTER_VALIDATE_IP)) {
+                return $ip;
+            }
+        }
+    }
+
+    return '0.0.0.0';
+}
+
+function get_security_runtime_dir_path(): string
+{
+    $dir = get_backup_dir_path() . 'security-runtime/';
+    if (!is_dir($dir)) {
+        mkdir($dir, 0755, true);
+    }
+    return $dir;
+}
+
+function get_login_rate_limit_policy(): array
+{
+    return [
+        'window_seconds' => 10 * 60,
+        'max_attempts' => 5,
+        'lockout_seconds' => 15 * 60,
+    ];
+}
+
+function get_login_rate_limit_file_path(string $scope = 'web'): string
+{
+    $scope = preg_replace('/[^a-z0-9_\-]/i', '_', strtolower(trim($scope))) ?: 'web';
+    return get_security_runtime_dir_path() . 'login-rate-limit-' . $scope . '-' . sha1(get_client_ip_address()) . '.json';
+}
+
+function read_login_rate_limit_state(string $scope = 'web'): array
+{
+    $default = [
+        'attempts' => 0,
+        'first_attempt_at' => 0,
+        'last_attempt_at' => 0,
+        'locked_until' => 0,
+        'last_login' => '',
+        'ip' => get_client_ip_address(),
+    ];
+
+    $file = get_login_rate_limit_file_path($scope);
+    if (!file_exists($file)) {
+        return $default;
+    }
+
+    $decoded = json_decode((string) file_get_contents($file), true);
+    if (!is_array($decoded)) {
+        return $default;
+    }
+
+    return array_merge($default, $decoded);
+}
+
+function write_login_rate_limit_state(string $scope, array $state): void
+{
+    file_put_contents(
+        get_login_rate_limit_file_path($scope),
+        json_encode($state, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES)
+    );
+}
+
+function check_login_rate_limit(string $scope = 'web'): array
+{
+    $policy = get_login_rate_limit_policy();
+    $state = read_login_rate_limit_state($scope);
+    $now = time();
+
+    if (($state['locked_until'] ?? 0) > $now) {
+        return [
+            'allowed' => false,
+            'retry_after' => (int) $state['locked_until'] - $now,
+            'attempts' => (int) ($state['attempts'] ?? 0),
+            'max_attempts' => (int) $policy['max_attempts'],
+        ];
+    }
+
+    if (($state['first_attempt_at'] ?? 0) > 0 && ($now - (int) $state['first_attempt_at']) > (int) $policy['window_seconds']) {
+        $state = [
+            'attempts' => 0,
+            'first_attempt_at' => 0,
+            'last_attempt_at' => 0,
+            'locked_until' => 0,
+            'last_login' => '',
+            'ip' => get_client_ip_address(),
+        ];
+        write_login_rate_limit_state($scope, $state);
+    }
+
+    return [
+        'allowed' => true,
+        'retry_after' => 0,
+        'attempts' => (int) ($state['attempts'] ?? 0),
+        'max_attempts' => (int) $policy['max_attempts'],
+    ];
+}
+
+function register_login_failure(string $scope = 'web', string $login = ''): array
+{
+    $policy = get_login_rate_limit_policy();
+    $state = read_login_rate_limit_state($scope);
+    $now = time();
+
+    if (($state['first_attempt_at'] ?? 0) <= 0 || ($now - (int) $state['first_attempt_at']) > (int) $policy['window_seconds']) {
+        $state['attempts'] = 0;
+        $state['first_attempt_at'] = $now;
+    }
+
+    $state['attempts'] = (int) ($state['attempts'] ?? 0) + 1;
+    $state['last_attempt_at'] = $now;
+    $state['last_login'] = mb_substr(trim($login), 0, 120);
+    $state['ip'] = get_client_ip_address();
+
+    if ($state['attempts'] >= (int) $policy['max_attempts']) {
+        $state['locked_until'] = $now + (int) $policy['lockout_seconds'];
+    }
+
+    write_login_rate_limit_state($scope, $state);
+
+    return [
+        'allowed' => ($state['locked_until'] ?? 0) <= $now,
+        'retry_after' => max(0, (int) ($state['locked_until'] ?? 0) - $now),
+        'attempts' => (int) $state['attempts'],
+        'max_attempts' => (int) $policy['max_attempts'],
+    ];
+}
+
+function clear_login_rate_limit(string $scope = 'web'): void
+{
+    $file = get_login_rate_limit_file_path($scope);
+    if (file_exists($file)) {
+        @unlink($file);
+    }
 }
 
 /**
@@ -136,6 +317,10 @@ function mark_sync_dirty(?string $table = null, ?int $record_id = null): bool
         $stmt->execute([(int) $record_id]);
     } catch (Throwable $e) {
         error_log('⚠️ mark_sync_dirty: ' . $e->getMessage());
+    }
+
+    if (in_array($tableName, ['controles', 'enrollements_vivants'], true)) {
+        maybe_trigger_background_backup_job($tableName);
     }
 
     return true;
@@ -1228,6 +1413,81 @@ function get_backup_interval_seconds()
     return 8 * 3600;
 }
 
+function has_pending_backup_changes(?array $state = null): bool
+{
+    global $pdo;
+
+    if (!isset($pdo) || !($pdo instanceof PDO)) {
+        return false;
+    }
+
+    $state = is_array($state) ? array_merge(read_backup_state(), $state) : read_backup_state();
+    $lastControlId = (int) ($state['last_control_id'] ?? 0);
+
+    try {
+        $maxControlId = (int) $pdo->query("SELECT COALESCE(MAX(id), 0) FROM controles")->fetchColumn();
+        if ($maxControlId > $lastControlId || (int) ($state['last_backup_at'] ?? 0) <= 0) {
+            return true;
+        }
+
+        $currentSnapshot = get_non_vus_matricule_snapshot(get_non_vus_rows_for_backup());
+        return $currentSnapshot !== (array) ($state['non_vus_snapshot'] ?? []);
+    } catch (Throwable $e) {
+        error_log('⚠️ has_pending_backup_changes: ' . $e->getMessage());
+        return false;
+    }
+}
+
+function maybe_trigger_background_backup_job(?string $tableName = null): bool
+{
+    if (PHP_SAPI === 'cli') {
+        return false;
+    }
+
+    $watchedTable = strtolower(trim((string) $tableName));
+    if ($watchedTable !== '' && !in_array($watchedTable, ['controles', 'enrollements_vivants', 'equipes', 'militaires'], true)) {
+        return false;
+    }
+
+    $state = read_backup_state();
+    $now = time();
+    if (($now - (int) ($state['last_backup_at'] ?? 0)) < get_backup_interval_seconds()) {
+        return false;
+    }
+
+    if (!has_pending_backup_changes($state)) {
+        return false;
+    }
+
+    $triggerLock = get_backup_dir_path() . 'backup_trigger.lock';
+    if (file_exists($triggerLock) && ($now - (int) @filemtime($triggerLock)) < 900) {
+        return false;
+    }
+
+    @file_put_contents($triggerLock, (string) $now);
+
+    $cronScript = realpath(__DIR__ . '/backup_cron.php');
+    $phpBinary = defined('PHP_BINARY') ? PHP_BINARY : 'php';
+
+    if (!$cronScript || !is_file($cronScript) || !is_file($phpBinary)) {
+        return false;
+    }
+
+    try {
+        if (DIRECTORY_SEPARATOR === '\\') {
+            $command = 'start /B "" ' . escapeshellarg($phpBinary) . ' ' . escapeshellarg($cronScript) . ' 30 >NUL 2>NUL';
+            @pclose(@popen($command, 'r'));
+        } else {
+            $command = escapeshellarg($phpBinary) . ' ' . escapeshellarg($cronScript) . ' 30 >/dev/null 2>&1 &';
+            @exec($command);
+        }
+        return true;
+    } catch (Throwable $e) {
+        error_log('⚠️ maybe_trigger_background_backup_job: ' . $e->getMessage());
+        return false;
+    }
+}
+
 function read_backup_state()
 {
     $state_file = get_backup_state_file_path();
@@ -1433,6 +1693,10 @@ function xlsx_column_letter($column_number)
 
 function build_xlsx_content($headers, $rows, $sheet_name = 'Donnees')
 {
+    if (!class_exists('ZipArchive')) {
+        return false;
+    }
+
     $sheet_rows = array_merge([$headers], $rows);
 
     $sheet_xml_rows = '';
@@ -1511,12 +1775,33 @@ function create_incremental_backup_archive($datasets)
 {
     $backup_dir = get_backup_dir_path();
     $zip_file = $backup_dir . 'backup_consolide_latest.zip';
+    $temp_dir = rtrim(sys_get_temp_dir(), DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . 'ctr_backup_' . bin2hex(random_bytes(6));
 
-    $zip = new ZipArchive();
-    if ($zip->open($zip_file, ZipArchive::CREATE | ZipArchive::OVERWRITE) !== true) {
-        error_log("Impossible de créer l'archive de sauvegarde consolidée.");
+    if (!@mkdir($temp_dir, 0755, true) && !is_dir($temp_dir)) {
+        error_log("Impossible de préparer le dossier temporaire de sauvegarde.");
         return false;
     }
+
+    $cleanup = static function (string $dir): void {
+        if (!is_dir($dir)) {
+            return;
+        }
+
+        $iterator = new RecursiveIteratorIterator(
+            new RecursiveDirectoryIterator($dir, FilesystemIterator::SKIP_DOTS),
+            RecursiveIteratorIterator::CHILD_FIRST
+        );
+
+        foreach ($iterator as $item) {
+            if ($item->isDir()) {
+                @rmdir($item->getPathname());
+            } else {
+                @unlink($item->getPathname());
+            }
+        }
+
+        @rmdir($dir);
+    };
 
     $manifest = [
         'updated_at' => date('c'),
@@ -1524,27 +1809,71 @@ function create_incremental_backup_archive($datasets)
         'datasets' => []
     ];
 
-    foreach ($datasets as $dataset_key => $dataset) {
-        $headers = $dataset['headers'];
-        $rows = $dataset['rows'];
-        $csv = build_csv_content($headers, $rows, ';');
-        $xlsx = build_xlsx_content($headers, $rows, $dataset['sheet_name'] ?? ucfirst($dataset_key));
+    try {
+        foreach ($datasets as $dataset_key => $dataset) {
+            $headers = $dataset['headers'];
+            $rows = $dataset['rows'];
+            $csv = build_csv_content($headers, $rows, ';');
+            $xlsx = build_xlsx_content($headers, $rows, $dataset['sheet_name'] ?? ucfirst($dataset_key));
 
-        $zip->addFromString($dataset_key . '.csv', $csv);
-        if ($xlsx !== false) {
-            $zip->addFromString($dataset_key . '.xlsx', $xlsx);
+            file_put_contents($temp_dir . DIRECTORY_SEPARATOR . $dataset_key . '.csv', $csv);
+            if ($xlsx !== false) {
+                file_put_contents($temp_dir . DIRECTORY_SEPARATOR . $dataset_key . '.xlsx', $xlsx);
+            }
+
+            $manifest['datasets'][$dataset_key] = [
+                'rows' => count($rows),
+                'formats' => $xlsx !== false ? ['csv', 'xlsx'] : ['csv']
+            ];
         }
 
-        $manifest['datasets'][$dataset_key] = [
-            'rows' => count($rows),
-            'formats' => $xlsx !== false ? ['csv', 'xlsx'] : ['csv']
-        ];
+        file_put_contents(
+            $temp_dir . DIRECTORY_SEPARATOR . 'manifest.json',
+            json_encode($manifest, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE)
+        );
+
+        if (class_exists('ZipArchive')) {
+            $zip = new ZipArchive();
+            if ($zip->open($zip_file, ZipArchive::CREATE | ZipArchive::OVERWRITE) !== true) {
+                error_log("Impossible de créer l'archive de sauvegarde consolidée.");
+                return false;
+            }
+
+            $files = new RecursiveIteratorIterator(
+                new RecursiveDirectoryIterator($temp_dir, FilesystemIterator::SKIP_DOTS),
+                RecursiveIteratorIterator::SELF_FIRST
+            );
+
+            foreach ($files as $fileInfo) {
+                if (!$fileInfo->isFile()) {
+                    continue;
+                }
+
+                $localName = substr($fileInfo->getPathname(), strlen($temp_dir) + 1);
+                $zip->addFile($fileInfo->getPathname(), str_replace('\\', '/', $localName));
+            }
+
+            $zip->close();
+            return $zip_file;
+        }
+
+        if (DIRECTORY_SEPARATOR === '\\') {
+            $sourcePath = str_replace("'", "''", $temp_dir . DIRECTORY_SEPARATOR . '*');
+            $destinationPath = str_replace("'", "''", $zip_file);
+            $psScript = "if (Test-Path -LiteralPath '$destinationPath') { Remove-Item -LiteralPath '$destinationPath' -Force }; Compress-Archive -Path '$sourcePath' -DestinationPath '$destinationPath' -Force";
+            $command = 'powershell.exe -NoProfile -ExecutionPolicy Bypass -Command ' . escapeshellarg($psScript);
+
+            exec($command, $output, $exitCode);
+            if ($exitCode === 0 && file_exists($zip_file)) {
+                return $zip_file;
+            }
+        }
+
+        error_log("Impossible de créer l'archive ZIP de sauvegarde (ZipArchive absent). ");
+        return false;
+    } finally {
+        $cleanup($temp_dir);
     }
-
-    $zip->addFromString('manifest.json', json_encode($manifest, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
-    $zip->close();
-
-    return $zip_file;
 }
 
 /**
@@ -1638,21 +1967,42 @@ function maybe_create_backup($force = false)
     $state = read_backup_state();
     $now = time();
     $interval = get_backup_interval_seconds();
+    $lastBackupAt = (int) ($state['last_backup_at'] ?? 0);
 
-    if (!$force && ($now - (int)$state['last_backup_at']) < $interval) {
+    if (!$force && $lastBackupAt > 0 && ($now - $lastBackupAt) < $interval) {
         return [
             'created' => false,
             'reason' => 'interval_not_elapsed',
-            'next_run_in_seconds' => $interval - ($now - (int)$state['last_backup_at'])
+            'next_run_in_seconds' => $interval - ($now - $lastBackupAt)
         ];
     }
 
     $control_fields = ['id', 'matricule', 'type_controle', 'nom_beneficiaire', 'new_beneficiaire', 'lien_parente', 'date_controle', 'mention', 'observations', 'cree_le'];
     $non_vus_fields = ['SERIE', 'MATRICULE', 'NOMS', 'GRADE', 'UNITE', 'BENEFICIAIRE', 'GARNISON', 'PROVINCE', 'CATEGORIE', 'ZDEF'];
 
-    $all_controles = fetch_full_rows_for_table('controles', $control_fields);
+    $max_control_id = (int) $pdo->query("SELECT COALESCE(MAX(id), 0) FROM controles")->fetchColumn();
     $current_non_vus = get_non_vus_rows_for_backup();
     $current_non_vus_snapshot = get_non_vus_matricule_snapshot($current_non_vus);
+
+    $isInitialBackup = $lastBackupAt <= 0;
+    $hasControlChanges = $max_control_id > (int) ($state['last_control_id'] ?? 0);
+    $hasNonVusChanges = $current_non_vus_snapshot !== (array) ($state['non_vus_snapshot'] ?? []);
+
+    if (!$force && !$isInitialBackup && !$hasControlChanges && !$hasNonVusChanges) {
+        $state['last_run_at'] = $now;
+        write_backup_state($state);
+
+        return [
+            'created' => false,
+            'reason' => 'no_new_control_data',
+            'counts' => [
+                'controles' => $max_control_id,
+                'non_vus' => count($current_non_vus)
+            ]
+        ];
+    }
+
+    $all_controles = fetch_full_rows_for_table('controles', $control_fields);
 
     $datasets = [
         'controles' => [
@@ -1674,8 +2024,6 @@ function maybe_create_backup($force = false)
             'reason' => 'zip_creation_failed'
         ];
     }
-
-    $max_control_id = (int)$pdo->query("SELECT COALESCE(MAX(id), 0) FROM controles")->fetchColumn();
 
     $state['last_backup_at'] = $now;
     $state['last_run_at'] = $now;

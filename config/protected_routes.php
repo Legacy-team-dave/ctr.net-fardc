@@ -12,7 +12,8 @@
 return [
     // Index and Dashboard
     '/ctr.net-fardc/index.php' => ['ADMIN_IG', 'OPERATEUR'],
-    '/ctr.net-fardc/equipes.php' => ['ADMIN_IG', 'OPERATEUR'],
+    '/ctr.net-fardc/modules/equipes/liste.php' => ['ADMIN_IG', 'OPERATEUR'],
+    '/ctr.net-fardc/modules/equipes/index.php' => ['ADMIN_IG', 'OPERATEUR'],
 
     // Administration Module
     '/ctr.net-fardc/modules/administration/liste.php' => ['ADMIN_IG'],

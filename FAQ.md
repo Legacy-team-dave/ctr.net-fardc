@@ -14,8 +14,8 @@ Quatre profils sont utilisés : `ADMIN_IG`, `OPERATEUR`, `CONTROLEUR` (mobile `C
 Ces deux profils sont réservés exclusivement aux applications mobiles `CTR.NET` et `ENROL.NET`. La connexion web est bloquée.
 
 ### Où va un `OPERATEUR` juste après connexion ?
-- vers `preferences.php` → `equipes.php` → `index.php` si aucune préférence n'est enregistrée,
-- vers `modules/controles/ajouter.php` si les préférences existent.
+- vers `preferences.php` → `modules/equipes/index.php` → `modules/controles/ajouter.php` si aucune préférence n'est enregistrée,
+- vers `modules/controles/ajouter.php` si les préférences existent déjà.
 
 ### Où va un `ADMIN_IG` juste après connexion ?
 Vers `index.php`.

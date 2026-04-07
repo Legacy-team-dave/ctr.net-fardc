@@ -143,13 +143,13 @@ CREATE TABLE `enrollements_vivants` (
   `province` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT 'Province',
   `categorie` varchar(80) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT 'Catégorie militaire',
   `photo_data` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT 'Photo encodée du militaire',
-  `empreinte_gauche_data` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci COMMENT 'Empreinte gauche encodée',
-  `empreinte_droite_data` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci COMMENT 'Empreinte droite encodée',
+  `empreinte_gauche_data` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci COMMENT 'Empreintes de la main gauche encodées (5 doigts, JSON)',
+  `empreinte_droite_data` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci COMMENT 'Empreintes de la main droite encodées (5 doigts, JSON)',
   `observations` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci COMMENT 'Observations de l’enrôlement',
   `appareil_id` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT 'Identifiant ou libellé de la tablette',
   `cree_le` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT 'Date de création',
   `sync_status` enum('local','synced') CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'local' COMMENT 'État de synchronisation'
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Enrôlements des militaires vivants depuis tablette';
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Enrôlements des militaires vivants depuis tablette avec photo et 10 empreintes (5 gauche + 5 droite)';
 
 -- --------------------------------------------------------
 

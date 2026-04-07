@@ -1,0 +1,27 @@
+Options -Indexes
+ServerSignature Off
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+
+    # Bloquer l'accès aux fichiers et dossiers sensibles
+    RewriteRule "(^|/)\.(?!well-known/)" - [F,L]
+    RewriteRule "(^|/)(composer\.(json|lock)|package(-lock)?\.json|phpunit\.xml|\.env.*)$" - [F,L,NC]
+    RewriteRule "(^|/)(backups|sql|bin|config)/.*\.(sql|json|log|bak|env|ini|dist)$" - [F,L,NC]
+    RewriteRule "(^|/).*\.(md|ps1|bat)$" - [F,L,NC]
+</IfModule>
+
+<IfModule mod_headers.c>
+    Header always set X-Frame-Options "SAMEORIGIN"
+    Header always set X-Content-Type-Options "nosniff"
+    Header always set Referrer-Policy "strict-origin-when-cross-origin"
+    Header always set Permissions-Policy "camera=(), microphone=(), geolocation=()"
+    Header always set Cross-Origin-Resource-Policy "same-site"
+    Header always set X-XSS-Protection "1; mode=block"
+    Header always set Content-Security-Policy "default-src 'self' 'unsafe-inline' 'unsafe-eval' data: blob: http: https:; img-src 'self' data: blob: http: https:; connect-src 'self' http: https: ws: wss:; frame-ancestors 'self'; form-action 'self'; base-uri 'self'; object-src 'none';"
+    Header always set Strict-Transport-Security "max-age=31536000; includeSubDomains"
+</IfModule>
+
+<LimitExcept GET POST HEAD OPTIONS>
+    Require all denied
+</LimitExcept>

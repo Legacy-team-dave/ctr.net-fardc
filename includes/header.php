@@ -1,11 +1,15 @@
 <?php
 if (session_status() === PHP_SESSION_NONE) {
+    $sessionSecure = function_exists('is_https_request')
+        ? is_https_request()
+        : ((!empty($_SERVER['HTTPS']) && strtolower((string) $_SERVER['HTTPS']) !== 'off')
+            || ((int) ($_SERVER['SERVER_PORT'] ?? 0) === 443));
+
     // Configuration des cookies de session pour éviter les problèmes de redirection
     session_set_cookie_params([
         'lifetime' => 0,
         'path' => '/',
-        'domain' => $_SERVER['HTTP_HOST'],
-        'secure' => false,   // passer à true si HTTPS
+        'secure' => $sessionSecure,
         'httponly' => true,
         'samesite' => 'Lax'
     ]);
@@ -100,7 +104,7 @@ $menuItems = [
     [
         'title' => 'Équipe',
         'icon'  => 'fas fa-users',
-        'url'   => '/ctr.net-fardc/equipes.php',
+        'url'   => '/ctr.net-fardc/modules/equipes/liste.php',
         'roles' => ['ADMIN_IG', 'OPERATEUR']
     ],
     [
@@ -283,6 +287,23 @@ if (isset($_SESSION['user_id'])) {
         .dataTables_wrapper table thead th:last-child,
         table.table thead th:last-child {
             border-radius: 0 10px 10px 0 !important;
+        }
+
+        .dataTables_wrapper table.dataTable thead tr:not(:first-child) {
+            visibility: collapse !important;
+            height: 0 !important;
+        }
+
+        .dataTables_wrapper table.dataTable thead tr:not(:first-child) th,
+        .dataTables_wrapper table.dataTable thead tr:not(:first-child) td,
+        .dataTables_wrapper table.dataTable thead .dataTables_sizing {
+            padding-top: 0 !important;
+            padding-bottom: 0 !important;
+            border: 0 !important;
+            height: 0 !important;
+            line-height: 0 !important;
+            overflow: hidden !important;
+            background: transparent !important;
         }
 
         .table-responsive table tbody tr,
@@ -1121,7 +1142,7 @@ if (isset($_SESSION['user_id'])) {
                             Liste</a>
                     </li>
                     <li class="nav-item">
-                        <a href="/ctr.net-fardc/equipes.php" class="nav-link"><i class="fas fa-users"></i>
+                        <a href="/ctr.net-fardc/modules/equipes/liste.php" class="nav-link"><i class="fas fa-users"></i>
                             Équipe</a>
                     </li>
                     <li class="nav-item">

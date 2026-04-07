@@ -7,7 +7,8 @@
 header('Content-Type: application/json; charset=utf-8');
 header('Access-Control-Allow-Origin: *');
 header('Access-Control-Allow-Methods: POST, GET, OPTIONS');
-header('Access-Control-Allow-Headers: Content-Type, Authorization');
+header('Access-Control-Allow-Headers: Content-Type, Authorization, X-Auth-Token, X-Requested-With');
+header('Access-Control-Allow-Private-Network: true');
 
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     http_response_code(200);
@@ -72,34 +73,70 @@ function authenticateToken($pdo)
 function handleSearch($pdo)
 {
     $q = trim($_GET['q'] ?? '');
+    $controlledOnly = in_array(strtolower((string) ($_GET['controlled_only'] ?? '0')), ['1', 'true', 'yes', 'oui'], true);
+
     if (strlen($q) < 2) {
         echo json_encode([]);
         return;
     }
 
     try {
-        $stmt = $pdo->prepare("SELECT matricule, noms, grade, unite, garnison, province, statut, categorie, beneficiaire
-                               FROM militaires 
-                               WHERE matricule LIKE ? OR noms LIKE ? 
-                               ORDER BY 
-                                   CASE 
-                                       WHEN matricule = ? THEN 0 
-                                       WHEN matricule LIKE ? THEN 1 
-                                       WHEN noms LIKE ? THEN 2 
-                                       ELSE 3 
-                                   END, noms 
-                               LIMIT 10");
+        $hasEnrolTable = tableExists($pdo, 'enrollements_vivants');
+        $enrolSelect = $hasEnrolTable
+            ? ", EXISTS(SELECT 1 FROM enrollements_vivants ev WHERE ev.matricule = m.matricule) AS deja_enrole"
+            : ", 0 AS deja_enrole";
+
         $searchTerm = "%$q%";
-        $stmt->execute([$searchTerm, $searchTerm, $q, "$q%", "$q%"]);
+
+        if ($controlledOnly) {
+            $alreadyEnrolledFilter = $hasEnrolTable
+                ? "AND NOT EXISTS(SELECT 1 FROM enrollements_vivants ev WHERE ev.matricule = m.matricule)"
+                : "";
+
+            $stmt = $pdo->prepare("SELECT m.matricule, m.noms, m.grade, m.unite, m.garnison, m.province, m.statut, m.categorie, m.beneficiaire,
+                                          1 AS deja_controle
+                                          {$enrolSelect}
+                                   FROM controles c
+                                   INNER JOIN militaires m ON m.matricule = c.matricule
+                                   WHERE c.type_controle = 'Militaire'
+                                     {$alreadyEnrolledFilter}
+                                     AND (m.matricule LIKE ? OR m.noms LIKE ?)
+                                   ORDER BY
+                                       CASE
+                                           WHEN m.matricule = ? THEN 0
+                                           WHEN m.matricule LIKE ? THEN 1
+                                           WHEN m.noms LIKE ? THEN 2
+                                           ELSE 3
+                                       END,
+                                       c.date_controle DESC,
+                                       c.id DESC,
+                                       m.noms ASC
+                                   LIMIT 10");
+            $stmt->execute([$searchTerm, $searchTerm, $q, "$q%", "$q%"]);
+        } else {
+            $stmt = $pdo->prepare("SELECT m.matricule, m.noms, m.grade, m.unite, m.garnison, m.province, m.statut, m.categorie, m.beneficiaire,
+                                          EXISTS(SELECT 1 FROM controles c WHERE c.matricule = m.matricule) AS deja_controle
+                                          {$enrolSelect}
+                                   FROM militaires m
+                                   WHERE m.matricule LIKE ? OR m.noms LIKE ?
+                                   ORDER BY
+                                       CASE
+                                           WHEN m.matricule = ? THEN 0
+                                           WHEN m.matricule LIKE ? THEN 1
+                                           WHEN m.noms LIKE ? THEN 2
+                                           ELSE 3
+                                       END,
+                                       m.noms
+                                   LIMIT 10");
+            $stmt->execute([$searchTerm, $searchTerm, $q, "$q%", "$q%"]);
+        }
+
         $resultats = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-        // Enrichir chaque résultat avec l'âge estimé
         foreach ($resultats as &$r) {
             $r['age'] = calculerAge($r['matricule']);
-            // Vérifier si déjà contrôlé
-            $check = $pdo->prepare("SELECT id FROM controles WHERE matricule = ?");
-            $check->execute([$r['matricule']]);
-            $r['deja_controle'] = $check->rowCount() > 0;
+            $r['deja_controle'] = !empty($r['deja_controle']);
+            $r['deja_enrole'] = !empty($r['deja_enrole']);
         }
 
         echo json_encode($resultats);
@@ -133,11 +170,19 @@ function handleMilitaire($pdo)
             return;
         }
 
-        $check = $pdo->prepare("SELECT id FROM controles WHERE matricule = ? LIMIT 1");
+        $check = $pdo->prepare("SELECT EXISTS(SELECT 1 FROM controles WHERE matricule = ?)");
         $check->execute([$matricule]);
 
         $militaire['age'] = calculerAge($matricule);
-        $militaire['deja_controle'] = (bool) $check->fetch(PDO::FETCH_ASSOC);
+        $militaire['deja_controle'] = (bool) $check->fetchColumn();
+
+        if (tableExists($pdo, 'enrollements_vivants')) {
+            $enrolCheck = $pdo->prepare("SELECT EXISTS(SELECT 1 FROM enrollements_vivants WHERE matricule = ?)");
+            $enrolCheck->execute([$matricule]);
+            $militaire['deja_enrole'] = (bool) $enrolCheck->fetchColumn();
+        } else {
+            $militaire['deja_enrole'] = false;
+        }
 
         echo json_encode([
             'success' => true,
@@ -417,9 +462,18 @@ function handleEnrollVivant($pdo, $user)
         return;
     }
 
-    if ($empreinte_gauche_data === '' && $empreinte_droite_data === '') {
+    if ($empreinte_gauche_data === '' || $empreinte_droite_data === '') {
         http_response_code(400);
-        echo json_encode(['success' => false, 'message' => 'Au moins une empreinte doit être capturée']);
+        echo json_encode(['success' => false, 'message' => 'Les 10 doigts doivent être capturés : 5 à gauche et 5 à droite.']);
+        return;
+    }
+
+    $leftFingerCount = countFingerprintEntries($empreinte_gauche_data);
+    $rightFingerCount = countFingerprintEntries($empreinte_droite_data);
+
+    if ($leftFingerCount < 5 || $rightFingerCount < 5) {
+        http_response_code(400);
+        echo json_encode(['success' => false, 'message' => 'Chaque main doit contenir 5 empreintes capturées avant validation.']);
         return;
     }
 
@@ -431,6 +485,30 @@ function handleEnrollVivant($pdo, $user)
 
     try {
         ensureEnrollementsVivantsTable($pdo);
+
+        $controleStmt = $pdo->prepare("SELECT id, type_controle, mention, date_controle FROM controles WHERE matricule = ? ORDER BY date_controle DESC, id DESC LIMIT 1");
+        $controleStmt->execute([$matricule]);
+        $controle = $controleStmt->fetch(PDO::FETCH_ASSOC);
+
+        if (!$controle) {
+            http_response_code(409);
+            echo json_encode(['success' => false, 'message' => 'Enrôlement refusé : ce militaire doit d’abord être contrôlé.']);
+            return;
+        }
+
+        if (($controle['type_controle'] ?? '') !== 'Militaire') {
+            http_response_code(409);
+            echo json_encode(['success' => false, 'message' => 'Enrôlement refusé : seuls les militaires contrôlés vivants peuvent être enrôlés.']);
+            return;
+        }
+
+        $existingEnrolStmt = $pdo->prepare("SELECT id FROM enrollements_vivants WHERE matricule = ? LIMIT 1");
+        $existingEnrolStmt->execute([$matricule]);
+        if ($existingEnrolStmt->fetchColumn()) {
+            http_response_code(409);
+            echo json_encode(['success' => false, 'message' => 'Ce militaire est déjà enrôlé.']);
+            return;
+        }
 
         $stmt = $pdo->prepare("SELECT noms, grade, unite, garnison, province, categorie FROM militaires WHERE matricule = ? LIMIT 1");
         $stmt->execute([$matricule]);
@@ -495,6 +573,45 @@ function handleEnrollVivant($pdo, $user)
         http_response_code(500);
         echo json_encode(['success' => false, 'message' => $e->getMessage()]);
     }
+}
+
+function tableExists($pdo, $tableName)
+{
+    static $cache = [];
+
+    $tableName = strtolower(trim((string) $tableName));
+    if ($tableName === '') {
+        return false;
+    }
+
+    if (array_key_exists($tableName, $cache)) {
+        return $cache[$tableName];
+    }
+
+    try {
+        $stmt = $pdo->prepare("SELECT COUNT(*) FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ?");
+        $stmt->execute([$tableName]);
+        $cache[$tableName] = ((int) $stmt->fetchColumn()) > 0;
+    } catch (Throwable $e) {
+        $cache[$tableName] = false;
+    }
+
+    return $cache[$tableName];
+}
+
+function countFingerprintEntries($rawFingerprintData)
+{
+    $rawFingerprintData = trim((string) $rawFingerprintData);
+    if ($rawFingerprintData === '') {
+        return 0;
+    }
+
+    $decoded = json_decode($rawFingerprintData, true);
+    if (is_array($decoded)) {
+        return count($decoded);
+    }
+
+    return 1;
 }
 
 function ensureEnrollementsVivantsTable($pdo)
@@ -587,17 +704,55 @@ function calculerAge($matricule)
 
 function getBearerToken()
 {
-    $headers = '';
-    if (isset($_SERVER['HTTP_AUTHORIZATION'])) {
-        $headers = $_SERVER['HTTP_AUTHORIZATION'];
-    } elseif (isset($_SERVER['REDIRECT_HTTP_AUTHORIZATION'])) {
-        $headers = $_SERVER['REDIRECT_HTTP_AUTHORIZATION'];
-    } elseif (function_exists('apache_request_headers')) {
+    $candidates = [];
+
+    if (!empty($_SERVER['HTTP_AUTHORIZATION'])) {
+        $candidates[] = $_SERVER['HTTP_AUTHORIZATION'];
+    }
+    if (!empty($_SERVER['REDIRECT_HTTP_AUTHORIZATION'])) {
+        $candidates[] = $_SERVER['REDIRECT_HTTP_AUTHORIZATION'];
+    }
+    if (!empty($_SERVER['HTTP_X_AUTH_TOKEN'])) {
+        $candidates[] = trim($_SERVER['HTTP_X_AUTH_TOKEN']);
+    }
+
+    if (function_exists('apache_request_headers')) {
         $reqHeaders = apache_request_headers();
-        $headers = $reqHeaders['Authorization'] ?? '';
+        $candidates[] = $reqHeaders['Authorization'] ?? '';
+        $candidates[] = $reqHeaders['authorization'] ?? '';
+        $candidates[] = $reqHeaders['X-Auth-Token'] ?? '';
+        $candidates[] = $reqHeaders['x-auth-token'] ?? '';
     }
-    if (preg_match('/Bearer\s(\S+)/', $headers, $matches)) {
-        return $matches[1];
+
+    foreach ($candidates as $candidate) {
+        $candidate = trim((string) $candidate);
+        if ($candidate === '') {
+            continue;
+        }
+
+        if (preg_match('/Bearer\s(.+)/i', $candidate, $matches)) {
+            $token = trim($matches[1]);
+            if ($token !== '') {
+                return $token;
+            }
+        }
+
+        if ($candidate !== '') {
+            return $candidate;
+        }
     }
+
+    $rawInput = file_get_contents('php://input');
+    if (is_string($rawInput) && trim($rawInput) !== '') {
+        $payload = json_decode($rawInput, true);
+        if (is_array($payload) && !empty($payload['auth_token'])) {
+            return trim((string) $payload['auth_token']);
+        }
+    }
+
+    if (!empty($_GET['token'])) {
+        return trim((string) $_GET['token']);
+    }
+
     return null;
 }

@@ -75,6 +75,7 @@ Les profils `CONTROLEUR` et `ENROLEUR` sont réservés aux applications mobiles 
 - Suppression du cookie
 - Audit `DECONNEXION`
 - Destruction complète de session
+- Redirection systématique vers `login.php`
 
 ## 3.4 Réinitialisation de mot de passe (`reset_password.php`)
 
@@ -120,16 +121,22 @@ Permet de définir les filtres personnels :
 
 Les préférences servent au filtrage des données du dashboard.
 
-## 5.4 Équipe de contrôle (`equipes.php`)
+## 5.4 Équipe de contrôle (`modules/equipes/index.php`)
 
-Après la validation des préférences, l'opérateur est redirigé vers `equipes.php` pour enregistrer les membres de son équipe de contrôle.
+Après la validation des préférences, l'opérateur est redirigé vers `modules/equipes/index.php` pour enregistrer les membres de son équipe de contrôle.
 
-Cette étape fait partie du parcours de première configuration, mais n'est pas recontrôlée à chaque connexion si les préférences existent déjà.
+Le parcours initial est désormais :
 
-- Table standalone `equipes` (id, noms, grade, role) — aucune relation avec les autres tables
+1. `preferences.php`
+2. `modules/equipes/index.php`
+3. `modules/controles/ajouter.php`
+
+Cette étape reste dédiée à la première configuration et conserve l'utilisateur sur la page d'équipe tant qu'il ajoute ou supprime des membres.
+
+- Table standalone `equipes` (id, noms, grade, role) — aucune relation stricte obligatoire avec les autres tables
 - Formulaire d'ajout : noms, grade, rôle
 - Liste des membres enregistrés avec suppression possible
-- Bouton « Continuer » pour accéder au dashboard (`index.php`)
+- Bouton « Continuer » pour accéder à `modules/controles/ajouter.php`
 - Page autonome (design identique à `preferences.php`, sans header/footer)
 
 ## 6. Module Contrôles
@@ -285,7 +292,7 @@ Comportement réel :
 1. Connexion
 2. Vérification rôle
 3. Redirection selon profil
-4. Configuration équipe (`equipes.php`) — si premier accès
+4. Configuration équipe (`modules/equipes/index.php`) — si premier accès
 5. Saisie/consultation (équipes, contrôles, dashboard)
 6. Journalisation des actions
 7. Sauvegardes automatiques en arrière-plan

@@ -1,8 +1,9 @@
 <?php
-session_start();
 require_once 'includes/functions.php';
 
-// MODIFICATION : Supprimer le token "Se souvenir de moi" de la base de données et du cookie
+$cookieSecure = is_https_request();
+
+// Supprimer le token "Se souvenir de moi" de la base de données et du cookie
 if (isset($_SESSION['user_id'])) {
     try {
         // $pdo est déjà défini via functions.php (qui inclut database.php)
@@ -13,7 +14,7 @@ if (isset($_SESSION['user_id'])) {
         error_log("Erreur lors de la suppression du token remember_token : " . $e->getMessage());
     }
     // Supprimer le cookie
-    setcookie('remember_token', '', time() - 3600, '/', '', false, true);
+    setcookie('remember_token', '', time() - 3600, '/', '', $cookieSecure, true);
 }
 
 // Journaliser la déconnexion

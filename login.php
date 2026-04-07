@@ -1,6 +1,8 @@
 <?php
 require_once 'includes/functions.php';
 
+$cookieSecure = is_https_request();
+
 // Vérification du cookie "remember_token"
 if (!isset($_SESSION['user_id']) && isset($_COOKIE['remember_token'])) {
     $token = $_COOKIE['remember_token'];
@@ -12,9 +14,9 @@ if (!isset($_SESSION['user_id']) && isset($_COOKIE['remember_token'])) {
         if ($user) {
             // En mode central, seul ADMIN_IG est autorisé
             if (is_central_mode() && strtoupper(trim((string)$user['profil'])) !== 'ADMIN_IG') {
-                setcookie('remember_token', '', time() - 3600, '/', '', false, true);
+                setcookie('remember_token', '', time() - 3600, '/', '', $cookieSecure, true);
             } elseif (is_mobile_only_profile($user['profil'])) {
-                setcookie('remember_token', '', time() - 3600, '/', '', false, true);
+                setcookie('remember_token', '', time() - 3600, '/', '', $cookieSecure, true);
             } else {
                 session_regenerate_id(true);
                 $_SESSION['user_id'] = $user['id_utilisateur'];
@@ -39,7 +41,7 @@ if (!isset($_SESSION['user_id']) && isset($_COOKIE['remember_token'])) {
                 exit;
             }
         } else {
-            setcookie('remember_token', '', time() - 3600, '/', '', false, true);
+            setcookie('remember_token', '', time() - 3600, '/', '', $cookieSecure, true);
         }
     } catch (PDOException $e) {
         error_log("Erreur lors de la vérification du token : " . $e->getMessage());
@@ -100,80 +102,97 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $password = $_POST['password'] ?? '';
     $remember = isset($_POST['remember']);
 
-    try {
-        $stmt = $pdo->prepare("SELECT * FROM utilisateurs WHERE (login = ? OR nom_complet = ? OR email = ?) AND actif = true");
-        $stmt->execute([$login, $login, $login]);
-        $user = $stmt->fetch();
+    $rateLimit = check_login_rate_limit('web');
+    if (!$rateLimit['allowed']) {
+        $retryMinutes = max(1, (int) ceil(($rateLimit['retry_after'] ?? 0) / 60));
+        $error = "Trop de tentatives détectées. Réessayez dans {$retryMinutes} minute(s).";
+        audit_action('BLOCAGE_SECURITE', null, null, 'Connexion web temporairement bloquée pour IP ' . get_client_ip_address());
+    } else {
+        try {
+            $stmt = $pdo->prepare("SELECT * FROM utilisateurs WHERE (login = ? OR nom_complet = ? OR email = ?) AND actif = true");
+            $stmt->execute([$login, $login, $login]);
+            $user = $stmt->fetch();
 
-        if ($user && password_verify($password, $user['mot_de_passe'])) {
-            // En mode central, seul ADMIN_IG est autorisé
-            if (is_central_mode() && strtoupper(trim((string)$user['profil'])) !== 'ADMIN_IG') {
-                audit_action('ECHEC_CONNEXION', 'utilisateurs', $user['id_utilisateur'], 'Tentative connexion hors ADMIN_IG en mode central');
-                $error = "La plateforme centrale est réservée au profil ADMIN_IG.";
-            } elseif (is_mobile_only_profile($user['profil'])) {
-                audit_action('ECHEC_CONNEXION', 'utilisateurs', $user['id_utilisateur'], 'Tentative connexion web profil mobile réservé');
-                $error = "Les profils CONTROLEUR et ENROLEUR sont réservés aux applications mobiles.";
+            if ($user && password_verify($password, $user['mot_de_passe'])) {
+                // En mode central, seul ADMIN_IG est autorisé
+                if (is_central_mode() && strtoupper(trim((string)$user['profil'])) !== 'ADMIN_IG') {
+                    audit_action('ECHEC_CONNEXION', 'utilisateurs', $user['id_utilisateur'], 'Tentative connexion hors ADMIN_IG en mode central');
+                    $failureState = register_login_failure('web', $login);
+                    $error = ($failureState['retry_after'] ?? 0) > 0
+                        ? 'Trop de tentatives détectées. Réessayez dans ' . max(1, (int) ceil(($failureState['retry_after'] ?? 0) / 60)) . ' minute(s).'
+                        : 'La plateforme centrale est réservée au profil ADMIN_IG.';
+                } elseif (is_mobile_only_profile($user['profil'])) {
+                    audit_action('ECHEC_CONNEXION', 'utilisateurs', $user['id_utilisateur'], 'Tentative connexion web profil mobile réservé');
+                    $failureState = register_login_failure('web', $login);
+                    $error = ($failureState['retry_after'] ?? 0) > 0
+                        ? 'Trop de tentatives détectées. Réessayez dans ' . max(1, (int) ceil(($failureState['retry_after'] ?? 0) / 60)) . ' minute(s).'
+                        : 'Les profils CONTROLEUR et ENROLEUR sont réservés aux applications mobiles.';
+                } else {
+                    session_regenerate_id(true);
+
+                    $_SESSION['user_id'] = $user['id_utilisateur'];
+                    $_SESSION['user_login'] = $user['login'];
+                    $_SESSION['user_nom'] = $user['nom_complet'];
+                    $_SESSION['user_email'] = $user['email'];
+                    $_SESSION['user_profil'] = $user['profil'];
+                    $_SESSION['user_avatar'] = $user['avatar'];
+
+                    $updateStmt = $pdo->prepare("UPDATE utilisateurs SET dernier_acces = NOW() WHERE id_utilisateur = ?");
+                    $updateStmt->execute([$user['id_utilisateur']]);
+
+                    audit_action('CONNEXION', 'utilisateurs', $user['id_utilisateur'], 'Connexion réussie');
+                    clear_login_rate_limit('web');
+
+                    if (!empty($user['preferences'])) {
+                        $_SESSION['filtres'] = json_decode($user['preferences'], true);
+                    }
+
+                    // Gestion du "Se souvenir de moi"
+                    if ($remember) {
+                        $token = bin2hex(random_bytes(32));
+                        $expires = date('Y-m-d H:i:s', strtotime('+30 days'));
+                        $stmtToken = $pdo->prepare("UPDATE utilisateurs SET remember_token = ?, remember_token_expires = ? WHERE id_utilisateur = ?");
+                        $stmtToken->execute([$token, $expires, $user['id_utilisateur']]);
+                        setcookie('remember_token', $token, time() + (30 * 24 * 3600), '/', '', $cookieSecure, true);
+                    } else {
+                        $stmtToken = $pdo->prepare("UPDATE utilisateurs SET remember_token = NULL, remember_token_expires = NULL WHERE id_utilisateur = ?");
+                        $stmtToken->execute([$user['id_utilisateur']]);
+                        setcookie('remember_token', '', time() - 3600, '/', '', $cookieSecure, true);
+                    }
+
+                    // Déterminer l'URL de redirection finale
+                    if ($user['profil'] === 'OPERATEUR') {
+                        $redirect_url = !empty($user['preferences']) ? 'modules/controles/ajouter.php' : 'preferences.php';
+                    } elseif ($user['profil'] === 'ADMIN_IG') {
+                        $redirect_url = 'index.php';
+                    } else {
+                        $redirect_url = 'index.php';
+                    }
+
+                    // Indiquer que la connexion est réussie et conserver les valeurs saisies pour affichage
+                    $login_success = true;
+                    // On garde les valeurs postées pour pré-remplir le formulaire
+                    $_SESSION['post_data'] = [
+                        'login' => $login,
+                        'remember' => $remember
+                    ];
+                } // fin else CONTROLEUR
             } else {
-                session_regenerate_id(true);
-
-                $_SESSION['user_id'] = $user['id_utilisateur'];
-                $_SESSION['user_login'] = $user['login'];
-                $_SESSION['user_nom'] = $user['nom_complet'];
-                $_SESSION['user_email'] = $user['email'];
-                $_SESSION['user_profil'] = $user['profil'];
-                $_SESSION['user_avatar'] = $user['avatar'];
-
-                $updateStmt = $pdo->prepare("UPDATE utilisateurs SET dernier_acces = NOW() WHERE id_utilisateur = ?");
-                $updateStmt->execute([$user['id_utilisateur']]);
-
-                audit_action('CONNEXION', 'utilisateurs', $user['id_utilisateur'], 'Connexion réussie');
-
-                if (!empty($user['preferences'])) {
-                    $_SESSION['filtres'] = json_decode($user['preferences'], true);
-                }
-
-                // Gestion du "Se souvenir de moi"
-                if ($remember) {
-                    $token = bin2hex(random_bytes(32));
-                    $expires = date('Y-m-d H:i:s', strtotime('+30 days'));
-                    $stmtToken = $pdo->prepare("UPDATE utilisateurs SET remember_token = ?, remember_token_expires = ? WHERE id_utilisateur = ?");
-                    $stmtToken->execute([$token, $expires, $user['id_utilisateur']]);
-                    setcookie('remember_token', $token, time() + (30 * 24 * 3600), '/', '', false, true);
-                } else {
-                    $stmtToken = $pdo->prepare("UPDATE utilisateurs SET remember_token = NULL, remember_token_expires = NULL WHERE id_utilisateur = ?");
-                    $stmtToken->execute([$user['id_utilisateur']]);
-                    setcookie('remember_token', '', time() - 3600, '/', '', false, true);
-                }
-
-                // Déterminer l'URL de redirection finale
-                if ($user['profil'] === 'OPERATEUR') {
-                    $redirect_url = !empty($user['preferences']) ? 'modules/controles/ajouter.php' : 'preferences.php';
-                } elseif ($user['profil'] === 'ADMIN_IG') {
-                    $redirect_url = 'index.php';
-                } else {
-                    $redirect_url = 'index.php';
-                }
-
-                // Indiquer que la connexion est réussie et conserver les valeurs saisies pour affichage
-                $login_success = true;
-                // On garde les valeurs postées pour pré-remplir le formulaire
+                $failureState = register_login_failure('web', $login);
+                $error = ($failureState['retry_after'] ?? 0) > 0
+                    ? 'Trop de tentatives détectées. Réessayez dans ' . max(1, (int) ceil(($failureState['retry_after'] ?? 0) / 60)) . ' minute(s).'
+                    : 'Identifiant ou mot de passe incorrect.';
+                audit_action('ECHEC_CONNEXION', null, null, "Tentative avec identifiant: $login");
+                // En cas d'erreur, on garde aussi les valeurs pour les réafficher
                 $_SESSION['post_data'] = [
                     'login' => $login,
                     'remember' => $remember
                 ];
-            } // fin else CONTROLEUR
-        } else {
-            $error = "Identifiant ou mot de passe incorrect.";
-            audit_action('ECHEC_CONNEXION', null, null, "Tentative avec identifiant: $login");
-            // En cas d'erreur, on garde aussi les valeurs pour les réafficher
-            $_SESSION['post_data'] = [
-                'login' => $login,
-                'remember' => $remember
-            ];
+            }
+        } catch (PDOException $e) {
+            error_log("Erreur SQL dans login.php : " . $e->getMessage());
+            $error = "Erreur technique, veuillez réessayer plus tard.";
         }
-    } catch (PDOException $e) {
-        error_log("Erreur SQL dans login.php : " . $e->getMessage());
-        $error = "Erreur technique, veuillez réessayer plus tard.";
     }
 }
 

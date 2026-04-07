@@ -122,6 +122,45 @@ h6 { font-size: 1rem; font-weight: 600; }
     clear: both;
 }
 
+.dataTables_wrapper table.dataTable thead tr:not(:first-child) {
+    visibility: collapse !important;
+    height: 0 !important;
+}
+
+.dataTables_wrapper table.dataTable thead tr:not(:first-child) th,
+.dataTables_wrapper table.dataTable thead tr:not(:first-child) td,
+.dataTables_wrapper table.dataTable thead .dataTables_sizing {
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+    border: 0 !important;
+    height: 0 !important;
+    line-height: 0 !important;
+    overflow: hidden !important;
+    background: transparent !important;
+}
+
+/* Bordures harmonisées pour tous les en-têtes de tableaux */
+table thead th,
+.dataTables_wrapper table thead th {
+    border-top: 1px solid #1b5e20 !important;
+    border-bottom: 1px solid #1b5e20 !important;
+    border-left: 1px solid rgba(27, 94, 32, 0.35) !important;
+    border-right: 1px solid rgba(255, 255, 255, 0.18) !important;
+    background-clip: padding-box;
+}
+
+table thead th:first-child,
+.dataTables_wrapper table thead th:first-child {
+    border-left: 1px solid #1b5e20 !important;
+    border-top-left-radius: 10px !important;
+}
+
+table thead th:last-child,
+.dataTables_wrapper table thead th:last-child {
+    border-right: 1px solid #1b5e20 !important;
+    border-top-right-radius: 10px !important;
+}
+
 .dataTables_wrapper .dataTables_length {
     float: left;
     margin-bottom: 20px;

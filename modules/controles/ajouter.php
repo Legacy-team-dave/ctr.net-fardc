@@ -650,7 +650,7 @@ include '../../includes/header.php';
         align-items: center;
         gap: 10px;
         margin-bottom: 10px;
-        animation: slideIn 0.3s ease-out, fadeOut 0.5s ease-out 3s forwards;
+        animation: slideIn 0.3s ease-out, fadeOut 0.5s ease-out 5s forwards;
         font-weight: 500;
         min-width: 320px;
         font-size: 0.95rem;
@@ -1044,7 +1044,7 @@ include '../../includes/header.php';
         </div>
 
     <?php elseif ($q !== ''): ?>
-        <div class="alert alert-warning text-center">Aucun militaire trouvé pour "<?= htmlspecialchars($q) ?>"</div>
+        <div class="alert alert-warning text-center">Aucun militaire trouvé.</div>
     <?php endif; ?>
 
     <?php if (isset($error)): ?>
@@ -1317,7 +1317,9 @@ include '../../includes/header.php';
         function displayResults(results) {
             searchResults.innerHTML = '';
             if (!results || results.length === 0) {
-                searchResults.style.display = 'none';
+                searchResults.innerHTML = '<div class="list-group-item text-center text-muted">Aucun militaire trouvé</div>';
+                searchResults.style.maxHeight = 'none';
+                searchResults.style.display = 'block';
                 return;
             }
 

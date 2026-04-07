@@ -67,7 +67,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             log_action('PREFERENCES', 'utilisateurs', $_SESSION['user_id'], 'Définition des filtres');
 
             $_SESSION['setup_equipes'] = true;
-            header('Location: ' . app_url('equipes.php'));
+            header('Location: ' . app_url('modules/equipes/index.php'));
             exit;
         } catch (Throwable $e) {
             error_log("Erreur sauvegarde préférences: " . $e->getMessage());
@@ -662,7 +662,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         garnisons: garnisons
                     })
                 })
-                .then(res => res.json())
+                .then(async (response) => {
+                    const data = await response.json();
+                    if (!response.ok || !Array.isArray(data)) {
+                        throw new Error(data?.error || 'Erreur lors du chargement des catégories');
+                    }
+                    return data;
+                })
                 .then(data => {
                     categoriesData = data;
                     if (data.length === 0) {
@@ -690,8 +696,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 })
                 .catch(err => {
                     console.error(err);
+                    const message = err?.message ? String(err.message) : 'Erreur';
                     container.innerHTML =
-                        '<div style="text-align: center; padding: 15px; color: #dc3545;"><i class="fas fa-exclamation-circle mb-1"></i><br>Erreur</div>';
+                        `<div style="text-align: center; padding: 15px; color: #dc3545;"><i class="fas fa-exclamation-circle mb-1"></i><br>${message}</div>`;
+                    categorieTotal.textContent = '0';
+                    categorieTotalCount.textContent = '0';
+                    selectAllBtn.disabled = true;
+                    deselectAllBtn.disabled = true;
                 });
         }
 

@@ -42,11 +42,18 @@ Exemple : `check_profil(['ADMIN_IG'])`.
 - Vérifier les journaux (`logs`) en cas d'incident
 - La table `equipes` est gérée par l'opérateur (standalone, aucune relation)
 
+## 🔐 Protection internet (v1.6.0+)
+
+- `.htaccess` bloque l’accès direct aux fichiers sensibles et ajoute des headers HTTP de sécurité.
+- `login.php` et `api/auth.php` appliquent un verrouillage temporaire après plusieurs échecs de connexion depuis la même IP.
+- En cas de suspicion d’attaque, contrôler les actions `ECHEC_CONNEXION` et `BLOCAGE_SECURITE` dans la table `logs`.
+
 ## 🧹 Nettoyage des caches (v1.5.0+)
 
 ### Exécution automatique
 
 Le nettoyage des caches s’exécute automatiquement toutes les 8 heures (intégré au job de sauvegarde planifié).
+Le job de sauvegarde se relance aussi automatiquement en arrière-plan lorsqu’un nouveau contrôle est saisi après plus de 8 heures depuis la dernière archive.
 
 Cibles nettoyées automatiquement :
 - Fichiers temporaires XLSX orphelins

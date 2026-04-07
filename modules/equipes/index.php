@@ -1,5 +1,5 @@
 <?php
-require_once 'includes/functions.php';
+require_once '../../includes/functions.php';
 
 if (!isset($_SESSION['user_id'])) {
     header('Location: ' . app_url('login.php'));
@@ -12,10 +12,10 @@ check_profil(['ADMIN_IG', 'OPERATEUR']);
 // Mode lecture seule = accès depuis index.php (consultation uniquement)
 $is_setup = !empty($_SESSION['setup_equipes']);
 
-// Clic sur "Continuer" → fin du setup équipes
+// Clic sur "Continuer" → fin du setup équipes puis accès au contrôle
 if (isset($_GET['continue']) && $is_setup) {
     unset($_SESSION['setup_equipes']);
-    header('Location: ' . app_url('index.php'));
+    header('Location: ' . app_url('modules/controles/ajouter.php'));
     exit;
 }
 
@@ -135,7 +135,7 @@ if ($is_setup) {
                     : 'Le membre sélectionné a été supprimé avec succès.';
                 $_SESSION['toast_type'] = 'success';
 
-                header('Location: ' . app_url('equipes.php'));
+                header('Location: ' . app_url('modules/equipes/index.php'));
                 exit;
             } catch (PDOException $e) {
                 error_log("Erreur suppression membre: " . $e->getMessage());
@@ -160,7 +160,7 @@ if ($is_setup) {
                     $_SESSION['toast_message'] = 'Membre <strong>' . htmlspecialchars($noms, ENT_QUOTES, 'UTF-8') . '</strong> enregistré avec succès.';
                     $_SESSION['toast_type'] = 'success';
 
-                    header('Location: ' . app_url('equipes.php'));
+                    header('Location: ' . app_url('modules/equipes/index.php'));
                     exit;
                 } catch (PDOException $e) {
                     error_log("Erreur ajout membre: " . $e->getMessage());
@@ -242,9 +242,9 @@ $display_membres = $membres;
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CTR.NET FARDC - Équipe de contrôle</title>
-    <link rel="stylesheet" href="assets/css/all.min.css">
-    <link rel="stylesheet" href="assets/css/adminlte.min.css">
-    <link rel="stylesheet" href="assets/css/tables-unified.css">
+    <link rel="stylesheet" href="../../assets/css/all.min.css">
+    <link rel="stylesheet" href="../../assets/css/adminlte.min.css">
+    <link rel="stylesheet" href="../../assets/css/tables-unified.css">
     <link rel="stylesheet" href="https://cdn.datatables.net/1.11.5/css/dataTables.bootstrap5.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
@@ -262,7 +262,7 @@ $display_membres = $membres;
             align-items: flex-start;
             padding: 10px;
             background: linear-gradient(135deg, rgba(30, 30, 30, 0.85), rgba(20, 60, 20, 0.85)),
-                url('assets/img/fardc2.png') center/cover no-repeat fixed;
+                url('../../assets/img/fardc2.png') center/cover no-repeat fixed;
         }
 
         .equipe-card {
@@ -1029,15 +1029,15 @@ $display_membres = $membres;
             <!-- Bouton footer -->
             <div class="actions-footer">
                 <?php if ($is_setup): ?>
-                    <a href="equipes.php?continue=1" class="btn-continue"><i class="fas fa-arrow-right"></i> Continuer</a>
+                    <a href="<?= htmlspecialchars(app_url('modules/equipes/index.php?continue=1')) ?>" class="btn-continue"><i class="fas fa-arrow-right"></i> Continuer</a>
                 <?php else: ?>
-                    <a href="index.php" class="btn-continue"><i class="fas fa-arrow-left"></i> Retour</a>
+                    <a href="<?= htmlspecialchars(app_url('index.php')) ?>" class="btn-continue"><i class="fas fa-arrow-left"></i> Retour</a>
                 <?php endif; ?>
             </div>
         </div>
     </div>
 
-    <script src="assets/js/jquery-3.6.0.min.js"></script>
+    <script src="../../assets/js/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
     <script src="https://cdn.datatables.net/1.11.5/js/dataTables.bootstrap5.min.js"></script>
     <script>
@@ -1067,7 +1067,7 @@ $display_membres = $membres;
                     toast.style.opacity = '0';
                     toast.style.transform = 'translateX(20px)';
                     setTimeout(() => toast.remove(), 250);
-                }, 3200);
+                }, 5000);
             }
 
             function escapeRegex(value) {

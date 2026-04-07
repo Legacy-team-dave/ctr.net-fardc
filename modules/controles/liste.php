@@ -935,7 +935,7 @@ $export_fields = [
     align-items: center;
     gap: 10px;
     margin-bottom: 10px;
-    animation: slideIn 0.3s ease-out, fadeOut 0.5s ease-out 3s forwards;
+    animation: slideIn 0.3s ease-out, fadeOut 0.5s ease-out 5s forwards;
     font-weight: 500;
     min-width: 320px;
     font-size: 0.95rem;
@@ -1138,7 +1138,7 @@ $export_fields = [
                                 <th>Noms</th>
                                 <th>Grade</th>
                                 <th>Unité</th>
-                                <th>Observations</th>
+                                <th>OBN</th>
                                 <th>ZDEF</th>
                                 <th>QR</th>
                                 <th style="display:none;">Date</th>
@@ -2444,7 +2444,7 @@ $(document).ready(function() {
         container.appendChild(toast);
         setTimeout(() => {
             toast.remove();
-        }, 3500);
+        }, 5500);
     }
 
     setInterval(function() {

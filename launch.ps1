@@ -11,6 +11,7 @@ param(
 $AppRoot = Split-Path -Parent $MyInvocation.MyCommand.Path
 $AppName = "CTR.NET-FARDC"
 $AppUrl = "http://127.0.0.1/ctr.net-fardc/splash_screen.php"
+$LoginUrl = "http://127.0.0.1/ctr.net-fardc/login.php"
 $LaragonExe = "C:\laragon\laragon.exe"
 $ApacheRoot = "C:\laragon\bin\apache\httpd-2.4.62-240904-win64-VS17"
 $ApacheExe = Join-Path $ApacheRoot "bin\httpd.exe"
@@ -151,6 +152,7 @@ Write-Host ""
 Write-Host "================================================================================" -ForegroundColor Cyan
 Write-Host "Application started" -ForegroundColor Green
 Write-Host "URL: $AppUrl" -ForegroundColor Cyan
+Write-Host "Login: $LoginUrl" -ForegroundColor Cyan
 Write-Host "================================================================================" -ForegroundColor Cyan
 Write-Host ""
 

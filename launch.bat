@@ -26,25 +26,19 @@ if exist "C:\laragon\laragon.exe" (
     
     REM Afficher les informations de l'application
     echo ============================================
-    echo PROFILS DISPONIBLES
+    echo PROFILS WEB ACTIFS
     echo ============================================
-    echo - ADMIN_IG (gestion complète)
-    echo - OPERATEUR (opérations + rapports)
-    echo - CONTROLEUR (saisie contrôles uniquement)
+    echo - ADMIN_IG (gestion complete)
+    echo - OPERATEUR (preferences ^> equipe ^> controle)
+    echo - CONTROLEUR / ENROLEUR (acces mobile uniquement)
     echo.
     echo ============================================
-    echo MENTIONS DE CONTRÔLE
+    echo PARCOURS ET FONCTIONNALITES ACTUELS
     echo ============================================
-    echo - Présent
-    echo - Favorable
-    echo - Défavorable
-    echo.
-    echo ============================================
-    echo FONCTIONNALITÉS V1.1.0+
-    echo ============================================
-    echo [✓] Chiffrement AES-256-CBC des fichiers sensibles
-    echo [✓] Sauvegarde consolidée automatique (8h)
-    echo [✓] Traçabilité complète des actions
+    echo [✓] Deconnexion renvoyee vers login.php
+    echo [✓] Flux initial : preferences ^> modules/equipes/index.php ^> modules/controles/ajouter.php
+    echo [✓] Tables harmonisees : QR masque, OBN, en-tetes uniformes
+    echo [✓] Sauvegarde consolidee automatique + nettoyage des caches
     echo.
 
     if exist "%LAUNCH_PS1%" (

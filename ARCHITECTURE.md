@@ -13,9 +13,13 @@ ctr.net-fardc/
 ├── logout.php
 ├── profil.php
 ├── preferences.php
-├── equipes.php
 ├── includes/
 ├── modules/
+│   ├── equipes/
+│   │   ├── index.php
+│   │   └── liste.php
+│   ├── controles/
+│   └── rapports/
 ├── ajax/
 ├── config/
 ├── assets/
@@ -151,12 +155,21 @@ Trois interfaces pour gérer le chiffrement :
 
 ---
 
+## Protection internet
+
+Durcissement activé sur le frontal PHP exposé en réseau :
+
+- `.htaccess` bloque l’accès direct aux fichiers sensibles (`.env`, scripts `.ps1/.bat`, exports et backups techniques) ;
+- des en-têtes HTTP de sécurité sont envoyés côté Apache (`CSP`, `X-Frame-Options`, `nosniff`, `HSTS`, etc.) ;
+- `login.php` et `api/auth.php` appliquent une limitation anti-bruteforce par IP avec verrouillage temporaire.
+
 ## Sauvegarde et purge
 
 Mécanisme de sauvegarde consolidée piloté par scripts racine :
 
 - `setup_backup_task.ps1` / `setup_backup_task.bat` : installation de la tâche planifiée (toutes les 8h)
 - `run_backup_job.ps1` : exécution du job (backup + purge + nettoyage caches)
+- `mark_sync_dirty()` → `maybe_trigger_background_backup_job()` : auto-relance lorsqu’un nouveau contrôle arrive après le délai de 8h
 - `run_backup_purge.ps1` / `run_backup_purge.bat` : purge manuelle
 - `run_cache_cleanup.ps1` / `run_cache_cleanup.bat` : nettoyage caches manuel
 - `config/backup_mail.json` : configuration e-mail expéditeur/destinataire (optionnel)
@@ -185,7 +198,7 @@ Système de nettoyage intégré au job planifié (toutes les 8h) et exécutable 
 ### Architecture
 
 ```text
-Job planifié Windows (toutes les 8h)
+Job planifié Windows (toutes les 8h) + auto-déclenchement métier sur nouveaux contrôles
     ↓
 backup_cron.php
     ├── maybe_create_backup()    ← Sauvegarde consolidée (ZIP unique mis à jour)

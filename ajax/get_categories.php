@@ -1,11 +1,11 @@
 <?php
-session_start();
 require_once '../includes/functions.php';
+header('Content-Type: application/json; charset=UTF-8');
 
 // Vérifier la connexion
 if (!isset($_SESSION['user_id'])) {
     http_response_code(401);
-    echo json_encode(['error' => 'Non authentifié']);
+    echo json_encode(['error' => 'Non authentifié'], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
     exit;
 }
 
@@ -14,7 +14,7 @@ $input = json_decode(file_get_contents('php://input'), true);
 $garnisons = $input['garnisons'] ?? [];
 
 if (empty($garnisons)) {
-    echo json_encode([]);
+    echo json_encode([], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
     exit;
 }
 
@@ -34,10 +34,10 @@ try {
     $stmt->execute($garnisons);
     $categories = $stmt->fetchAll(PDO::FETCH_ASSOC);
     
-    echo json_encode($categories);
-    
+    echo json_encode($categories, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+
 } catch (PDOException $e) {
     error_log("Erreur get_categories: " . $e->getMessage());
     http_response_code(500);
-    echo json_encode(['error' => 'Erreur serveur']);
+    echo json_encode(['error' => 'Erreur serveur'], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
 }

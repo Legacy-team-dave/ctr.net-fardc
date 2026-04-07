@@ -47,6 +47,7 @@ if (window.jQuery && $.fn.dataTable) {
         pageLength: 10,
         lengthMenu: [10, 25, 50, 100],
         autoWidth: false,
+        orderCellsTop: true,
         responsive: false,
         language: ctrDataTableLanguage
     });
@@ -128,6 +129,49 @@ if (window.jQuery && $.fn.dataTable) {
 
             $filterDiv.data('ctr-enhanced', true);
         },
+        cleanupDuplicateHeaderRows(target = null) {
+            const $elements = target ? $(target) : $('table.dataTable');
+
+            $elements.each(function () {
+                const $source = $(this);
+                const $tables = $source.is('table') ? $source : $source.find('table.dataTable');
+
+                $tables.each(function () {
+                    const $table = $(this);
+                    const $wrapper = $table.closest('.dataTables_wrapper');
+                    if (!$wrapper.length) {
+                        return;
+                    }
+
+                    $wrapper.find('table.dataTable thead tr').each(function (index) {
+                        if (index === 0) {
+                            return;
+                        }
+
+                        $(this).css({
+                            visibility: 'collapse',
+                            height: 0
+                        }).find('th, td').css({
+                            paddingTop: 0,
+                            paddingBottom: 0,
+                            border: 0,
+                            height: 0,
+                            lineHeight: 0,
+                            background: 'transparent'
+                        });
+                    });
+
+                    $wrapper.find('thead .dataTables_sizing').css({
+                        height: 0,
+                        minHeight: 0,
+                        overflow: 'hidden',
+                        padding: 0,
+                        margin: 0,
+                        border: 0
+                    });
+                });
+            });
+        },
         bindSearchHighlight(table, tableSelector, excludedIndexes = []) {
             if (!tableSelector || !table) {
                 return;
@@ -183,12 +227,28 @@ if (window.jQuery && $.fn.dataTable) {
         return (cell?.textContent || '').replace(/\s+/g, ' ').trim().toUpperCase();
     }
 
+    function normalizeTargetHeaders(table) {
+        if (!table || !table.tHead || !table.tHead.rows.length) {
+            return;
+        }
+
+        const headerRow = table.tHead.rows[table.tHead.rows.length - 1];
+        Array.from(headerRow.cells).forEach((cell) => {
+            const text = getNormalizedHeaderText(cell);
+            if (text === 'OBSERVATION' || text === 'OBSERVATIONS') {
+                cell.textContent = 'OBN';
+            }
+        });
+    }
+
     function hideTargetColumns(table) {
         if (!table || !table.tHead || !table.tHead.rows.length) {
             return;
         }
 
-        const hiddenHeaders = ['ZDEF', 'OBSERVATIONS'];
+        normalizeTargetHeaders(table);
+
+        const hiddenHeaders = ['ZDEF', 'QR', 'QRCODE', 'QR CODE', 'CODE QR'];
         const headerRow = table.tHead.rows[table.tHead.rows.length - 1];
         const hiddenIndexes = Array.from(headerRow.cells)
             .map((cell, index) => ({ index, text: getNormalizedHeaderText(cell) }))
@@ -212,14 +272,27 @@ if (window.jQuery && $.fn.dataTable) {
         document.querySelectorAll('table').forEach(hideTargetColumns);
     }
 
-    document.addEventListener('DOMContentLoaded', applyHiddenColumnVisibility);
+    function applyGlobalTableFixes(target = null) {
+        applyHiddenColumnVisibility();
+        if (window.CTRDataTableHelpers && typeof window.CTRDataTableHelpers.cleanupDuplicateHeaderRows === 'function') {
+            window.CTRDataTableHelpers.cleanupDuplicateHeaderRows(target || document.querySelectorAll('table.dataTable'));
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        applyGlobalTableFixes();
+    });
 
     if (window.jQuery) {
-        $(document).on('init.dt draw.dt', function (event, settings) {
+        $(document).on('init.dt draw.dt column-sizing.dt responsive-resize.dt', function (event, settings) {
             if (settings && settings.nTable) {
                 hideTargetColumns(settings.nTable);
+                applyGlobalTableFixes(settings.nTable);
+                return;
             }
-            window.requestAnimationFrame(applyHiddenColumnVisibility);
+            window.requestAnimationFrame(function () {
+                applyGlobalTableFixes();
+            });
         });
     }
 })();

@@ -1,19 +1,23 @@
-# Deny access to .php files unless explicitly allowed
+# API mobile: accès PHP autorisé uniquement pour les routes prévues
 <Files "*.php">
-    # Allow API access
     Require all granted
 </Files>
 
-# Enable CORS
+<LimitExcept GET POST OPTIONS>
+    Require all denied
+</LimitExcept>
+
+# Private network access for local preview / mobile LAN calls
 <IfModule mod_headers.c>
-    Header set Access-Control-Allow-Origin "*"
-    Header set Access-Control-Allow-Methods "GET, POST, OPTIONS"
-    Header set Access-Control-Allow-Headers "Content-Type, Authorization"
+    Header always set Access-Control-Allow-Private-Network "true"
+    Header always set X-Content-Type-Options "nosniff"
+    Header always set Referrer-Policy "no-referrer"
+    Header always set Cache-Control "no-store, no-cache, must-revalidate, max-age=0"
 </IfModule>
 
 # Pass Authorization header to PHP
 <IfModule mod_rewrite.c>
     RewriteEngine On
     RewriteCond %{HTTP:Authorization} ^(.*)
-    RewriteRule .* - [e=HTTP_AUTHORIZATION:%1]
+    RewriteRule .* - [E=HTTP_AUTHORIZATION:%1]
 </IfModule>

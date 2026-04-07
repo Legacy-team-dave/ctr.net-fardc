@@ -7,7 +7,8 @@
 header('Content-Type: application/json; charset=utf-8');
 header('Access-Control-Allow-Origin: *');
 header('Access-Control-Allow-Methods: POST, GET, OPTIONS');
-header('Access-Control-Allow-Headers: Content-Type, Authorization');
+header('Access-Control-Allow-Headers: Content-Type, Authorization, X-Auth-Token, X-Requested-With');
+header('Access-Control-Allow-Private-Network: true');
 
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     http_response_code(200);
@@ -138,17 +139,49 @@ function authenticateToken($pdo)
 
 function getBearerToken()
 {
-    $headers = '';
-    if (isset($_SERVER['HTTP_AUTHORIZATION'])) {
-        $headers = $_SERVER['HTTP_AUTHORIZATION'];
-    } elseif (isset($_SERVER['REDIRECT_HTTP_AUTHORIZATION'])) {
-        $headers = $_SERVER['REDIRECT_HTTP_AUTHORIZATION'];
-    } elseif (function_exists('apache_request_headers')) {
+    $candidates = [];
+
+    if (!empty($_SERVER['HTTP_AUTHORIZATION'])) {
+        $candidates[] = $_SERVER['HTTP_AUTHORIZATION'];
+    }
+    if (!empty($_SERVER['REDIRECT_HTTP_AUTHORIZATION'])) {
+        $candidates[] = $_SERVER['REDIRECT_HTTP_AUTHORIZATION'];
+    }
+    if (!empty($_SERVER['HTTP_X_AUTH_TOKEN'])) {
+        $candidates[] = trim($_SERVER['HTTP_X_AUTH_TOKEN']);
+    }
+
+    if (function_exists('apache_request_headers')) {
         $reqHeaders = apache_request_headers();
-        $headers = $reqHeaders['Authorization'] ?? '';
+        $candidates[] = $reqHeaders['Authorization'] ?? '';
+        $candidates[] = $reqHeaders['authorization'] ?? '';
+        $candidates[] = $reqHeaders['X-Auth-Token'] ?? '';
+        $candidates[] = $reqHeaders['x-auth-token'] ?? '';
     }
-    if (preg_match('/Bearer\s(\S+)/', $headers, $matches)) {
-        return $matches[1];
+
+    foreach ($candidates as $candidate) {
+        $candidate = trim((string) $candidate);
+        if ($candidate === '') {
+            continue;
+        }
+
+        if (preg_match('/Bearer\s(.+)/i', $candidate, $matches)) {
+            $token = trim($matches[1]);
+            if ($token !== '') {
+                return $token;
+            }
+        }
+
+        return $candidate;
     }
+
+    $rawInput = file_get_contents('php://input');
+    if (is_string($rawInput) && trim($rawInput) !== '') {
+        $payload = json_decode($rawInput, true);
+        if (is_array($payload) && !empty($payload['auth_token'])) {
+            return trim((string) $payload['auth_token']);
+        }
+    }
+
     return null;
 }

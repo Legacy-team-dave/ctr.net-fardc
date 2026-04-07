@@ -57,10 +57,12 @@ try {
         error_log("Sauvegarde consolidée non exécutée: " . ($result['reason'] ?? 'raison inconnue'));
     }
 
-    // Mise à jour du fichier de synchronisation
-    $syncResult = maybe_update_sync_file($pdo);
-    if (($syncResult['reason'] ?? '') === 'rebuilt') {
-        error_log("Fichier sync reconstruit: " . ($syncResult['total_records'] ?? 0) . " enregistrements");
+    // Mise à jour du fichier de synchronisation si la fonction est disponible
+    if (function_exists('maybe_update_sync_file')) {
+        $syncResult = maybe_update_sync_file($pdo);
+        if (($syncResult['reason'] ?? '') === 'rebuilt') {
+            error_log("Fichier sync reconstruit: " . ($syncResult['total_records'] ?? 0) . " enregistrements");
+        }
     }
 
     $purge = purge_backup_archives($maxKeep);

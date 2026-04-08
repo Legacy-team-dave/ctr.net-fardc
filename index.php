@@ -1436,50 +1436,39 @@ $categories_filtre_js = $filtres_actifs['categories'] ?? [];
 
     .map-legend {
         background: white;
-        padding: 15px;
-        border-radius: 12px;
-        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
-        font-size: 13px;
+        padding: 10px 12px;
+        border-radius: 10px;
+        box-shadow: 0 3px 10px rgba(0, 0, 0, 0.14);
+        font-size: 11px;
         border: 2px solid #2e7d32;
         font-family: 'Barlow', sans-serif;
-        min-width: 200px;
+        min-width: 165px;
     }
 
     .map-legend h6 {
-        margin: 0 0 10px 0;
+        margin: 0 0 6px 0;
         color: #2e7d32;
         font-weight: 600;
-        font-size: 14px;
+        font-size: 12px;
         text-transform: uppercase;
-        letter-spacing: 0.5px;
-        border-bottom: 2px solid #ffc107;
-        padding-bottom: 6px;
+        letter-spacing: 0.3px;
+        border-bottom: 1px solid #ffc107;
+        padding-bottom: 4px;
     }
 
     .legend-item {
         display: flex;
         align-items: center;
-        margin: 8px 0;
-        font-size: 13px;
-        transition: all 0.2s ease;
-    }
-
-    .legend-item:hover {
-        transform: translateX(3px);
+        margin: 5px 0;
+        font-size: 11px;
     }
 
     .legend-item .color-box {
-        width: 20px;
-        height: 20px;
-        border-radius: 4px;
-        margin-right: 12px;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-        transition: all 0.2s ease;
-    }
-
-    .legend-item:hover .color-box {
-        transform: scale(1.1);
-        box-shadow: 0 3px 6px rgba(0, 0, 0, 0.15);
+        width: 14px;
+        height: 14px;
+        border-radius: 3px;
+        margin-right: 8px;
+        box-shadow: none;
     }
 
     .legend-item span:last-child {
@@ -2400,11 +2389,7 @@ $categories_filtre_js = $filtres_actifs['categories'] ?? [];
                         <div class="card-body p-0">
                             <div id="drcMap" style="height: 540px; width: 100%;">
                                 <div id="map-loader" class="d-flex justify-content-center align-items-center"
-                                    style="height:100%">
-                                    <div class="text-center text-muted" style="font-weight: 600;">
-                                        <i class="fas fa-map-marked-alt mr-2"></i>Chargement de la carte...
-                                    </div>
-                                </div>
+                                    style="height:100%"></div>
                             </div>
                         </div>
                     </div>

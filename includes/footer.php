@@ -268,8 +268,61 @@ if (window.jQuery && $.fn.dataTable) {
         });
     }
 
+    function getVisibleCells(row) {
+        if (!row) {
+            return [];
+        }
+
+        return Array.from(row.cells || []).filter((cell) => {
+            if (!cell) {
+                return false;
+            }
+
+            const computed = window.getComputedStyle(cell);
+            return !cell.hidden
+                && !cell.classList.contains('d-none')
+                && computed.display !== 'none'
+                && computed.visibility !== 'collapse';
+        });
+    }
+
+    function applyVisibleColumnRounding(table) {
+        if (!table) {
+            return;
+        }
+
+        table.querySelectorAll('thead th, thead td, tbody th, tbody td').forEach((cell) => {
+            cell.classList.remove('ctr-first-visible', 'ctr-last-visible');
+        });
+
+        if (table.tHead) {
+            Array.from(table.tHead.rows).forEach((row) => {
+                const visibleCells = getVisibleCells(row);
+                if (!visibleCells.length) {
+                    return;
+                }
+                visibleCells[0].classList.add('ctr-first-visible');
+                visibleCells[visibleCells.length - 1].classList.add('ctr-last-visible');
+            });
+        }
+
+        Array.from(table.tBodies || []).forEach((tbody) => {
+            Array.from(tbody.rows || []).forEach((row) => {
+                const visibleCells = getVisibleCells(row);
+                if (!visibleCells.length) {
+                    return;
+                }
+                visibleCells[0].classList.add('ctr-first-visible');
+                visibleCells[visibleCells.length - 1].classList.add('ctr-last-visible');
+            });
+        });
+    }
+
     function applyHiddenColumnVisibility() {
-        document.querySelectorAll('table').forEach(hideTargetColumns);
+        document.querySelectorAll('table').forEach((table) => {
+            hideTargetColumns(table);
+            applyVisibleColumnRounding(table);
+        });
     }
 
     function applyGlobalTableFixes(target = null) {
@@ -277,6 +330,14 @@ if (window.jQuery && $.fn.dataTable) {
         if (window.CTRDataTableHelpers && typeof window.CTRDataTableHelpers.cleanupDuplicateHeaderRows === 'function') {
             window.CTRDataTableHelpers.cleanupDuplicateHeaderRows(target || document.querySelectorAll('table.dataTable'));
         }
+
+        if (target) {
+            const tables = target instanceof NodeList || Array.isArray(target) ? target : [target];
+            Array.from(tables).forEach((table) => applyVisibleColumnRounding(table));
+            return;
+        }
+
+        document.querySelectorAll('table').forEach((table) => applyVisibleColumnRounding(table));
     }
 
     document.addEventListener('DOMContentLoaded', function () {

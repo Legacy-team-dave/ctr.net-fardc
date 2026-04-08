@@ -1128,8 +1128,8 @@ $display_membres = $membres;
                             search: '<i class="fas fa-search"></i>',
                             lengthMenu: 'Afficher _MENU_ éléments',
                             info: 'Affichage de _START_ à _END_ sur _TOTAL_ éléments',
-                            infoEmpty: 'Aucun élément',
-                            infoFiltered: '(filtré de _MAX_ éléments)',
+                            infoEmpty: 'Affichage de 0 à 0 sur 0 élément',
+                            infoFiltered: '(filtré sur _MAX_ éléments au total)',
                             zeroRecords: 'Aucun enregistrement correspondant',
                             paginate: {
                                 first: 'Premier',

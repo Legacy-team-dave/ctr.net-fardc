@@ -661,9 +661,9 @@ $(document).ready(function() {
             url: '//cdn.datatables.net/plug-ins/1.11.5/i18n/fr-FR.json',
             search: '<i class="fas fa-search"></i>',
             lengthMenu: "Afficher _MENU_ éléments",
-            info: "Affichage de _START$ à _END$ sur _TOTAL$ éléments",
-            infoEmpty: "Aucun élément",
-            infoFiltered: "(filtré de _MAX$ éléments)",
+            info: "Affichage de _START_ à _END_ sur _TOTAL_ éléments",
+            infoEmpty: "Affichage de 0 à 0 sur 0 élément",
+            infoFiltered: "(filtré sur _MAX_ éléments au total)",
             zeroRecords: "Aucun enregistrement correspondant",
             paginate: {
                 first: "Premier",

@@ -278,14 +278,28 @@ if (isset($_SESSION['user_id'])) {
         .table-responsive table thead th:first-child,
         table.dataTable thead th:first-child,
         .dataTables_wrapper table thead th:first-child,
-        table.table thead th:first-child {
+        table.table thead th:first-child,
+        .table-responsive table thead th.ctr-first-visible,
+        table.dataTable thead th.ctr-first-visible,
+        .dataTables_wrapper table thead th.ctr-first-visible,
+        .table-militaires thead th.ctr-first-visible,
+        .table-users thead th.ctr-first-visible,
+        .table-logs thead th.ctr-first-visible,
+        table.table thead th.ctr-first-visible {
             border-radius: 10px 0 0 10px !important;
         }
 
         .table-responsive table thead th:last-child,
         table.dataTable thead th:last-child,
         .dataTables_wrapper table thead th:last-child,
-        table.table thead th:last-child {
+        table.table thead th:last-child,
+        .table-responsive table thead th.ctr-last-visible,
+        table.dataTable thead th.ctr-last-visible,
+        .dataTables_wrapper table thead th.ctr-last-visible,
+        .table-militaires thead th.ctr-last-visible,
+        .table-users thead th.ctr-last-visible,
+        .table-logs thead th.ctr-last-visible,
+        table.table thead th.ctr-last-visible {
             border-radius: 0 10px 10px 0 !important;
         }
 
@@ -356,14 +370,28 @@ if (isset($_SESSION['user_id'])) {
         .table-responsive table tbody td:first-child,
         table.dataTable tbody td:first-child,
         .dataTables_wrapper table tbody td:first-child,
-        table.table tbody td:first-child {
+        table.table tbody td:first-child,
+        .table-responsive table tbody td.ctr-first-visible,
+        table.dataTable tbody td.ctr-first-visible,
+        .dataTables_wrapper table tbody td.ctr-first-visible,
+        .table-militaires tbody td.ctr-first-visible,
+        .table-users tbody td.ctr-first-visible,
+        .table-logs tbody td.ctr-first-visible,
+        table.table tbody td.ctr-first-visible {
             border-radius: 10px 0 0 10px !important;
         }
 
         .table-responsive table tbody td:last-child,
         table.dataTable tbody td:last-child,
         .dataTables_wrapper table tbody td:last-child,
-        table.table tbody td:last-child {
+        table.table tbody td:last-child,
+        .table-responsive table tbody td.ctr-last-visible,
+        table.dataTable tbody td.ctr-last-visible,
+        .dataTables_wrapper table tbody td.ctr-last-visible,
+        .table-militaires tbody td.ctr-last-visible,
+        .table-users tbody td.ctr-last-visible,
+        .table-logs tbody td.ctr-last-visible,
+        table.table tbody td.ctr-last-visible {
             border-radius: 0 10px 10px 0 !important;
         }
 

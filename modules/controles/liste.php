@@ -2418,6 +2418,17 @@ $(document).ready(function() {
     // ========== Auto-refresh après contrôle mobile ==========
     let lastControleId =
         <?php echo intval($pdo->query("SELECT COALESCE(MAX(id),0) FROM controles")->fetchColumn()); ?>;
+    let isPollingControles = false;
+
+    function buildControlesPollUrl() {
+        return '../../api/controles_poll.php?since_id=' + encodeURIComponent(lastControleId) + '&_=' + Date.now();
+    }
+
+    function refreshControlesList() {
+        const refreshUrl = new URL(window.location.href);
+        refreshUrl.searchParams.set('_refresh', Date.now().toString());
+        window.location.replace(refreshUrl.toString());
+    }
 
     function showMobileToast(noms, mention, matricule) {
         const container = document.getElementById('mobile-toast-container');
@@ -2448,7 +2459,19 @@ $(document).ready(function() {
     }
 
     setInterval(function() {
-        $.getJSON('../../api/controles_poll.php?since_id=' + lastControleId, function(resp) {
+        if (isPollingControles) {
+            return;
+        }
+
+        isPollingControles = true;
+
+        $.ajax({
+            url: buildControlesPollUrl(),
+            method: 'GET',
+            dataType: 'json',
+            cache: false,
+            timeout: 8000
+        }).done(function(resp) {
             if (resp.success && resp.count > 0) {
                 resp.nouveaux.forEach(function(c) {
                     showMobileToast(
@@ -2458,11 +2481,12 @@ $(document).ready(function() {
                     );
                 });
                 lastControleId = resp.max_id;
-                // Recharger le DataTable
-                location.reload();
+                refreshControlesList();
             }
         }).fail(function(xhr) {
             console.warn('Poll contrôles échoué:', xhr.status);
+        }).always(function() {
+            isPollingControles = false;
         });
     }, 10000);
     // ========== Fin auto-refresh ==========

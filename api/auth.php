@@ -46,6 +46,10 @@ function handleLogin($pdo)
     $input = json_decode(file_get_contents('php://input'), true);
     $login = trim($input['login'] ?? '');
     $password = $input['password'] ?? '';
+    $expectedProfile = strtoupper(trim((string) ($input['expected_profile'] ?? '')));
+    if (!in_array($expectedProfile, ['CONTROLEUR', 'ENROLEUR'], true)) {
+        $expectedProfile = '';
+    }
 
     if (empty($login) || empty($password)) {
         http_response_code(400);
@@ -121,6 +125,20 @@ function handleLogin($pdo)
 
             http_response_code(403);
             echo json_encode(['success' => false, 'message' => 'Ce compte n\'est pas autorisé sur cette application mobile.']);
+            return;
+        }
+
+        if ($expectedProfile !== '' && strtoupper(trim((string) $user['profil'])) !== $expectedProfile) {
+            $failureState = register_login_failure('mobile_api', $login);
+            if (($failureState['retry_after'] ?? 0) > 0) {
+                header('Retry-After: ' . max(60, (int) ($failureState['retry_after'] ?? 0)));
+                http_response_code(429);
+                echo json_encode(['success' => false, 'message' => 'Trop de tentatives de connexion. Réessayez dans quelques minutes.']);
+                return;
+            }
+
+            http_response_code(403);
+            echo json_encode(['success' => false, 'message' => 'Ce compte n\'est pas autorisé sur cette version de l\'application mobile.']);
             return;
         }
 

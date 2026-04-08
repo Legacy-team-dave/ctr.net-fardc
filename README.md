@@ -68,7 +68,7 @@ sauf si le central est réellement hébergé sur cette même machine. La phase a
 - premier accès : `preferences.php` → `modules/equipes/index.php` → `modules/controles/ajouter.php`
 - connexions suivantes : ouverture directe de `modules/controles/ajouter.php` si les préférences existent déjà
 - déconnexion : retour systématique vers `login.php`
-- tableau de bord local : la **carte RDC** reprend désormais le même cadrage et le même comportement que `ctr-net-fardc_active_front_web/index.php`, sur **fond blanc** et sans affichage des pays voisins, avec une taille légèrement réduite pour plus de lisibilité
+- tableau de bord local : la **carte RDC** reprend désormais le même cadrage et le même comportement que `ctr-net-fardc_active_front_web/index.php`, sur **fond blanc** et sans affichage des pays voisins, avec une taille encore réduite pour plus de lisibilité
 - chargement cartographique : le spinner a été retiré au profit d’un message statique `Chargement de la carte...`
 - cartes d’activités récentes **`Derniers militaires`** et **`Derniers contrôles`** harmonisées à la même hauteur
 - widget **`Derniers militaires`** simplifié à : `Noms`, `Unité`, `Garnison`

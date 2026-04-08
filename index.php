@@ -1274,8 +1274,8 @@ $categories_filtre_js = $filtres_actifs['categories'] ?? [];
         border-radius: 12px;
         overflow: hidden;
         border: 2px solid var(--primary);
-        height: 540px !important;
-        min-height: 540px;
+        height: 500px !important;
+        min-height: 500px;
         width: 100% !important;
         display: block;
         background: #ffffff;
@@ -2387,7 +2387,7 @@ $categories_filtre_js = $filtres_actifs['categories'] ?? [];
                             </h5>
                         </div>
                         <div class="card-body p-0">
-                            <div id="drcMap" style="height: 540px; width: 100%;">
+                            <div id="drcMap" style="height: 500px; width: 100%;">
                                 <div id="map-loader" class="d-flex justify-content-center align-items-center"
                                     style="height:100%"></div>
                             </div>

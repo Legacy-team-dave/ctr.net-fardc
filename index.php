@@ -339,11 +339,11 @@ if ($mode_filtre) {
 
     // ---- Derniers militaires (5) ----
     if (!empty($where_clause)) {
-        $sql_derniers_militaires = "SELECT noms, grade, unite, province, categorie 
+        $sql_derniers_militaires = "SELECT noms, unite, garnison
                                     FROM militaires m $where_sql 
                                     ORDER BY m.matricule DESC LIMIT 5";
     } else {
-        $sql_derniers_militaires = "SELECT noms, grade, unite, province, categorie 
+        $sql_derniers_militaires = "SELECT noms, unite, garnison
                                     FROM militaires 
                                     ORDER BY matricule DESC LIMIT 5";
     }
@@ -448,7 +448,7 @@ if ($mode_filtre) {
     // Données pour le template
     $stats_detaillees['par_garnison'] = $pdo->query("SELECT garnison, COUNT(*) as total FROM militaires WHERE garnison IS NOT NULL AND garnison != '' GROUP BY garnison ORDER BY total DESC LIMIT 5")->fetchAll();
 
-    $stats_detaillees['derniers_militaires'] = $pdo->query("SELECT noms, grade, unite, province, categorie FROM militaires ORDER BY matricule DESC LIMIT 5")->fetchAll();
+    $stats_detaillees['derniers_militaires'] = $pdo->query("SELECT noms, unite, garnison FROM militaires ORDER BY matricule DESC LIMIT 5")->fetchAll();
 
     $stats_detaillees['derniers_controles'] = $pdo->query("SELECT c.date_controle, c.type_controle, c.mention, m.noms, m.grade, m.unite, m.categorie FROM controles c JOIN militaires m ON c.matricule = m.matricule ORDER BY c.date_controle DESC LIMIT 5")->fetchAll();
 
@@ -1274,8 +1274,17 @@ $categories_filtre_js = $filtres_actifs['categories'] ?? [];
         border-radius: 12px;
         overflow: hidden;
         border: 2px solid var(--primary);
-        height: 600px;
-        width: 100%;
+        height: 540px !important;
+        min-height: 540px;
+        width: 100% !important;
+        display: block;
+        background: #ffffff;
+    }
+
+    #drcMap .leaflet-container {
+        width: 100% !important;
+        height: 100% !important;
+        background: #ffffff;
     }
 
     #map-loader {
@@ -2268,10 +2277,10 @@ $categories_filtre_js = $filtres_actifs['categories'] ?? [];
                     </div>
                 </div>
             </div>
-            <div class="row">
-                <!-- Derniers militaires (sans colonne Catégorie) -->
-                <div class="col-md-6">
-                    <div class="card-modern">
+            <div class="row align-items-stretch">
+                <!-- Derniers militaires -->
+                <div class="col-md-6 d-flex">
+                    <div class="card-modern h-100 w-100">
                         <div class="card-header"
                             style="background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);">
                             <h3 class="card-title" style="color: white; font-weight: 600;">
@@ -2283,10 +2292,8 @@ $categories_filtre_js = $filtres_actifs['categories'] ?? [];
                                 <thead>
                                     <tr>
                                         <th>Noms</th>
-                                        <th>Grade</th>
                                         <th>Unité</th>
-                                        <th>Province</th>
-                                        <!-- Colonne Catégorie supprimée -->
+                                        <th>Garnison</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -2296,10 +2303,8 @@ $categories_filtre_js = $filtres_actifs['categories'] ?? [];
                                     ?>
                                         <tr>
                                             <td><?= h($row['noms']) ?></td>
-                                            <td><?= h($row['grade']) ?></td>
                                             <td><?= h($row['unite'] ?? 'N/A') ?></td>
-                                            <td><?= h($row['province'] ?? 'N/A') ?></td>
-                                            <!-- Cellule catégorie supprimée -->
+                                            <td><?= h($row['garnison'] ?? 'N/A') ?></td>
                                         </tr>
                                     <?php endforeach; ?>
                                 </tbody>
@@ -2308,8 +2313,8 @@ $categories_filtre_js = $filtres_actifs['categories'] ?? [];
                     </div>
                 </div>
                 <!-- Derniers contrôles (sans colonne Type) -->
-                <div class="col-md-6">
-                    <div class="card-modern">
+                <div class="col-md-6 d-flex">
+                    <div class="card-modern h-100 w-100">
                         <div class="card-header"
                             style="background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);">
                             <h3 class="card-title" style="color: white; font-weight: 600;">
@@ -2393,11 +2398,11 @@ $categories_filtre_js = $filtres_actifs['categories'] ?? [];
                             </h5>
                         </div>
                         <div class="card-body p-0">
-                            <div id="drcMap" style="height: 600px; width: 100%;">
+                            <div id="drcMap" style="height: 540px; width: 100%;">
                                 <div id="map-loader" class="d-flex justify-content-center align-items-center"
                                     style="height:100%">
-                                    <div class="spinner-border text-primary" role="status">
-                                        <span class="visually-hidden">Chargement...</span>
+                                    <div class="text-center text-muted" style="font-weight: 600;">
+                                        <i class="fas fa-map-marked-alt mr-2"></i>Chargement de la carte...
                                     </div>
                                 </div>
                             </div>
@@ -2708,7 +2713,10 @@ $categories_filtre_js = $filtres_actifs['categories'] ?? [];
         $('[data-widget="pushmenu"]').off('click').on('click', function(e) {
             e.preventDefault();
             $('body').toggleClass('sidebar-collapse');
+            refreshMapLayout();
         });
+
+        $(window).on('resize', refreshMapLayout);
     });
 
     // ===== CARTE OPTIMISÉE =====
@@ -2735,24 +2743,44 @@ $categories_filtre_js = $filtres_actifs['categories'] ?? [];
     let hoverTimeout = null;
     let currentHoverLayer = null;
 
+    function refreshMapLayout() {
+        if (!map) return;
+
+        window.setTimeout(() => {
+            try {
+                map.invalidateSize(true);
+            } catch (error) {
+                console.warn('Actualisation carte ignorée :', error);
+            }
+        }, 120);
+    }
+
     function initOptimizedMap() {
         const mapEl = document.getElementById('drcMap');
         if (!mapEl) return;
 
-        map = L.map('drcMap', mapConfig);
-
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '&copy; OpenStreetMap',
-            detectRetina: true,
-            updateWhenIdle: true,
-            keepBuffer: 2
-        }).addTo(map);
+        map = L.map('drcMap', {
+            ...mapConfig,
+            zoomControl: true,
+            attributionControl: false,
+            dragging: true,
+            scrollWheelZoom: true,
+            doubleClickZoom: true,
+            boxZoom: true,
+            keyboard: true,
+            touchZoom: true,
+            tap: true,
+            zoomSnap: 0.1,
+            zoomDelta: 0.25
+        });
 
         const infoControl = createOptimizedInfoControl();
         infoControl.addTo(map);
 
         loadOptimizedGeoJSON(infoControl);
         addPerformanceControls();
+        refreshMapLayout();
+        window.setTimeout(refreshMapLayout, 300);
     }
 
     function createOptimizedInfoControl() {
@@ -2973,12 +3001,24 @@ $categories_filtre_js = $filtres_actifs['categories'] ?? [];
             }
         }).addTo(map);
 
-        map.fitBounds(geojsonLayer.getBounds(), {
+        const drcBounds = geojsonLayer.getBounds();
+
+        map.fitBounds(drcBounds, {
             padding: [20, 20],
-            maxZoom: 6
+            maxZoom: 6,
+            animate: false
         });
+
+        map.setMaxBounds(drcBounds.pad(0.08));
+        map.setMinZoom(4.8);
+        map.setMaxZoom(7.5);
+        refreshMapLayout();
+        window.setTimeout(refreshMapLayout, 200);
+        window.setTimeout(refreshMapLayout, 600);
+
         loader.style.display = 'none';
         addLegend();
+        refreshMapLayout();
     }
 
     function createPopupContent(provinceName, stats) {

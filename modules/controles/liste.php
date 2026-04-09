@@ -192,6 +192,8 @@ $export_fields = [
 .btn-export.pdf { background: #dc3545; }
 .btn-export.zip { background: #9b59b6; }
 .btn-export.choisir { background: #6c757d; }
+.btn-export.sync { background: #17a2b8; }
+.btn-export.sync:hover { background: #138496; transform: translateY(-2px); }
 
 .total-badge {
     background: rgba(255, 255, 255, 0.2);
@@ -224,6 +226,10 @@ $export_fields = [
     display: block;
 }
 
+.filter-item .form-label i {
+    margin-right: 4px;
+}
+
 .filter-item .form-select,
 .filter-item .form-control {
     border-radius: 8px;
@@ -247,16 +253,38 @@ $export_fields = [
     text-transform: uppercase;
 }
 
+.table-militaires thead th:first-child {
+    border-radius: 10px 0 0 10px;
+}
+
+.table-militaires thead th:last-child {
+    border-radius: 0 10px 10px 0;
+}
+
 .table-militaires tbody tr {
     background: white;
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
     border-radius: 10px;
+    transition: all 0.3s;
+}
+
+.table-militaires tbody tr:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 20px rgba(46, 125, 50, 0.15);
 }
 
 .table-militaires tbody td {
     padding: 15px;
     font-size: 0.9rem;
     vertical-align: middle;
+}
+
+.table-militaires tbody td:first-child {
+    border-radius: 10px 0 0 10px;
+}
+
+.table-militaires tbody td:last-child {
+    border-radius: 0 10px 10px 10px;
 }
 
 .matricule-with-eye {
@@ -268,6 +296,12 @@ $export_fields = [
 .matricule-with-eye i {
     color: #2e7d32;
     cursor: pointer;
+    transition: all 0.3s;
+}
+
+.matricule-with-eye i:hover {
+    color: #ffc107;
+    transform: scale(1.1);
 }
 
 .stats-container {
@@ -287,6 +321,13 @@ $export_fields = [
     display: flex;
     align-items: center;
     gap: 20px;
+    transition: all 0.3s;
+    border: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.stat-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(46, 125, 50, 0.15);
 }
 
 .stat-icon {
@@ -299,33 +340,17 @@ $export_fields = [
     justify-content: center;
     color: white;
     font-size: 1.8rem;
+    box-shadow: 0 4px 10px rgba(46, 125, 50, 0.3);
 }
 
 .stat-icon.present { background: linear-gradient(135deg, #28a745 0%, #1e7e34 100%); }
 .stat-icon.favorable { background: linear-gradient(135deg, #ffc107 0%, #ff9800 100%); }
 .stat-icon.defavorable { background: linear-gradient(135deg, #dc3545 0%, #bd2130 100%); }
 
-
 .stat-info h4 {
     margin: 0;
     font-size: 1.8rem;
     font-weight: 700;
-}
-
-/* Harmonisation couleur valeur = couleur icône */
-.stat-card .stat-icon {
-    /* rien, couleur par défaut */
-}
-.stat-card .stat-icon.present + .stat-info h4 {
-    color: #28a745;
-}
-.stat-card .stat-icon.favorable + .stat-info h4 {
-    color: #ffc107;
-}
-.stat-card .stat-icon.defavorable + .stat-info h4 {
-    color: #dc3545;
-}
-.stat-card .stat-icon:not(.present):not(.favorable):not(.defavorable) + .stat-info h4 {
     color: #2e7d32;
 }
 
@@ -335,17 +360,75 @@ $export_fields = [
     color: #6c757d;
 }
 
+/* DataTables */
+.dataTables_wrapper {
+    width: 100%;
+    padding: 0;
+    position: relative;
+    clear: both;
+}
+
+.dataTables_wrapper .dataTables_length {
+    float: left;
+    margin-bottom: 20px;
+}
+
+.dataTables_wrapper .dataTables_length select {
+    border-radius: 8px;
+    border: 1px solid #e0e0e0;
+    padding: 6px 12px;
+}
+
 .dataTables_wrapper .dataTables_filter {
     float: right;
     margin-bottom: 20px;
+    display: flex !important;
+    align-items: center;
+    gap: 10px;
+}
+
+.dataTables_wrapper .dataTables_filter label {
+    font-weight: 500;
+    color: #2e7d32;
+    margin-bottom: 0;
+    display: flex;
+    align-items: center;
+    gap: 5px;
 }
 
 .dataTables_wrapper .dataTables_filter input {
     border-radius: 8px;
     border: 1px solid #e0e0e0;
     padding: 6px 12px;
+    width: 250px;
 }
 
+.dataTables_wrapper .dataTables_info {
+    float: left;
+    margin-top: 20px;
+    font-size: 0.9rem;
+    color: #2e7d32;
+}
+
+.dataTables_wrapper .dataTables_paginate {
+    float: right;
+    margin-top: 20px;
+}
+
+.filtre-tags {
+    margin-top: 10px;
+}
+
+.filtre-tag {
+    background: #e9ecef;
+    padding: 4px 8px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    display: inline-block;
+    margin-right: 5px;
+}
+
+/* Modal */
 .modal-champs-export {
     display: none;
     position: fixed;
@@ -364,6 +447,7 @@ $export_fields = [
     border-radius: 15px;
     width: 90%;
     max-width: 700px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
 }
 
 .modal-champs-header {
@@ -377,6 +461,7 @@ $export_fields = [
 
 .modal-champs-header h4 {
     color: #2e7d32;
+    margin: 0;
 }
 
 .modal-champs-close {
@@ -384,10 +469,21 @@ $export_fields = [
     border: none;
     font-size: 1.6rem;
     cursor: pointer;
+    color: #6c757d;
+}
+
+.modal-champs-close:hover {
+    color: #dc3545;
 }
 
 .modal-champs-body .champs-section {
     margin-bottom: 15px;
+}
+
+.modal-champs-body .champs-section-title {
+    font-weight: 600;
+    color: #495057;
+    margin-bottom: 10px;
 }
 
 .modal-champs-body .champs-grid {
@@ -400,12 +496,19 @@ $export_fields = [
     display: flex;
     align-items: center;
     gap: 8px;
+    padding: 5px;
+    background: #f8f9fa;
+    border-radius: 5px;
 }
 
 .modal-champs-body .champ-item.required {
     background: #e8f5e9;
-    padding: 5px;
-    border-radius: 5px;
+    border-left: 3px solid #2e7d32;
+}
+
+.modal-champs-body .champ-item.required label {
+    font-weight: 600;
+    color: #2e7d32;
 }
 
 .modal-champs-footer {
@@ -422,16 +525,20 @@ $export_fields = [
     border-radius: 6px;
     border: none;
     cursor: pointer;
+    transition: all 0.3s;
 }
 
 .modal-champs-footer .btn-annuler { background: #6c757d; color: white; }
+.modal-champs-footer .btn-annuler:hover { background: #5a6268; transform: translateY(-2px); }
 .modal-champs-footer .btn-confirmer { background: #2e7d32; color: white; }
+.modal-champs-footer .btn-confirmer:hover { background: #1b5e20; transform: translateY(-2px); }
 
 @media (max-width: 768px) {
     .modern-card .card-header { flex-direction: column; align-items: flex-start; }
     .stats-container { flex-direction: column; }
     .filters-row { flex-direction: column; }
     .dataTables_wrapper .dataTables_filter { float: none; margin-bottom: 20px; }
+    .dataTables_wrapper .dataTables_filter input { width: 100%; }
 }
 </style>
 
@@ -482,6 +589,11 @@ $export_fields = [
                             <button type="button" class="btn-export excel" id="export-excel"><i class="fas fa-file-excel"></i> Excel</button>
                             <button type="button" class="btn-export pdf" id="export-pdf"><i class="fas fa-file-pdf"></i> PDF</button>
                             <button type="button" class="btn-export zip" id="export-zip"><i class="fas fa-file-archive"></i> ZIP</button>
+                            <?php if (in_array($user_profil, ['ADMIN_IG', 'OPERATEUR'])): ?>
+                            <a href="sync.php" class="btn-export sync">
+                                <i class="fas fa-cloud-upload-alt"></i> Synchronisation
+                            </a>
+                            <?php endif; ?>
                         </div>
                     </div>
                 </div>
@@ -546,6 +658,7 @@ $export_fields = [
                         </div>
                     </div>
 
+                    <!-- Tags des filtres actifs -->
                     <div class="filtre-tags mb-3" style="display: none;"></div>
 
                     <!-- Tableau -->
@@ -634,12 +747,8 @@ $export_fields = [
     </div>
 </div>
 
-
 <?php include '../../includes/footer.php'; ?>
 
-
-<!-- JQuery en premier -->
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="../../assets/js/bootstrap.bundle.min.js"></script>
 <script src="../../assets/js/xlsx.full.min.js"></script>
 <script src="../../assets/js/jspdf.umd.min.js"></script>
@@ -649,22 +758,6 @@ $export_fields = [
 <script>
 $(document).ready(function() {
     let selectedExportFields = <?php echo json_encode(array_map(function ($field) { return $field['enabled']; }, $export_fields)); ?>;
-
-    // =============================
-    // AUTO-REFRESH APRÈS CONTRÔLE MOBILE
-    // =============================
-    let lastControleId = <?php echo intval($pdo->query("SELECT COALESCE(MAX(id),0) FROM controles")->fetchColumn()); ?>;
-    setInterval(function() {
-        fetch('../../api/controles_poll.php?since_id=' + lastControleId + '&_=' + Date.now())
-            .then(r => r.json())
-            .then(data => {
-                if (data && data.success && data.count > 0) {
-                    // Nouveaux contrôles détectés, on recharge la page
-                    window.location.reload();
-                }
-            })
-            .catch(() => {});
-    }, 10000); // 10 secondes
 
     const getTimestamp = () => {
         const d = new Date();
@@ -706,25 +799,59 @@ $(document).ready(function() {
     const table = $('#table-controles').DataTable({
         language: {
             url: '//cdn.datatables.net/plug-ins/1.11.5/i18n/fr-FR.json',
+            search: '<i class="fas fa-search"></i>',
             lengthMenu: "Afficher _MENU_ éléments",
             info: "Affichage de _START_ à _END_ sur _TOTAL_ éléments",
-            zeroRecords: "Aucun enregistrement correspondant"
+            infoEmpty: "Affichage de 0 à 0 sur 0 élément",
+            infoFiltered: "(filtré sur _MAX_ éléments au total)",
+            zeroRecords: "Aucun enregistrement correspondant",
+            paginate: {
+                first: "Premier",
+                previous: "Précédent",
+                next: "Suivant",
+                last: "Dernier"
+            }
         },
         order: [[6, 'desc']],
         pageLength: 10,
+        lengthMenu: [10, 25, 50, 100],
         columnDefs: [{ targets: [6], visible: false }],
-        dom: 'rt<"datatable-bottom d-flex justify-content-between align-items-center flex-wrap gap-2 mt-3"ip>',
         initComplete: function() {
             const filterDiv = $('.dataTables_filter');
-            filterDiv.css({ 'float': 'right', 'display': 'flex', 'align-items': 'center', 'gap': '10px' });
+            
+            filterDiv.css({
+                'display': 'flex',
+                'align-items': 'center',
+                'gap': '10px',
+                'float': 'right'
+            });
+            
+            // Ajouter l'icône de recherche
+            filterDiv.prepend('<i class="fas fa-search search-icon" style="color: #2e7d32; font-size: 1rem;"></i>');
             
             const searchLabel = filterDiv.find('label');
-            searchLabel.css({ 'margin-bottom': '0', 'display': 'flex', 'align-items': 'center', 'gap': '5px' });
+            searchLabel.css({
+                'display': 'flex',
+                'align-items': 'center',
+                'margin-bottom': '0',
+                'flex': '0 1 auto'
+            });
             
+            // Supprimer l'icône existante
+            searchLabel.find('i').remove();
+            
+            // Supprimer le texte "Rechercher :"
+            searchLabel.contents().filter(function() {
+                return this.nodeType === 3;
+            }).remove();
+            
+            // Ajouter le bouton Nouveau
             filterDiv.append(`
-                <a href="ajouter.php" class="btn-modern btn-primary-modern">
-                    <i class="fas fa-user-plus"></i> Nouveau
-                </a>
+                <div class="action-buttons">
+                    <a href="ajouter.php" class="btn-modern btn-primary-modern">
+                        <i class="fas fa-user-plus"></i> Nouveau
+                    </a>
+                </div>
             `);
         }
     });
@@ -741,7 +868,7 @@ $(document).ready(function() {
 
         const $tagsContainer = $('.filtre-tags');
         $tagsContainer.empty();
-        tags.forEach(tag => $tagsContainer.append(`<span class="badge bg-secondary me-2">${tag}</span>`));
+        tags.forEach(tag => $tagsContainer.append(`<span class="filtre-tag me-2">${tag}</span>`));
         $tagsContainer.toggle(tags.length > 0);
     }
 
@@ -1013,10 +1140,7 @@ $(document).ready(function() {
             doc.text(`Page ${currentPage}`, pageWidth - rightMargin, pageHeight - 8, { align: 'right' });
         }
 
-        // Ajouter le filigrane sur toutes les pages
         addWatermark();
-        
-        // Ajouter l'en-tête uniquement sur la première page
         addFirstPageHeader();
 
         doc.autoTable({
@@ -1054,7 +1178,6 @@ $(document).ready(function() {
             didDrawPage: function(data) {
                 currentPage = data.pageNumber;
                 addFooter();
-                // Ajouter le filigrane sur chaque page
                 addWatermark();
             }
         });
@@ -1076,6 +1199,7 @@ $(document).ready(function() {
         link.click();
         URL.revokeObjectURL(link.href);
         
+        $.get(window.location.href, { ajax: 'log_export', type: 'CSV', filtres: 'tous' });
         Swal.fire({ icon: 'success', title: 'Export CSV', text: 'Fichier CSV généré avec succès', timer: 1500, showConfirmButton: false });
     });
 
@@ -1091,6 +1215,7 @@ $(document).ready(function() {
         XLSX.utils.book_append_sheet(wb, ws, 'Controles');
         XLSX.writeFile(wb, `controles_${getTimestamp()}.xlsx`);
         
+        $.get(window.location.href, { ajax: 'log_export', type: 'Excel', filtres: 'tous' });
         Swal.fire({ icon: 'success', title: 'Export Excel', text: 'Fichier Excel généré avec succès', timer: 1500, showConfirmButton: false });
     });
 
@@ -1112,6 +1237,7 @@ $(document).ready(function() {
         URL.revokeObjectURL(link.href);
         
         Swal.close();
+        $.get(window.location.href, { ajax: 'log_export', type: 'PDF', filtres: 'tous' });
         Swal.fire({ icon: 'success', title: 'Export PDF', text: 'Fichier PDF généré avec succès', timer: 1500, showConfirmButton: false });
     });
 
@@ -1153,6 +1279,7 @@ $(document).ready(function() {
         URL.revokeObjectURL(link.href);
         
         Swal.close();
+        $.get(window.location.href, { ajax: 'log_export', type: 'ZIP', filtres: 'tous' });
         Swal.fire({ icon: 'success', title: 'Export ZIP', text: 'Fichier ZIP généré avec succès', timer: 2000, showConfirmButton: false });
     });
 

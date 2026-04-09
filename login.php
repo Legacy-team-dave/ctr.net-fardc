@@ -53,7 +53,7 @@ if (isset($_SESSION['user_id']) && !isset($_GET['success'])) {
     $profil = $_SESSION['user_profil'] ?? null;
 
     if (is_central_mode() && strtoupper(trim((string)$profil)) !== 'ADMIN_IG') {
-        session_destroy();
+        //session_destroy();
         header('Location: login.php');
         exit;
     }

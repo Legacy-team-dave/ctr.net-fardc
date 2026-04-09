@@ -207,17 +207,7 @@ function importerMilitaires($data)
 ?>
 
 <!-- Scripts locaux -->
-<script src="../../assets/js/jquery-3.6.0.min.js"></script>
-<script src="../../assets/js/bootstrap.bundle.min.js"></script>
-<script src="../../assets/js/jquery.dataTables.min.js"></script>
-<script src="../../assets/js/dataTables.bootstrap4.min.js"></script>
-<script src="../../assets/js/sweetalert2.all.min.js"></script>
-<script src="../../assets/js/xlsx.full.min.js"></script>
-
-<style>
-    :root {
-        --primary: #2e7d32;
-        --primary-dark: #1b5e20;
+<script src="../../assets/js/20;
         --success: #28a745;
         --warning: #ffc107;
         --danger: #dc3545;

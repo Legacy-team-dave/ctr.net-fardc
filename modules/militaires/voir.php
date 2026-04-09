@@ -415,7 +415,7 @@ body {
                             </td>
                         </tr>
                         <tr>
-                            <th><i class="fas fa-fort-awesome"></i> GARNISON</th>
+                            <th><i class="fas fa-map-pin"></i> GARNISON</th>
                             <td><?= h($militaire['garnison'] ?? 'NON DÉFINIE') ?></td>
                         </tr>
                         <tr>

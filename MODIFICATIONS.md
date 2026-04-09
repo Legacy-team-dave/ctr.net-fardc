@@ -1,3 +1,18 @@
+# 9 avril 2026 — Harmonisation, correctifs et évolutions majeures
+
+## Changements principaux
+
+- Harmonisation visuelle des cartes de statistiques (couleurs valeurs/icônes)
+- Toast d’export harmonisé (SweetAlert2, timer auto, feedback unifié)
+- Suppression de tous les QR codes dans modules/controles/liste.php
+- Gestion robuste des conflits de synchronisation multi-client
+- Auto-refresh du tableau après contrôle mobile (liste.php)
+- Intégration et fallback du fingerprint (BrowserFingerprintService)
+- Placement de JQuery avant tous les autres scripts dans tous les tableaux
+- Correction des bugs Android et alignement version/package
+- Documentation et version alignées sur tous les projets
+- Workflow GitHub Actions pour APK mobile
+
 # Modifications récentes
 
 ## Nettoyage automatique des caches (Mars 2026 - v1.5.0)

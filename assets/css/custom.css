@@ -122,22 +122,7 @@ h6 { font-size: 1rem; font-weight: 600; }
     clear: both;
 }
 
-.dataTables_wrapper table.dataTable thead tr:not(:first-child) {
-    visibility: collapse !important;
-    height: 0 !important;
-}
-
-.dataTables_wrapper table.dataTable thead tr:not(:first-child) th,
-.dataTables_wrapper table.dataTable thead tr:not(:first-child) td,
-.dataTables_wrapper table.dataTable thead .dataTables_sizing {
-    padding-top: 0 !important;
-    padding-bottom: 0 !important;
-    border: 0 !important;
-    height: 0 !important;
-    line-height: 0 !important;
-    overflow: hidden !important;
-    background: transparent !important;
-}
+/* Laisser DataTables gérer nativement le calcul des largeurs */
 
 /* Bordures harmonisées pour tous les en-têtes de tableaux */
 table thead th,

@@ -158,7 +158,21 @@ if (!is_array($remote)) {
     ]);
 }
 
-if (!($remote['success'] ?? false)) {
+$remoteStats = is_array($remote['stats'] ?? null) ? $remote['stats'] : [];
+$remoteEquipes = is_array($remoteStats['equipes'] ?? null) ? $remoteStats['equipes'] : [];
+$remoteControles = is_array($remoteStats['controles'] ?? null) ? $remoteStats['controles'] : [];
+$duplicatesTotal = (int) ($remoteEquipes['doublons'] ?? 0) + (int) ($remoteControles['doublons'] ?? 0);
+$invalidTotal = (int) ($remoteEquipes['invalides'] ?? 0) + (int) ($remoteControles['invalides'] ?? 0);
+$insertedTotal = (int) ($remoteEquipes['inseres'] ?? 0) + (int) ($remoteControles['inseres'] ?? 0);
+$updatedTotal = (int) ($remoteEquipes['maj'] ?? 0) + (int) ($remoteControles['maj'] ?? 0);
+$remotePendingConflicts = (int) ($remote['pending_conflicts'] ?? 0);
+$hasRemoteConflicts = $remotePendingConflicts > 0;
+$isRemoteAlreadySynced = !($remote['success'] ?? false)
+    && $duplicatesTotal > 0
+    && $invalidTotal === 0
+    && ($insertedTotal + $updatedTotal) === 0;
+
+if (!($remote['success'] ?? false) && !$isRemoteAlreadySynced) {
     log_sync_attempt($pdo, array_column($pendingControles, 'id'), array_column($equipesRows, 'id'), 'echec', json_encode([
         'server_ip' => $serverIp,
         'target_url' => $forwardResponse['target_url'],
@@ -210,29 +224,43 @@ if (!empty($pendingControles)) {
     $summaryParts[] = sprintf('%d contrôle(s)', count($pendingControles));
 }
 
-$summary = 'Synchronisation effectuée : ' . implode(' et ', $summaryParts) . ' envoyé(s) vers ' . $serverIp . '.';
+$syncState = $hasRemoteConflicts ? 'conflicts_pending' : ($isRemoteAlreadySynced ? 'already_synced' : 'completed');
+$summary = $hasRemoteConflicts
+    ? 'Synchronisation transmise : ' . $remotePendingConflicts . ' conflit(s) sont en attente d’arbitrage sur le serveur central.'
+    : ($isRemoteAlreadySynced
+        ? 'Synchronisation vérifiée : les données existaient déjà sur le serveur central. Les statuts locaux ont été mis à jour.'
+        : 'Synchronisation effectuée : ' . implode(' et ', $summaryParts) . ' envoyé(s) vers ' . $serverIp . '.');
 
 log_sync_attempt($pdo, $controleIds, $equipeIds, 'succes', json_encode([
     'server_ip' => $serverIp,
     'target_url' => $forwardResponse['target_url'],
     'remote_response' => $remote,
     'summary' => $summary,
+    'sync_state' => $syncState,
 ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
 
 audit_action('SYNC_CONTROLES', 'synchronisation', null, $summary);
 
 sync_progress_event('progress', [
     'percentage' => 100,
-    'step' => 'Synchronisation finalisée avec succès.',
+    'step' => $hasRemoteConflicts
+        ? 'Synchronisation transmise. Des conflits sont en attente sur le serveur central.'
+        : ($isRemoteAlreadySynced
+            ? 'Les données étaient déjà présentes sur le serveur. Mise à jour locale terminée.'
+            : 'Synchronisation finalisée avec succès.'),
     'sent' => [
         'equipes' => count($equipesRows),
         'controles' => count($pendingControles),
     ],
 ]);
 
-sync_json_response(true, 'Synchronisation terminée avec succès.', 200, null, [
+sync_json_response(true, $hasRemoteConflicts
+    ? 'Synchronisation transmise avec conflits en attente.'
+    : ($isRemoteAlreadySynced ? 'Les données existaient déjà sur le serveur central.' : 'Synchronisation terminée avec succès.'), 200, null, [
     'summary' => $summary,
-    'sync_state' => 'completed',
+    'sync_state' => $syncState,
+    'pending_conflicts' => $remotePendingConflicts,
+    'conflict_page' => $remote['conflict_page'] ?? null,
     'target_url' => $forwardResponse['target_url'],
     'sent' => [
         'equipes' => count($equipesRows),

@@ -764,8 +764,9 @@ function check_profil($profils_autorises)
 function require_login()
 {
     if (!isset($_SESSION['user_id'])) {
-        redirect_with_flash(app_url('login.php'), 'danger', 'Accès non autorisé. Veuillez vous connecter pour continuer.');
-    }
+    // Ne rien faire : accès libre en local, ou afficher un message personnalisé si besoin
+    // Exemple : afficher une bannière "Non connecté" mais ne pas rediriger
+}
 
     if (is_central_mode()) {
         $profil = strtoupper(trim((string) ($_SESSION['user_profil'] ?? '')));

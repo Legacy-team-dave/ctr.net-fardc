@@ -27,6 +27,11 @@
 - Rapport détaillé en retour (JSON)
 - Documentation mise à jour (14 fichiers)
 
+## 1.4.7 (2026-04-08)
+
+- Harmonisation de version : alignement sur la version 1.4.7 pour cohérence avec les autres applications (mobile, web, front).
+- Voir détails dans les fichiers VERSION.md des autres projets pour la liste complète des changements.
+
 ## 1.4.0 (2026-03-24)
 
 ### 🔒 Profil CONTROLEUR réservé au mobile

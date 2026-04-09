@@ -407,15 +407,15 @@ $unites_list = $stmt_unites->fetchAll(PDO::FETCH_COLUMN);
 }
 
 .stat-icon {
-    width: 48px;
-    height: 48px;
-    border-radius: 10px;
+    width: 60px;
+    height: 60px;
+    border-radius: 12px;
     background: linear-gradient(135deg, #2e7d32 0%, #1b5e20 100%);
     display: flex;
     align-items: center;
     justify-content: center;
     color: white;
-    font-size: 1.35rem;
+    font-size: 1.8rem;
     box-shadow: 0 4px 10px rgba(46, 125, 50, 0.3);
     flex-shrink: 0;
 }
@@ -435,10 +435,12 @@ $unites_list = $stmt_unites->fetchAll(PDO::FETCH_COLUMN);
     line-height: 1.2;
 }
 
+
 .stat-value {
-    font-size: 1.35rem;
+    font-size: 1.8rem;
     font-weight: 700;
-    line-height: 1.05;
+    color: #2e7d32;
+    line-height: 1.2;
     margin: 0;
 }
 
@@ -531,7 +533,7 @@ $unites_list = $stmt_unites->fetchAll(PDO::FETCH_COLUMN);
                     <!-- Filtres -->
                     <div class="filters-row">
                         <div class="filter-item">
-                            <label class="form-label"><i class="fas fa-tag"></i> Rôle</label>
+                            <label class="form-label"><i class="fas fa-user-tag"></i> Rôle</label>
                             <select id="role-filter" class="form-select">
                                 <option value="">Tous</option>
                                 <?php foreach ($roles_equipe as $role): ?>
@@ -549,7 +551,7 @@ $unites_list = $stmt_unites->fetchAll(PDO::FETCH_COLUMN);
                             </select>
                         </div>
                         <div class="filter-item">
-                            <label class="form-label"><i class="fas fa-star"></i> Grade</label>
+                            <label class="form-label"><i class="fas fa-fist-raised"></i> Grade</label>
                             <select id="grade-filter" class="form-select">
                                 <option value="">Tous</option>
                             </select>
@@ -676,7 +678,7 @@ $(document).ready(function() {
         order: [[0, 'asc']],
         pageLength: 10,
         lengthMenu: [10, 25, 50, 100],
-        autoWidth: false,
+        autoWidth: true,
         orderCellsTop: true,
         scrollX: false,
         scrollY: false,

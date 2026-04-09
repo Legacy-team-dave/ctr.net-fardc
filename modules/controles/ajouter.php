@@ -1378,7 +1378,7 @@ include '../../includes/header.php';
                 <div class="d-flex flex-wrap gap-2 small">
                     <span><i class="fas fa-id-card"></i> ${escapeHtml(militaire.matricule)}</span>
                     <span><i class="fas fa-star"></i> ${escapeHtml(militaire.grade || 'N/A')}</span>
-                    <span><i class="fas fa-map-marker-alt"></i> ${escapeHtml(militaire.garnison || 'N/A')}</span>
+                    <span><i class="fas fa-map-pin"></i> ${escapeHtml(militaire.garnison || 'N/A')}</span>
                 </div>
             `;
                 searchResults.appendChild(item);

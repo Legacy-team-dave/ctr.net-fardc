@@ -296,8 +296,6 @@ function handleValider($pdo, $user)
     $observations = trim($input['observations'] ?? '');
     $statut_vivant = $input['statut_vivant'] ?? false;
     $statut_decede = $input['statut_decede'] ?? false;
-    $latitude = $input['latitude'] ?? null;
-    $longitude = $input['longitude'] ?? null;
 
     if (empty($matricule) || empty($mention)) {
         http_response_code(400);
@@ -367,12 +365,6 @@ function handleValider($pdo, $user)
         $cat = $militaire_info['categorie'] ?? '';
         if ($cat === 'DCD_AP_BIO' && $statut_vivant && !$statut_decede) {
             $observations = empty($observations) ? 'Mort vivant' : 'Mort vivant - ' . $observations;
-        }
-
-        // Ajouter coordonnées GPS aux observations si disponibles
-        if ($latitude !== null && $longitude !== null) {
-            $gps = "GPS: $latitude, $longitude";
-            $observations = empty($observations) ? $gps : $observations . " | $gps";
         }
 
         // Insertion

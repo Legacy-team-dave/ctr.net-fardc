@@ -93,7 +93,7 @@ include '../../includes/header.php';
     }
 
     .sync-stat-icon.sync-team {
-        background: linear-gradient(135deg, #2e7d32 0%, #1b5e20 100%);
+        background: linear-gradient(135deg, #1565c0, #0d47a1);
     }
 
     .sync-stat-icon.sync-pending {
@@ -117,6 +117,16 @@ include '../../includes/header.php';
         line-height: 1;
         margin: 0;
     }
+
+    .sync-stat-icon.sync-team + .sync-stat-info .sync-stat-value {
+    color: #1565c0;
+}
+.sync-stat-icon.sync-pending + .sync-stat-info .sync-stat-value {
+    color: #2e7d32;
+}
+.sync-stat-icon.sync-history + .sync-stat-info .sync-stat-value {
+    color: #6c757d;
+}
 
     .sync-stat-label {
         color: #6c757d;
@@ -156,7 +166,7 @@ include '../../includes/header.php';
     }
 
     .sync-btn-secondary {
-        background: linear-gradient(135deg, #1565c0, #0d47a1);
+        background: linear-gradient(135deg, #f1b50f, #e1b231);
         color: #fff;
     }
 
@@ -316,6 +326,161 @@ include '../../includes/header.php';
         text-transform: uppercase;
         color: #666;
     }
+    
+    /* Styles pour le rapport de conflits */
+    .conflict-report {
+        margin-top: 20px;
+        border-top: 2px solid #dee2e6;
+        padding-top: 20px;
+    }
+    
+    .conflict-report-header {
+        background: linear-gradient(135deg, #dc3545, #c82333);
+        color: white;
+        padding: 12px 16px;
+        border-radius: 8px;
+        margin-bottom: 15px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    
+    .conflict-report-header i {
+        font-size: 1.3rem;
+    }
+    
+    .conflict-report-header h4 {
+        margin: 0;
+        font-size: 1.1rem;
+        font-weight: 600;
+    }
+    
+    .conflict-summary {
+        background: #fff3cd;
+        border: 1px solid #ffc107;
+        border-radius: 8px;
+        padding: 12px 16px;
+        margin-bottom: 15px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+    
+    .conflict-summary-item {
+        display: flex;
+        align-items: baseline;
+        gap: 8px;
+    }
+    
+    .conflict-summary-label {
+        font-weight: 600;
+        color: #856404;
+    }
+    
+    .conflict-summary-value {
+        font-size: 1.3rem;
+        font-weight: 700;
+        color: #856404;
+    }
+    
+    .conflict-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.85rem;
+    }
+    
+    .conflict-table th {
+        background: #f8f9fa;
+        padding: 10px 12px;
+        text-align: left;
+        font-weight: 600;
+        border-bottom: 2px solid #dee2e6;
+        position: sticky;
+        top: 0;
+    }
+    
+    .conflict-table td {
+        padding: 10px 12px;
+        border-bottom: 1px solid #e9ecef;
+        vertical-align: top;
+    }
+    
+    .conflict-table tr:hover {
+        background: #f8f9fa;
+    }
+    
+    .conflict-badge {
+        display: inline-block;
+        padding: 3px 8px;
+        border-radius: 12px;
+        font-size: 0.7rem;
+        font-weight: 600;
+    }
+    
+    .conflict-badge.equipe {
+        background: #cfe2ff;
+        color: #084298;
+    }
+    
+    .conflict-badge.controle {
+        background: #f8d7da;
+        color: #721c24;
+    }
+    
+    .conflict-badge.autre {
+        background: #e2e3e5;
+        color: #383d41;
+    }
+    
+    .conflict-details-preview {
+        max-width: 300px;
+        font-size: 0.8rem;
+        color: #6c757d;
+    }
+    
+    .conflict-actions {
+        margin-top: 20px;
+        text-align: center;
+        padding-top: 15px;
+        border-top: 1px solid #dee2e6;
+    }
+    
+    .btn-view-conflicts {
+        background: linear-gradient(135deg, #dc3545, #c82333);
+        color: white;
+        border: none;
+        padding: 8px 20px;
+        border-radius: 6px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-view-conflicts:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(220, 53, 69, 0.3);
+    }
+    
+    .conflict-report-container {
+        max-height: 500px;
+        overflow-y: auto;
+    }
+    
+    .auto-redirect-message {
+        margin-top: 15px;
+        padding: 10px;
+        background: #e7f3ff;
+        border-radius: 6px;
+        text-align: center;
+        font-size: 0.85rem;
+        color: #004085;
+    }
+    
+    .auto-redirect-message i {
+        margin-right: 5px;
+    }
 </style>
 
 <div class="sync-simple-page">
@@ -416,6 +581,7 @@ include '../../includes/header.php';
             return <?= json_encode($saved_server_ip) ?> || '';
         }
     })();
+    const redirectUrl = <?= json_encode(app_url('modules/controles/liste.php')) ?>;
 
     let syncStartTime = null;
     let syncTimer = null;
@@ -659,14 +825,21 @@ include '../../includes/header.php';
 
                 if (eventData.event === 'complete') {
                     finalPayload = eventData;
-                    const isNoDataState = eventData.data && eventData.data.sync_state === 'no_data';
+                    const syncState = eventData.data && eventData.data.sync_state;
+                    const isNoDataState = syncState === 'no_data';
+                    const isAlreadySyncedState = syncState === 'already_synced';
+                    const isConflictsPendingState = syncState === 'conflicts_pending';
 
                     if (isNoDataState) {
                         hideSyncProgress();
                     } else {
                         updateSyncProgress({
                             percentage: 100,
-                            step: 'Synchronisation finalisée avec succès.',
+                            step: isConflictsPendingState
+                                ? 'Synchronisation transmise. Génération du rapport de conflits...'
+                                : (isAlreadySyncedState
+                                    ? 'Données déjà présentes sur le serveur. Mise à jour locale terminée.'
+                                    : 'Synchronisation finalisée avec succès.'),
                             sent: (eventData.data && eventData.data.sent) || {
                                 equipes: pendingEquipesCount,
                                 controles: pendingControlesCount
@@ -714,6 +887,95 @@ include '../../includes/header.php';
         };
     }
 
+    function buildConflictReportHtml(conflicts) {
+        if (!conflicts || conflicts.length === 0) {
+            return '';
+        }
+        
+        let html = '<div class="conflict-report">';
+        html += '<div class="conflict-report-header">';
+        html += '<i class="fas fa-exclamation-triangle"></i>';
+        html += '<h4>Rapport des conflits de synchronisation</h4>';
+        html += '</div>';
+        
+        // Résumé des conflits
+        const equipeConflicts = conflicts.filter(c => c.type === 'equipe' || c.type === 'team' || c.type === 'membre');
+        const controleConflicts = conflicts.filter(c => c.type === 'controle' || c.type === 'control');
+        const autresConflicts = conflicts.filter(c => !equipeConflicts.includes(c) && !controleConflicts.includes(c));
+        
+        html += '<div class="conflict-summary">';
+        html += '<div class="conflict-summary-item"><span class="conflict-summary-label">Total des conflits :</span><span class="conflict-summary-value">' + conflicts.length + '</span></div>';
+        if (equipeConflicts.length > 0) {
+            html += '<div class="conflict-summary-item"><span class="conflict-summary-label">👥 Équipes/Membres :</span><span class="conflict-summary-value">' + equipeConflicts.length + '</span></div>';
+        }
+        if (controleConflicts.length > 0) {
+            html += '<div class="conflict-summary-item"><span class="conflict-summary-label">📋 Contrôles :</span><span class="conflict-summary-value">' + controleConflicts.length + '</span></div>';
+        }
+        html += '</div>';
+        
+        // Tableau détaillé des conflits
+        html += '<div class="conflict-report-container">';
+        html += '<table class="conflict-table">';
+        html += '<thead><tr>';
+        html += '<th>Type</th>';
+        html += '<th>ID / Référence</th>';
+        html += '<th>Nom / Libellé</th>';
+        html += '<th>Détails du conflit</th>';
+        html += '</thead>';
+        html += '<tbody>';
+        
+        conflicts.forEach(conflict => {
+            let typeClass = 'autre';
+            let typeLabel = 'Autre';
+            
+            if (conflict.type === 'equipe' || conflict.type === 'team' || conflict.type === 'membre') {
+                typeClass = 'equipe';
+                typeLabel = '👥 Équipe';
+            } else if (conflict.type === 'controle' || conflict.type === 'control') {
+                typeClass = 'controle';
+                typeLabel = '📋 Contrôle';
+            }
+            
+            const id = conflict.id || conflict.reference || conflict.controle_id || conflict.equipe_id || 'N/A';
+            const name = conflict.nom || conflict.name || conflict.libelle || conflict.titre || 'N/A';
+            
+            let detailsHtml = '';
+            if (conflict.message) {
+                detailsHtml += '<div><strong>Message:</strong> ' + escapeHtml(conflict.message) + '</div>';
+            }
+            if (conflict.details) {
+                if (typeof conflict.details === 'object') {
+                    detailsHtml += '<div><strong>Infos:</strong> <pre style="font-size:0.7rem; margin-top:5px;">' + escapeHtml(JSON.stringify(conflict.details, null, 2)) + '</pre></div>';
+                } else {
+                    detailsHtml += '<div>' + escapeHtml(conflict.details) + '</div>';
+                }
+            }
+            if (conflict.date_conflit) {
+                detailsHtml += '<div><strong>Date:</strong> ' + escapeHtml(conflict.date_conflit) + '</div>';
+            }
+            
+            html += '<tr>';
+            html += '<td><span class="conflict-badge ' + typeClass + '">' + typeLabel + '</span></td>';
+            html += '<td><code>' + escapeHtml(id) + '</code></td>';
+            html += '<td><strong>' + escapeHtml(name) + '</strong></td>';
+            html += '<td class="conflict-details-preview">' + (detailsHtml || '<em class="text-muted">Aucun détail supplémentaire</em>') + '</td>';
+            html += '</tr>';
+        });
+        
+        html += '</tbody>';
+        html += '</table>';
+        html += '</div>';
+        
+        html += '<div class="conflict-actions">';
+        html += '<button class="btn-view-conflicts" onclick="window.open(\'' + appUrl('admin/conflicts.php') + '\', \'_blank\')">';
+        html += '<i class="fas fa-external-link-alt"></i> Voir tous les conflits sur le serveur';
+        html += '</button>';
+        html += '</div>';
+        
+        html += '</div>';
+        return html;
+    }
+
     function buildSyncFeedbackHtml(mode, data, serverIp) {
         const payload = data && data.data ? data.data : {};
 
@@ -721,28 +983,89 @@ include '../../includes/header.php';
             const targetUrl = payload.target_url || data.target_url || serverIp;
             return `
                 <div style="text-align:left; line-height:1.6;">
-                    <div><strong>Serveur saisi :</strong> ${escapeHtml(serverIp)}</div>
+                    <div><strong>IP Serveur :</strong> ${escapeHtml(serverIp)}</div>
                     <div><strong>Point de réception :</strong> ${escapeHtml(targetUrl)}</div>
-                    <div style="margin-top:10px;">La connexion avec le serveur distant est opérationnelle.</div>
+                    <div style="margin-top:10px;">La connexion avec le serveur distant est disponible.</div>
+                    <!-- Message de redirection supprimé -->
+                    </div>
                 </div>
             `;
         }
 
         const sent = payload.sent || {};
         const stats = payload.stats || {};
+        const pendingConflicts = toSyncCount(payload.pending_conflicts || 0);
+        const conflictsList = payload.conflicts_list || payload.conflicts || [];
         const equipesCount = toSyncCount(sent.equipes ?? (stats.equipes && stats.equipes.recus) ?? stats.equipes ?? 0);
         const controlesCount = toSyncCount(sent.controles ?? (stats.controles && stats.controles.recus) ?? stats.controles ?? 0);
         const summary = payload.summary || data.message || 'Opération terminée.';
+        
+        let rapportHtml = '';
+        
+        // Générer le rapport de conflits UNIQUEMENT s'il y a des conflits
+        if (pendingConflicts > 0 && conflictsList.length > 0) {
+            rapportHtml = buildConflictReportHtml(conflictsList);
+        } else if (pendingConflicts > 0) {
+            // Si le serveur signale des conflits mais n'envoie pas la liste détaillée
+            rapportHtml = `
+                <div class="conflict-report">
+                    <div class="conflict-report-header">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <h4>⚠️ Conflits détectés</h4>
+                    </div>
+                    <div class="conflict-summary">
+                        <div class="conflict-summary-item">
+                            <span class="conflict-summary-label">Nombre de conflits :</span>
+                            <span class="conflict-summary-value">${pendingConflicts}</span>
+                        </div>
+                    </div>
+                    <div class="conflict-actions">
+                        <button class="btn-view-conflicts" onclick="window.open('${appUrl('admin/conflicts.php')}', '_blank')">
+                            <i class="fas fa-external-link-alt"></i> Voir les conflits sur le serveur
+                        </button>
+                    </div>
+                </div>
+            `;
+        }
 
         return `
-            <div style="text-align:left; line-height:1.6;">
-                <div>${escapeHtml(summary)}</div>
-                <ul style="margin:10px 0 0 18px; padding:0;">
-                    <li><strong>Membres d'équipe synchronisés :</strong> ${equipesCount}</li>
-                    <li><strong>Contrôles synchronisés :</strong> ${controlesCount}</li>
-                </ul>
+            <div style="text-align:left; line-height:1.6; max-height: 70vh; overflow-y: auto;">
+                <div><strong>Résumé :</strong> ${escapeHtml(summary)}</div>
+                <div style="margin: 10px 0;">
+                    <div><i class="fas fa-users"></i> <strong>Membres d'équipe synchronisés :</strong> ${equipesCount}</div>
+                    <div><i class="fas fa-clipboard-check"></i> <strong>Contrôles synchronisés :</strong> ${controlesCount}</div>
+                </div>
+                ${rapportHtml}
+                <!-- Message de redirection supprimé -->
+                </div>
             </div>
         `;
+    }
+
+    // Helper pour obtenir l'URL de l'application
+    function appUrl(path) {
+        const baseUrl = window.location.origin + window.location.pathname.replace(/\/modules\/controles\/[^/]*$/, '');
+        return baseUrl + path;
+    }
+
+    function redirectToListeWithDelay(delay = 3000) {
+        let countdown = delay / 1000;
+        const countdownElement = document.getElementById('redirectCountdown');
+        
+        const interval = setInterval(() => {
+            countdown--;
+            if (countdownElement) {
+                countdownElement.textContent = countdown;
+            }
+            if (countdown <= 0) {
+                clearInterval(interval);
+                window.location.href = redirectUrl;
+            }
+        }, 1000);
+        
+        setTimeout(() => {
+            window.location.href = redirectUrl;
+        }, delay);
     }
 
     async function requestSync(mode) {
@@ -755,6 +1078,8 @@ include '../../includes/header.php';
                 text: 'Aucun membre d\'équipe ni contrôle n\'est actuellement en attente de synchronisation.',
                 confirmButtonText: 'Fermer'
             });
+            // Redirection après fermeture de la popup
+            redirectToListeWithDelay(1000);
             return;
         }
 
@@ -762,9 +1087,9 @@ include '../../includes/header.php';
             icon: 'question',
             title: 'Adresse du serveur',
             input: 'text',
-            inputLabel: 'Saisissez l\'IP ou l\'URL de la machine serveur.',
+            inputLabel: 'Saisissez l\'IP de la machine serveur.',
             inputValue: defaultSavedServerIp,
-            inputPlaceholder: 'Ex: http://192.168.1.107/ctr-net-fardc_active_front_web',
+            inputPlaceholder: 'Ex: 192.168.1.107',
             showCancelButton: true,
             confirmButtonText: mode === 'test' ? 'Tester' : 'Synchroniser',
             cancelButtonText: 'Annuler',
@@ -802,12 +1127,15 @@ include '../../includes/header.php';
                 });
 
                 setConnectionButtonState('success');
-                Swal.fire({
+                await Swal.fire({
                     icon: 'success',
                     title: 'Connexion établie',
                     html: buildSyncFeedbackHtml('test', data, serverIp),
-                    confirmButtonText: 'Fermer'
+                    confirmButtonText: 'Fermer',
+                    timer: 3000,
+                    timerProgressBar: true
                 });
+                // Suppression de la redirection automatique après test de connexion
                 return;
             }
 
@@ -837,7 +1165,11 @@ include '../../includes/header.php';
 
             const data = await streamSyncRequest(serverIp);
             const payload = data && data.data ? data.data : {};
-            const isNoData = payload.sync_state === 'no_data';
+            const syncState = payload.sync_state || '';
+            const isNoData = syncState === 'no_data';
+            const isAlreadySynced = syncState === 'already_synced';
+            const hasConflictsPending = syncState === 'conflicts_pending';
+            const pendingConflicts = toSyncCount(payload.pending_conflicts || 0);
 
             if (isNoData) {
                 hideSyncProgress();
@@ -845,26 +1177,59 @@ include '../../includes/header.php';
                 await new Promise((resolve) => window.setTimeout(resolve, 2000));
             }
 
-            Swal.fire({
-                icon: isNoData ? 'info' : 'success',
-                title: isNoData ? 'Aucune donnée à synchroniser' : 'Synchronisation terminée',
-                html: buildSyncFeedbackHtml('sync', data, serverIp),
-                confirmButtonText: 'Fermer'
-            }).then(() => {
-                if (!isNoData) {
-                    window.location.reload();
-                }
+            // Déterminer le titre et l'icône en fonction des conflits
+            let icon = 'success';
+            let title = 'Synchronisation terminée';
+            let width = '700px';
+            
+            if (isNoData) {
+                icon = 'info';
+                title = 'Aucune donnée à synchroniser';
+                width = '500px';
+            } else if (hasConflictsPending && pendingConflicts > 0) {
+                icon = 'warning';
+                title = '📊 Rapport de synchronisation - Conflits détectés';
+                width = '900px';
+            } else if (isAlreadySynced) {
+                icon = 'info';
+                title = 'Données déjà synchronisées';
+                width = '500px';
+            }
+
+            const feedbackHtml = buildSyncFeedbackHtml('sync', data, serverIp);
+            
+            await Swal.fire({
+                icon: 'success',
+                title: 'Synchronisation terminée',
+                html: feedbackHtml,
+                confirmButtonText: 'Fermer',
+                timer: 3000,
+                timerProgressBar: true,
+                width: width,
+                customClass: {
+                    popup: 'conflict-report-popup'
+                },
+                showConfirmButton: true,
+                allowOutsideClick: false
             });
+            // Suppression de la redirection automatique après synchronisation
+            
         } catch (error) {
             if (mode === 'test') {
                 setConnectionButtonState('error');
             }
 
-            Swal.fire({
+            await Swal.fire({
                 icon: 'error',
                 title: mode === 'test' ? 'Connexion impossible' : 'Erreur de synchronisation',
-                text: error.message || 'Impossible de joindre le service de synchronisation.'
+                text: error.message || 'Impossible de joindre le service de synchronisation.',
+                confirmButtonText: 'Fermer'
             });
+            
+            // Redirection même en cas d'erreur
+            if (mode === 'sync') {
+                redirectToListeWithDelay(2000);
+            }
         } finally {
             if (mode === 'sync') {
                 stopSyncProgress();
@@ -892,3 +1257,29 @@ include '../../includes/header.php';
 </script>
 
 <?php include '../../includes/footer.php'; ?>
+<?php include 'sync_conflict_modal.php'; ?>
+<script src="modules/controles/sync_conflict.js"></script>
+<script>
+// Exemple d'utilisation lors de la synchro
+async function handleSyncConflict(id, localData) {
+    const response = await fetch('http://[IP_SERVEUR_CENTRAL]/api/sync_conflict.php?id=' + id, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(localData)
+    });
+    const res = await response.json();
+    if (res.conflict) {
+        showSyncConflictModal(res.client, res.server, async (choice, data) => {
+            // Ici, envoyer la version choisie à l'API pour validation
+            await fetch('http://[IP_SERVEUR_CENTRAL]/api/sync_conflict.php?id=' + id + '&resolve=1', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+            // Rafraîchir la liste ou notifier l'utilisateur
+        });
+    } else {
+        // Pas de conflit, continuer la synchro
+    }
+}
+</script>

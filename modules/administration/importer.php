@@ -235,17 +235,7 @@ function importerUtilisateurs($data)
 ?>
 
 <!-- Scripts locaux -->
-<script src="../../assets/js/jquery-3.6.0.min.js"></script>
-<script src="../../assets/js/bootstrap.bundle.min.js"></script>
-<script src="../../assets/js/jquery.dataTables.min.js"></script>
-<script src="../../assets/js/dataTables.bootstrap4.min.js"></script>
-<script src="../../assets/js/sweetalert2.all.min.js"></script>
-<script src="../../assets/js/xlsx.full.min.js"></script>
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
-<link rel="stylesheet" href="/ctr.net-fardc/assets/css/fonts.css">
-
-<style>
-:root {
+<script src="../../assets/js/
     --primary: #2e7d32;
     --primary-dark: #1b5e20;
     --success: #28a745;

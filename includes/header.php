@@ -224,14 +224,31 @@ if (isset($_SESSION['user_id'])) {
             font-size: 14px;
         }
 
+        /* === COULEURS VERTES MILITAIRES === */
+        :root {
+            --vert-militaire: #2e7d32;
+            --vert-militaire-fonce: #1b5e20;
+            --vert-kaki: #5C7A4D;
+            --vert-kaki-fonce: #3F5A2E;
+            --vert-kaki-clair: #6B8A5A;
+        }
+
         /* === HARMONISATION GLOBALE DES TABLEAUX === */
         .table-responsive,
         .dataTables_wrapper,
-        .dataTables_scroll {
+        .dataTables_scroll,
+        .dataTables_scrollHead,
+        .dataTables_scrollHeadInner,
+        .dataTables_scrollBody {
             width: 100%;
-            overflow-x: auto;
-            overflow-y: visible;
+            overflow-y: visible !important;
+            max-height: none !important;
             -webkit-overflow-scrolling: touch;
+        }
+
+        .table-responsive,
+        .dataTables_scrollBody {
+            overflow-x: auto !important;
         }
 
         .table-responsive table,
@@ -270,9 +287,9 @@ if (isset($_SESSION['user_id'])) {
             vertical-align: middle !important;
             text-transform: uppercase;
             letter-spacing: 0.02em;
-            white-space: normal !important;
-            word-break: break-word !important;
-            overflow-wrap: anywhere !important;
+            white-space: nowrap !important;
+            word-break: normal !important;
+            overflow-wrap: normal !important;
         }
 
         .table-responsive table thead th:first-child,
@@ -303,22 +320,7 @@ if (isset($_SESSION['user_id'])) {
             border-radius: 0 10px 10px 0 !important;
         }
 
-        .dataTables_wrapper table.dataTable thead tr:not(:first-child) {
-            visibility: collapse !important;
-            height: 0 !important;
-        }
-
-        .dataTables_wrapper table.dataTable thead tr:not(:first-child) th,
-        .dataTables_wrapper table.dataTable thead tr:not(:first-child) td,
-        .dataTables_wrapper table.dataTable thead .dataTables_sizing {
-            padding-top: 0 !important;
-            padding-bottom: 0 !important;
-            border: 0 !important;
-            height: 0 !important;
-            line-height: 0 !important;
-            overflow: hidden !important;
-            background: transparent !important;
-        }
+        /* Ne pas masquer les lignes techniques DataTables : cela fausse le calcul des largeurs. */
 
         .table-responsive table tbody tr,
         table.dataTable tbody tr,
@@ -456,7 +458,28 @@ if (isset($_SESSION['user_id'])) {
         .dataTables_scrollBody {
             overflow-x: auto !important;
             overflow-y: visible !important;
+            max-height: none !important;
+            height: auto !important;
             border-radius: 10px;
+        }
+
+        @media (max-width: 991.98px) {
+            .table-responsive table tbody td[data-label]::before,
+            table.dataTable tbody td[data-label]::before,
+            .dataTables_wrapper table tbody td[data-label]::before,
+            .table-militaires tbody td[data-label]::before,
+            .table-users tbody td[data-label]::before,
+            .table-logs tbody td[data-label]::before,
+            table.table tbody td[data-label]::before {
+                content: attr(data-label);
+                display: block;
+                margin-bottom: 4px;
+                color: #2e7d32;
+                font-size: 0.72rem;
+                font-weight: 700;
+                letter-spacing: 0.02em;
+                text-transform: uppercase;
+            }
         }
 
         table.dataTable.no-footer,
@@ -464,10 +487,10 @@ if (isset($_SESSION['user_id'])) {
             border-bottom: none !important;
         }
 
-        /* === NOUVELLES COULEURS : VERT KAKI MILITAIRE === */
+        /* === HEADER NAVBAR - VERT === */
         .main-header.navbar {
-            background: linear-gradient(135deg, #5C7A4D 0%, #3F5A2E 100%);
-            border: none;
+            background: linear-gradient(135deg, var(--vert-kaki) 0%, var(--vert-kaki-fonce) 100%) !important;
+            border: none !important;
             box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
         }
 
@@ -482,14 +505,23 @@ if (isset($_SESSION['user_id'])) {
             border-radius: 8px;
         }
 
-        /* === SIDEBAR : même vert kaki === */
+        /* === SIDEBAR - FORCER LA COULEUR VERTE === */
+        .main-sidebar,
+        .main-sidebar::before,
+        .sidebar-dark-primary,
+        .sidebar-dark-primary .nav-sidebar > .nav-item > .nav-link,
+        .sidebar-dark-primary .nav-sidebar > .nav-item > .nav-link.active,
+        .sidebar-dark-primary .nav-sidebar > .nav-item > .nav-link:hover {
+            background: linear-gradient(135deg, var(--vert-kaki) 0%, var(--vert-kaki-fonce) 100%) !important;
+        }
+
         .main-sidebar {
-            background: linear-gradient(135deg, #5C7A4D 0%, #3F5A2E 100%);
             box-shadow: 5px 0 15px rgba(0, 0, 0, 0.1);
         }
 
+        /* Supprimer les overrides par défaut d'AdminLTE */
         .sidebar-dark-primary {
-            background: transparent !important;
+            background: linear-gradient(135deg, var(--vert-kaki) 0%, var(--vert-kaki-fonce) 100%) !important;
         }
 
         .brand-link {
@@ -497,7 +529,7 @@ if (isset($_SESSION['user_id'])) {
             padding: 0 15px;
             display: flex;
             align-items: center;
-            background: rgba(255, 255, 255, 0.15);
+            background: rgba(255, 255, 255, 0.15) !important;
             border-bottom: 1px solid rgba(255, 255, 255, 0.2);
             gap: 10px;
         }
@@ -515,38 +547,140 @@ if (isset($_SESSION['user_id'])) {
         }
 
         .brand-link .brand-text {
-            color: white;
+            color: white !important;
             font-weight: 600;
             font-size: 1.1rem;
             text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
         }
 
-        /* Navigation sidebar */
+        /* Navigation sidebar - FORCER COULEUR VERTE */
         .nav-sidebar .nav-item .nav-link {
-            color: rgba(255, 255, 255, 0.9);
+            color: rgba(255, 255, 255, 0.9) !important;
             border-radius: 10px;
             margin: 2px 10px;
             transition: all 0.3s;
         }
 
         .nav-sidebar .nav-item .nav-link:hover {
-            background: #3F5A2E;
+            background: var(--vert-kaki-fonce) !important;
             transform: translateX(5px);
-            color: white;
+            color: white !important;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
         }
 
         .nav-sidebar .nav-item .nav-link.active {
-            background: white;
-            color: #5C7A4D !important;
+            background: white !important;
+            color: var(--vert-kaki) !important;
             box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
         }
 
+        .nav-sidebar .nav-item .nav-link.active i,
+        .nav-sidebar .nav-item .nav-link.active p {
+            color: var(--vert-kaki) !important;
+        }
+
         .nav-treeview {
-            background: rgba(0, 0, 0, 0.15);
+            background: rgba(0, 0, 0, 0.15) !important;
             border-radius: 10px;
             margin: 5px 10px !important;
             padding: 5px 0 !important;
+        }
+
+        .nav-treeview .nav-item .nav-link {
+            color: rgba(255, 255, 255, 0.85) !important;
+        }
+
+        .nav-treeview .nav-item .nav-link:hover {
+            background: var(--vert-kaki-fonce) !important;
+            color: white !important;
+        }
+
+        .nav-treeview .nav-item .nav-link.active {
+            background: white !important;
+            color: var(--vert-kaki) !important;
+        }
+
+        .nav-icon {
+            transition: all 0.3s;
+        }
+
+        .nav-item:hover .nav-icon {
+            transform: scale(1.1);
+        }
+
+        /* === SIDEBAR USER PROFILE === */
+        .sidebar-user-profile {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px 15px 10px 15px;
+            margin: 10px 15px 5px 15px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            transition: all 0.3s ease;
+        }
+
+        .sidebar-user-profile:hover {
+            background: rgba(255, 255, 255, 0.15);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        .sidebar-user-profile .profile-avatar {
+            width: 90px;
+            height: 90px;
+            border-radius: 50%;
+            overflow: hidden;
+            border: 3px solid white;
+            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.3);
+            margin-bottom: 15px;
+            transition: all 0.3s ease;
+        }
+
+        .sidebar-user-profile:hover .profile-avatar {
+            transform: scale(1.05);
+        }
+
+        .sidebar-user-profile .profile-avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .sidebar-user-profile .profile-info {
+            text-align: center;
+            width: 100%;
+        }
+
+        .sidebar-user-profile .profile-info .profile-name {
+            color: white;
+            font-weight: 700;
+            font-size: 1.1rem;
+            text-decoration: none;
+            display: block;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .sidebar-user-profile .profile-info .profile-name:hover {
+            text-decoration: underline;
+            opacity: 0.9;
+        }
+
+        .sidebar-user-profile .profile-info .profile-role {
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 0.85rem;
+            background: rgba(0, 0, 0, 0.2);
+            padding: 4px 10px;
+            border-radius: 20px;
+            margin-top: 5px;
+            display: inline-block;
+        }
+
+        .sidebar-divider {
+            border: none;
+            height: 2px;
+            background: linear-gradient(to right, transparent, rgba(255, 255, 255, 0.3), transparent);
+            margin: 5px 20px 15px 20px;
         }
 
         /* Content Wrapper */
@@ -662,110 +796,6 @@ if (isset($_SESSION['user_id'])) {
             border: 2px solid white;
         }
 
-        /* === STYLES AMÉLIORÉS POUR LE SIDEBAR === */
-        .sidebar-user-profile {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            padding: 20px 15px 10px 15px;
-            margin: 10px 15px 5px 15px;
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 16px;
-            transition: all 0.3s ease;
-        }
-
-        .sidebar-user-profile:hover {
-            background: rgba(255, 255, 255, 0.15);
-            transform: translateY(-2px);
-            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
-        }
-
-        .sidebar-user-profile .profile-avatar {
-            width: 90px;
-            height: 90px;
-            border-radius: 50%;
-            overflow: hidden;
-            border: 3px solid white;
-            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.3);
-            margin-bottom: 15px;
-            transition: all 0.3s ease;
-        }
-
-        .sidebar-user-profile:hover .profile-avatar {
-            transform: scale(1.05);
-            border-color: rgba(255, 255, 255, 0.9);
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4);
-        }
-
-        .sidebar-user-profile .profile-avatar img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            object-position: center;
-            display: block;
-        }
-
-        .sidebar-user-profile .profile-info {
-            text-align: center;
-            width: 100%;
-        }
-
-        .sidebar-user-profile .profile-info .profile-name {
-            color: white;
-            font-weight: 700;
-            font-size: 1.1rem;
-            margin-bottom: 4px;
-            text-decoration: none;
-            display: block;
-            transition: all 0.3s;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
-        }
-
-        .sidebar-user-profile .profile-info .profile-name:hover {
-            text-decoration: underline;
-            opacity: 0.9;
-        }
-
-        .sidebar-user-profile .profile-info .profile-role {
-            color: rgba(255, 255, 255, 0.8);
-            font-size: 0.85rem;
-            font-weight: 500;
-            display: block;
-            background: rgba(0, 0, 0, 0.2);
-            padding: 4px 10px;
-            border-radius: 20px;
-            margin-top: 5px;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            backdrop-filter: blur(5px);
-        }
-
-        /* Ligne de séparation améliorée */
-        .sidebar-divider {
-            border: none;
-            height: 2px;
-            background: linear-gradient(to right, transparent, rgba(255, 255, 255, 0.3), transparent);
-            margin: 5px 20px 15px 20px;
-            position: relative;
-        }
-
-        .sidebar-divider::after {
-            content: '';
-            position: absolute;
-            top: -2px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 40px;
-            height: 4px;
-            background: white;
-            border-radius: 2px;
-            opacity: 0.3;
-        }
-
         /* Style pour le bouton de déconnexion direct */
         .navbar-nav .nav-link.logout-link {
             display: flex;
@@ -788,35 +818,7 @@ if (isset($_SESSION['user_id'])) {
             font-size: 1.1rem;
         }
 
-        /* Responsive */
-        @media (max-width: 767px) {
-            .sidebar-user-profile .profile-avatar {
-                width: 70px;
-                height: 70px;
-            }
-
-            .sidebar-user-profile .profile-info .profile-name {
-                font-size: 0.95rem;
-            }
-
-            .sidebar-user-profile .profile-info .profile-role {
-                font-size: 0.75rem;
-            }
-
-            .content-header h1 {
-                font-size: 1.5rem;
-            }
-
-            .navbar-nav .nav-link.logout-link span {
-                display: none;
-            }
-
-            .navbar-nav .nav-link.logout-link {
-                padding: 8px 10px;
-            }
-        }
-
-        /* Effet de vague - RÉTABLI (état initial) */
+        /* Effet de vague */
         .main-sidebar::before {
             content: '';
             position: absolute;
@@ -827,14 +829,6 @@ if (isset($_SESSION['user_id'])) {
             background: linear-gradient(135deg, rgba(92, 122, 77, 0.8) 0%, rgba(63, 90, 46, 0.8) 100%);
             pointer-events: none;
             z-index: -1;
-        }
-
-        .nav-icon {
-            transition: all 0.3s;
-        }
-
-        .nav-item:hover .nav-icon {
-            transform: scale(1.1);
         }
 
         .nav-link {
@@ -955,7 +949,23 @@ if (isset($_SESSION['user_id'])) {
             box-shadow: 0 5px 20px rgba(255, 193, 7, 0.3);
         }
 
-        @media (max-width: 480px) {
+        @keyframes fadeOut {
+            from { opacity: 1; }
+            to { opacity: 0; }
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .sidebar-user-profile .profile-avatar {
+                width: 70px;
+                height: 70px;
+            }
+            .content-header h1 {
+                font-size: 1.5rem;
+            }
+            .navbar-nav .nav-link.logout-link span {
+                display: none;
+            }
             .toast-message {
                 min-width: 260px;
                 font-size: 0.9rem;

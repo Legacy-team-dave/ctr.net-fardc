@@ -1,11 +1,11 @@
 {
-  "enabled": false,
-  "smtpHost": "smtp.votre-domaine.tld",
+  "enabled": true,
+  "smtpHost": "smtp.gmail.com",
   "smtpPort": 587,
   "useSsl": true,
-  "smtpUser": "expediteur@votre-domaine.tld",
-  "smtpPassword": "CHANGE_ME",
-  "from": "expediteur@votre-domaine.tld",
-  "to": "destinataire@votre-domaine.tld",
+  "smtpUser": "votre.email@gmail.com",
+  "smtpPassword": "mot-de-passe-application",
+  "from": "votre.email@gmail.com",
+  "to": "destinataire@domaine.com",
   "subjectPrefix": "[CTR.NET-FARDC]"
 }

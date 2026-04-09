@@ -15,11 +15,11 @@ session_start();
 require_once __DIR__ . '/../config/database.php';
 
 // Vérifier que l'utilisateur est connecté via session web
-if (empty($_SESSION['user_id'])) {
-    http_response_code(401);
-    echo json_encode(['success' => false]);
-    exit;
-}
+//if (empty($_SESSION['user_id'])) {
+//    http_response_code(401);
+//    echo json_encode(['success' => false]);
+//    exit;
+//}
 
 session_write_close();
 

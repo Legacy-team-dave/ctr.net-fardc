@@ -1,3 +1,4 @@
+<!DOCTYPE html>
 <?php
 // Définir l'en-tête UTF-8 pour la page avec BOM
 header('Content-Type: text/html; charset=utf-8');
@@ -725,7 +726,8 @@ $timestamp = date('Y-m-d_H\hi');
     }
 
     .dataTables_scrollBody {
-        overflow: visible !important;
+        overflow-x: auto !important;
+        overflow-y: visible !important;
         border-radius: 10px;
     }
 
@@ -1348,6 +1350,8 @@ $timestamp = date('Y-m-d_H\hi');
 
 <?php include '../../includes/footer.php'; ?>
 
+<!-- JQuery en premier -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <!-- Scripts supplémentaires (exports) -->
 <script src="../../assets/js/xlsx.full.min.js"></script>
 <script src="../../assets/fontawesome/js/all.min.js"></script>
@@ -1430,8 +1434,14 @@ $timestamp = date('Y-m-d_H\hi');
             return index >= 0 ? index : 999;
         };
 
-        // Initialisation DataTables
-        const table = $('#table-militaires').DataTable({
+        // Initialisation DataTables (instance unique)
+        const tableSelector = '#table-militaires';
+        if ($.fn.dataTable.isDataTable(tableSelector)) {
+            $(tableSelector).DataTable().clear().destroy();
+            $(tableSelector + ' tbody').empty();
+        }
+
+        const table = $(tableSelector).DataTable({
             language: {
                 url: '//cdn.datatables.net/plug-ins/1.11.5/i18n/fr-FR.json',
                 search: '<i class="fas fa-search"></i>',
@@ -1574,13 +1584,14 @@ $timestamp = date('Y-m-d_H\hi');
             }],
             pageLength: 10,
             lengthMenu: [10, 25, 50, 100],
-            scrollX: false,
-            scrollY: false,
-            scrollCollapse: false,
-            autoWidth: true,
+            autoWidth: false,
             initComplete: function() {
+                const api = this.api();
                 $('.datatable-bottom').css({
                     'row-gap': '10px'
+                });
+                window.requestAnimationFrame(function() {
+                    api.columns.adjust();
                 });
             },
             drawCallback: function() {}

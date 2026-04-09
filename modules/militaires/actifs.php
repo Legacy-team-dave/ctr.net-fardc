@@ -1,3 +1,4 @@
+<!DOCTYPE html>
 <?php
 header('Content-Type: text/html; charset=utf-8');
 echo "\xEF\xBB\xBF";
@@ -647,8 +648,8 @@ body {
 }
 
 .dataTables_scrollBody {
-    overflow: visible !important;
-    border-radius: 10px;
+        overflow-x: auto !important;
+        overflow-y: visible !important;
 }
 
 .col-lg-2-4 {
@@ -1045,11 +1046,9 @@ body {
     </div>
 </div>
 
-<!-- Scripts avec CDN -->
+<!-- Scripts complémentaires -->
+<!-- JQuery en premier -->
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
-<script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
-<script src="https://cdn.datatables.net/1.11.5/js/dataTables.bootstrap5.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -1122,7 +1121,13 @@ $(document).ready(function() {
         return index >= 0 ? index : 999;
     };
 
-    const table = $('#table-militaires').DataTable({
+    const tableSelector = '#table-militaires';
+    if ($.fn.dataTable.isDataTable(tableSelector)) {
+        $(tableSelector).DataTable().clear().destroy();
+        $(tableSelector + ' tbody').empty();
+    }
+
+    const table = $(tableSelector).DataTable({
         language: {
             url: '//cdn.datatables.net/plug-ins/1.11.5/i18n/fr-FR.json',
             search: '<i class="fas fa-search"></i>',
@@ -1259,13 +1264,14 @@ $(document).ready(function() {
         }],
         pageLength: 10,
         lengthMenu: [10, 25, 50, 100],
-        scrollX: false,
-        scrollY: false,
-        scrollCollapse: false,
-        autoWidth: true,
+        autoWidth: false,
         initComplete: function() {
+            const api = this.api();
             $('.datatable-bottom').css({
                 'row-gap': '10px'
+            });
+            window.requestAnimationFrame(function() {
+                api.columns.adjust();
             });
         },
         drawCallback: function() {}

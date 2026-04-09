@@ -81,7 +81,6 @@ $export_fields = [
     <!-- Bootstrap 5 CSS (CDN) -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- DataTables Bootstrap 5 theme (CDN) version alignée avec JS -->
-    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.4/css/dataTables.bootstrap5.min.css">
     <!-- SweetAlert2 CSS (CDN) -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
     <!-- Styles personnalisés -->
@@ -1006,23 +1005,7 @@ $export_fields = [
         </div>
     </div>
 
-    <!-- Scripts -->
-    <!-- jQuery (CDN) -->
-    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
-    <!-- Bootstrap 5 JS (CDN) -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
-    <!-- DataTables (CDN) version 1.13.4 -->
-    <script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
-    <script src="https://cdn.datatables.net/1.13.4/js/dataTables.bootstrap5.min.js"></script>
-    <!-- SweetAlert2 est déjà chargé dans header.php, donc on ne le recharge pas ici -->
-    <!-- Librairies d'export (CDN) -->
-    <script src="https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.4/jspdf.plugin.autotable.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-
-    <script>
-    $(document).ready(function() {
+    <!-- Scripts communs déjà chargés via includes/footer.php
         // État des champs sélectionnés pour l'export
         let selectedExportFields = <?php echo json_encode(array_map(function ($field) {
                                             return $field['enabled'];

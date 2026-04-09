@@ -675,19 +675,20 @@ $display_membres = $membres;
         .table-responsive.fixed-team-table {
             border: none;
             border-radius: 10px;
-            overflow-x: auto;
+            overflow-x: visible;
             overflow-y: visible;
             width: 100%;
+            max-height: none;
             background: transparent;
         }
 
         .membres-table {
             width: 100%;
-            min-width: 100%;
+            min-width: 0;
             border-collapse: separate;
             border-spacing: 0 6px;
             font-size: 0.8rem;
-            table-layout: fixed !important;
+            table-layout: auto !important;
             background: transparent;
         }
 
@@ -744,24 +745,6 @@ $display_membres = $membres;
         .membres-table tbody td:last-child {
             border-radius: 0 10px 10px 0;
         }
-
-        .membres-table th:nth-child(1),
-        .membres-table td:nth-child(1) { width: 12%; }
-
-        .membres-table th:nth-child(2),
-        .membres-table td:nth-child(2) { width: 27%; }
-
-        .membres-table th:nth-child(3),
-        .membres-table td:nth-child(3) { width: 13%; }
-
-        .membres-table th:nth-child(4),
-        .membres-table td:nth-child(4) { width: 22%; }
-
-        .membres-table th:nth-child(5),
-        .membres-table td:nth-child(5) { width: 18%; }
-
-        .membres-table th:nth-child(6),
-        .membres-table td:nth-child(6) { width: 8%; }
 
         .btn-delete {
             background: #ef5350;
@@ -958,7 +941,7 @@ $display_membres = $membres;
                     <h4><i class="fas fa-filter"></i> Filtres du tableau équipe <span class="badge-count team-visible-count"><?= $initial_team_count ?></span></h4>
                     <form method="get" class="filters-grid" id="teamFilterForm">
                         <div class="form-group">
-                            <label for="role_filter">Rôle</label>
+                            <label for="role_filter"><i class="fas fa-user-tag"></i> Rôle</label>
                             <select id="role_filter" name="role">
                                 <option value="">Tous les rôles</option>
                                 <?php foreach ($roles_equipe as $role_option): ?>
@@ -967,7 +950,7 @@ $display_membres = $membres;
                             </select>
                         </div>
                         <div class="form-group">
-                            <label for="source_filter">Source locale</label>
+                            <label for="source_filter"><i class="fas fa-map-pin"></i> Source locale</label>
                             <input type="text" id="source_filter" value="<?= htmlspecialchars($local_source_label) ?>" readonly>
                         </div>
                     </form>
@@ -1037,13 +1020,7 @@ $display_membres = $membres;
         </div>
     </div>
 
-    <script src="../../assets/js/jquery-3.6.0.min.js"></script>
-    <script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
-    <script src="https://cdn.datatables.net/1.11.5/js/dataTables.bootstrap5.min.js"></script>
-    <script>
-        (function() {
-            function showToast(message, type = 'success') {
-                const toastContainer = document.getElementById('toastContainer');
+    <script     const toastContainer = document.getElementById('toastContainer');
                 if (!toastContainer || !message) {
                     return;
                 }
@@ -1141,7 +1118,7 @@ $display_membres = $membres;
                         dom: 'rt<"datatable-bottom d-flex justify-content-between align-items-center flex-wrap gap-2 mt-3"ip>',
                         pageLength: 10,
                         lengthMenu: [10, 25, 50, 100],
-                        autoWidth: false,
+                        autoWidth: true,
                         responsive: false,
                         scrollX: false,
                         order: [],

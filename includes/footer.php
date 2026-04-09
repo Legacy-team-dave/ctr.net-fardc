@@ -130,47 +130,9 @@ if (window.jQuery && $.fn.dataTable) {
             $filterDiv.data('ctr-enhanced', true);
         },
         cleanupDuplicateHeaderRows(target = null) {
-            const $elements = target ? $(target) : $('table.dataTable');
-
-            $elements.each(function () {
-                const $source = $(this);
-                const $tables = $source.is('table') ? $source : $source.find('table.dataTable');
-
-                $tables.each(function () {
-                    const $table = $(this);
-                    const $wrapper = $table.closest('.dataTables_wrapper');
-                    if (!$wrapper.length) {
-                        return;
-                    }
-
-                    $wrapper.find('table.dataTable thead tr').each(function (index) {
-                        if (index === 0) {
-                            return;
-                        }
-
-                        $(this).css({
-                            visibility: 'collapse',
-                            height: 0
-                        }).find('th, td').css({
-                            paddingTop: 0,
-                            paddingBottom: 0,
-                            border: 0,
-                            height: 0,
-                            lineHeight: 0,
-                            background: 'transparent'
-                        });
-                    });
-
-                    $wrapper.find('thead .dataTables_sizing').css({
-                        height: 0,
-                        minHeight: 0,
-                        overflow: 'hidden',
-                        padding: 0,
-                        margin: 0,
-                        border: 0
-                    });
-                });
-            });
+            // Conserver le calcul natif de DataTables pour éviter tout décalage
+            // entre les largeurs d'en-tête et les cellules du tableau.
+            return;
         },
         bindSearchHighlight(table, tableSelector, excludedIndexes = []) {
             if (!tableSelector || !table) {
@@ -259,6 +221,26 @@ if (window.jQuery && $.fn.dataTable) {
             return;
         }
 
+        const dataTableApi = window.jQuery && $.fn.dataTable && $.fn.dataTable.isDataTable(table)
+            ? $(table).DataTable()
+            : null;
+
+        if (dataTableApi) {
+            let visibilityChanged = false;
+
+            hiddenIndexes.forEach((index) => {
+                const column = dataTableApi.column(index);
+                if (column && column.visible()) {
+                    column.visible(false, false);
+                    visibilityChanged = true;
+                }
+            });
+
+            if (visibilityChanged) {
+                dataTableApi.columns.adjust();
+            }
+        }
+
         Array.from(table.rows).forEach((row) => {
             hiddenIndexes.forEach((index) => {
                 if (row.cells[index]) {
@@ -266,6 +248,8 @@ if (window.jQuery && $.fn.dataTable) {
                 }
             });
         });
+
+        syncTableCellHeaders(table);
     }
 
     function getVisibleCells(row) {
@@ -283,6 +267,29 @@ if (window.jQuery && $.fn.dataTable) {
                 && !cell.classList.contains('d-none')
                 && computed.display !== 'none'
                 && computed.visibility !== 'collapse';
+        });
+    }
+
+    function syncTableCellHeaders(table) {
+        if (!table || !table.tHead || !table.tHead.rows.length) {
+            return;
+        }
+
+        const headerRow = table.tHead.rows[table.tHead.rows.length - 1];
+        const visibleHeaders = getVisibleCells(headerRow).map((cell) => getNormalizedHeaderText(cell));
+
+        Array.from(table.tBodies || []).forEach((tbody) => {
+            Array.from(tbody.rows || []).forEach((row) => {
+                const visibleCells = getVisibleCells(row);
+                visibleCells.forEach((cell, index) => {
+                    const headerText = visibleHeaders[index] || '';
+                    if (headerText) {
+                        cell.setAttribute('data-label', headerText);
+                    } else {
+                        cell.removeAttribute('data-label');
+                    }
+                });
+            });
         });
     }
 
@@ -318,26 +325,46 @@ if (window.jQuery && $.fn.dataTable) {
         });
     }
 
+    function removeTableScrollbars() {
+        document.querySelectorAll('.table-responsive, .dataTables_scrollBody').forEach((element) => {
+            element.style.overflowX = 'auto';
+            element.style.overflowY = 'visible';
+            element.style.maxHeight = 'none';
+
+            if (element.classList.contains('dataTables_scrollBody')) {
+                element.style.height = 'auto';
+            }
+        });
+    }
+
     function applyHiddenColumnVisibility() {
         document.querySelectorAll('table').forEach((table) => {
             hideTargetColumns(table);
+            syncTableCellHeaders(table);
             applyVisibleColumnRounding(table);
         });
     }
 
     function applyGlobalTableFixes(target = null) {
         applyHiddenColumnVisibility();
+        removeTableScrollbars();
         if (window.CTRDataTableHelpers && typeof window.CTRDataTableHelpers.cleanupDuplicateHeaderRows === 'function') {
             window.CTRDataTableHelpers.cleanupDuplicateHeaderRows(target || document.querySelectorAll('table.dataTable'));
         }
 
         if (target) {
             const tables = target instanceof NodeList || Array.isArray(target) ? target : [target];
-            Array.from(tables).forEach((table) => applyVisibleColumnRounding(table));
+            Array.from(tables).forEach((table) => {
+                syncTableCellHeaders(table);
+                applyVisibleColumnRounding(table);
+            });
             return;
         }
 
-        document.querySelectorAll('table').forEach((table) => applyVisibleColumnRounding(table));
+        document.querySelectorAll('table').forEach((table) => {
+            syncTableCellHeaders(table);
+            applyVisibleColumnRounding(table);
+        });
     }
 
     document.addEventListener('DOMContentLoaded', function () {

@@ -511,10 +511,12 @@ include '../../includes/header.php';
                 </div>
                 <div class="col-md-4">
                     <div class="sync-stat-card">
-                        <div class="sync-stat-icon sync-history"><i class="fas fa-history"></i></div>
+                        <div class="sync-stat-icon" style="background: linear-gradient(135deg, #d32f2f, #b71c1c);"><i class="fas fa-equals"></i></div>
                         <div class="sync-stat-info">
-                            <div class="sync-stat-value"><?= count($last_syncs) ?></div>
-                            <div class="sync-stat-label">Tentatives enregistrées</div>
+                            <div class="sync-stat-value" style="color: #d32f2f;">
+                                <?= (int) $pending_equipes + (int) $pending_controles ?>
+                            </div>
+                            <div class="sync-stat-label">Total à envoyer</div>
                         </div>
                     </div>
                 </div>

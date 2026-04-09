@@ -129,6 +129,10 @@ $export_fields = [
     font-size: 1.3rem;
 }
 
+.modern-card .card-header h3 i {
+    margin-right: 8px;
+}
+
 .modern-card .card-body {
     padding: 25px;
 }
@@ -147,6 +151,15 @@ $export_fields = [
     text-decoration: none;
 }
 
+.btn-modern i {
+    font-size: 0.9rem;
+}
+
+.btn-modern:hover {
+    transform: translateY(-2px);
+    text-decoration: none;
+}
+
 .btn-primary-modern {
     background: #ffc107;
     color: #333;
@@ -156,7 +169,7 @@ $export_fields = [
 .btn-primary-modern:hover {
     background: #2e7d32;
     color: white;
-    transform: translateY(-2px);
+    box-shadow: 0 6px 15px rgba(46, 125, 50, 0.4);
 }
 
 .btn-reset-modern {
@@ -166,6 +179,17 @@ $export_fields = [
     border-radius: 8px;
     padding: 8px 16px;
     width: 100%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    transition: all 0.3s;
+}
+
+.btn-reset-modern:hover {
+    background: #5a6268;
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(108, 117, 125, 0.3);
 }
 
 .export-buttons {
@@ -185,13 +209,29 @@ $export_fields = [
     align-items: center;
     gap: 5px;
     color: white;
+    transition: all 0.3s;
+    text-decoration: none;
+}
+
+.btn-export i {
+    font-size: 0.9rem;
 }
 
 .btn-export.csv { background: #28a745; }
+.btn-export.csv:hover { background: #218838; transform: translateY(-2px); }
+
 .btn-export.excel { background: #1e7e34; }
+.btn-export.excel:hover { background: #19692c; transform: translateY(-2px); }
+
 .btn-export.pdf { background: #dc3545; }
+.btn-export.pdf:hover { background: #c82333; transform: translateY(-2px); }
+
 .btn-export.zip { background: #9b59b6; }
+.btn-export.zip:hover { background: #8e44ad; transform: translateY(-2px); }
+
 .btn-export.choisir { background: #6c757d; }
+.btn-export.choisir:hover { background: #5a6268; transform: translateY(-2px); }
+
 .btn-export.sync { background: #17a2b8; }
 .btn-export.sync:hover { background: #138496; transform: translateY(-2px); }
 
@@ -200,6 +240,9 @@ $export_fields = [
     color: white;
     padding: 5px 12px;
     border-radius: 20px;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
 }
 
 .filters-row {
@@ -438,6 +481,7 @@ $export_fields = [
     width: 100%;
     height: 100%;
     background-color: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(5px);
 }
 
 .modal-champs-content {
@@ -448,6 +492,7 @@ $export_fields = [
     width: 90%;
     max-width: 700px;
     box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+    animation: slideDown 0.3s ease;
 }
 
 .modal-champs-header {
@@ -464,12 +509,17 @@ $export_fields = [
     margin: 0;
 }
 
+.modal-champs-header h4 i {
+    margin-right: 8px;
+}
+
 .modal-champs-close {
     background: none;
     border: none;
     font-size: 1.6rem;
     cursor: pointer;
     color: #6c757d;
+    transition: color 0.3s;
 }
 
 .modal-champs-close:hover {
@@ -484,6 +534,8 @@ $export_fields = [
     font-weight: 600;
     color: #495057;
     margin-bottom: 10px;
+    padding-bottom: 5px;
+    border-bottom: 1px solid #dee2e6;
 }
 
 .modal-champs-body .champs-grid {
@@ -499,6 +551,11 @@ $export_fields = [
     padding: 5px;
     background: #f8f9fa;
     border-radius: 5px;
+    transition: background 0.3s;
+}
+
+.modal-champs-body .champ-item:hover {
+    background: #e9ecef;
 }
 
 .modal-champs-body .champ-item.required {
@@ -526,6 +583,7 @@ $export_fields = [
     border: none;
     cursor: pointer;
     transition: all 0.3s;
+    font-weight: 500;
 }
 
 .modal-champs-footer .btn-annuler { background: #6c757d; color: white; }
@@ -533,12 +591,24 @@ $export_fields = [
 .modal-champs-footer .btn-confirmer { background: #2e7d32; color: white; }
 .modal-champs-footer .btn-confirmer:hover { background: #1b5e20; transform: translateY(-2px); }
 
+@keyframes slideDown {
+    from {
+        transform: translateY(-50px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
 @media (max-width: 768px) {
     .modern-card .card-header { flex-direction: column; align-items: flex-start; }
     .stats-container { flex-direction: column; }
     .filters-row { flex-direction: column; }
     .dataTables_wrapper .dataTables_filter { float: none; margin-bottom: 20px; }
     .dataTables_wrapper .dataTables_filter input { width: 100%; }
+    .modal-champs-content { width: 95%; margin: 10% auto; }
 }
 </style>
 
@@ -826,7 +896,6 @@ $(document).ready(function() {
                 'float': 'right'
             });
             
-            // Ajouter l'icône de recherche
             filterDiv.prepend('<i class="fas fa-search search-icon" style="color: #2e7d32; font-size: 1rem;"></i>');
             
             const searchLabel = filterDiv.find('label');
@@ -837,15 +906,12 @@ $(document).ready(function() {
                 'flex': '0 1 auto'
             });
             
-            // Supprimer l'icône existante
             searchLabel.find('i').remove();
             
-            // Supprimer le texte "Rechercher :"
             searchLabel.contents().filter(function() {
                 return this.nodeType === 3;
             }).remove();
             
-            // Ajouter le bouton Nouveau
             filterDiv.append(`
                 <div class="action-buttons">
                     <a href="ajouter.php" class="btn-modern btn-primary-modern">

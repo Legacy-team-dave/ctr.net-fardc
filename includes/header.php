@@ -182,9 +182,11 @@ if (isset($_SESSION['user_id'])) {
     <!-- AdminLTE 3 -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/admin-lte@3.2/dist/css/adminlte.min.css">
     <!-- Font Awesome -->
+    <link rel="stylesheet" href="<?= $appBasePath ?>/assets/css/custom.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <!-- Leaflet -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+        <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <!-- DataTables -->
     <link rel="stylesheet" href="https://cdn.datatables.net/1.11.5/css/dataTables.bootstrap5.min.css">
     <!-- Import local font bundle -->
@@ -193,6 +195,8 @@ if (isset($_SESSION['user_id'])) {
     <!-- Styles personnalisés -->
     <link rel="stylesheet" href="<?= htmlspecialchars($appBasePath) ?>/assets/css/styles.css">
     <link rel="stylesheet" href="<?= htmlspecialchars($appBasePath) ?>/assets/css/custom.css">
+        <!-- Bootstrap 5 JS (pour dropdown) -->
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
     <!-- SweetAlert2 -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
@@ -1049,6 +1053,36 @@ if (isset($_SESSION['user_id'])) {
         })();
 
         document.addEventListener('DOMContentLoaded', function() {
+            // Gestion du thème (système, dark, white)
+            function applyTheme(theme) {
+                document.body.classList.remove('theme-dark', 'theme-light');
+                if (theme === 'system') {
+                    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                    document.body.classList.add(prefersDark ? 'theme-dark' : 'theme-light');
+                } else if (theme === 'dark') {
+                    document.body.classList.add('theme-dark');
+                } else {
+                    document.body.classList.add('theme-light');
+                }
+            }
+            function setTheme(theme) {
+                localStorage.setItem('theme', theme);
+                applyTheme(theme);
+            }
+            // Appliquer le thème au chargement
+            const savedTheme = localStorage.getItem('theme') || 'system';
+            applyTheme(savedTheme);
+            // Réagir au changement système
+            window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function() {
+                if ((localStorage.getItem('theme') || 'system') === 'system') applyTheme('system');
+            });
+            // Gestion du clic sur le menu
+            document.querySelectorAll('.theme-select').forEach(function(el) {
+                el.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    setTheme(el.getAttribute('data-theme'));
+                });
+            });
             const syncBtn = document.getElementById('syncBtn');
 
             function openSyncPage() {
@@ -1191,6 +1225,16 @@ if (isset($_SESSION['user_id'])) {
             </ul>
 
             <ul class="navbar-nav ml-auto">
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" id="themeDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        <i class="fas fa-adjust"></i> Thème
+                    </a>
+                    <ul class="dropdown-menu" aria-labelledby="themeDropdown">
+                        <li><a class="dropdown-item theme-select" href="#" data-theme="system">Système</a></li>
+                        <li><a class="dropdown-item theme-select" href="#" data-theme="light">Clair</a></li>
+                        <li><a class="dropdown-item theme-select" href="#" data-theme="dark">Sombre</a></li>
+                    </ul>
+                </li>
                 <?php if (!is_central_mode() && $user_profil === 'ADMIN_IG'): ?>
                     <li class="nav-item">
                         <a class="nav-link logout-link" id="syncBtn" href="#" title="Synchroniser vers le serveur central">

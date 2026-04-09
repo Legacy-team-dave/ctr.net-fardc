@@ -90,12 +90,12 @@ if (!function_exists('local_equipe_role_display_label')) {
     {
         $normalized = strtolower(trim((string) $role));
         return match ($normalized) {
-            "chef d'équipe", "chef d'equipe" => "Chef d'équipe",
-            'inspecteur' => 'Inspecteur',
-            'opérateur pc', 'operateur pc', 'opérateur', 'operateur' => 'Opérateur PC',
-            'contrôleur', 'controleur', 'contôleur' => 'Contrôleur',
-            'superviseur' => 'Superviseur',
-            default => trim((string) $role) !== '' ? trim((string) $role) : 'Non défini',
+            "chef d'équipe", "chef d'equipe" => "CHEF D'ÉQUIPE",
+            'inspecteur' => 'INSPECTEUR',
+            'opérateur pc', 'operateur pc', 'opérateur', 'operateur' => 'OPÉRATEUR PC',
+            'contrôleur', 'controleur', 'contôleur' => 'CONTRÔLEUR',
+            'superviseur' => 'SUPERVISEUR',
+            default => strtoupper(trim((string) $role) !== '' ? trim((string) $role) : 'NON DÉFINI'),
         };
     }
 }
@@ -115,6 +115,14 @@ if (!function_exists('local_equipe_role_badge_class')) {
     }
 }
 
+// Fonction pour mettre en majuscules les données
+if (!function_exists('format_upper')) {
+    function format_upper($value, $default = 'NON RENSEIGNÉ') {
+        $value = trim((string) $value);
+        return empty($value) ? $default : strtoupper($value);
+    }
+}
+
 // Actions d'édition uniquement en mode setup
 if ($is_setup) {
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -131,7 +139,7 @@ if ($is_setup) {
                 $stmt->execute([$memberId]);
 
                 $_SESSION['toast_message'] = $deletedMemberName !== ''
-                    ? 'Membre <strong>' . htmlspecialchars($deletedMemberName, ENT_QUOTES, 'UTF-8') . '</strong> supprimé avec succès.'
+                    ? 'Membre <strong>' . htmlspecialchars(strtoupper($deletedMemberName), ENT_QUOTES, 'UTF-8') . '</strong> supprimé avec succès.'
                     : 'Le membre sélectionné a été supprimé avec succès.';
                 $_SESSION['toast_type'] = 'success';
 
@@ -144,10 +152,10 @@ if ($is_setup) {
         }
 
         if ($teamAction === 'add') {
-            $matricule = trim($_POST['matricule'] ?? '');
-            $noms = trim($_POST['noms'] ?? '');
-            $grade = trim($_POST['grade'] ?? '');
-            $unites = trim($_POST['unites'] ?? '');
+            $matricule = strtoupper(trim($_POST['matricule'] ?? ''));
+            $noms = strtoupper(trim($_POST['noms'] ?? ''));
+            $grade = strtoupper(trim($_POST['grade'] ?? ''));
+            $unites = strtoupper(trim($_POST['unites'] ?? ''));
             $role = trim($_POST['role'] ?? '');
 
             if (empty($matricule) || empty($noms) || empty($grade) || empty($unites) || empty($role)) {
@@ -188,8 +196,13 @@ if ($local_source_label === '') {
 $role_counts = array_fill_keys($roles_equipe, 0);
 foreach ($membres as $membreStat) {
     $roleLabel = local_equipe_role_display_label($membreStat['role'] ?? '');
-    if (isset($role_counts[$roleLabel])) {
-        $role_counts[$roleLabel]++;
+    // Convertir le label en majuscules pour la comparaison
+    $roleLabelUpper = strtoupper($roleLabel);
+    foreach ($role_counts as $key => $value) {
+        if (strtoupper($key) === $roleLabelUpper) {
+            $role_counts[$key]++;
+            break;
+        }
     }
 }
 unset($membreStat);
@@ -230,10 +243,10 @@ $role_stat_cards = [
 $selected_role = trim((string) ($_GET['role'] ?? ''));
 $filtered_membres = array_values(array_filter($membres, static function (array $membre) use ($selected_role): bool {
     $roleLabel = local_equipe_role_display_label($membre['role'] ?? '');
-    return $selected_role === '' || $roleLabel === $selected_role;
+    return $selected_role === '' || strtoupper($roleLabel) === strtoupper($selected_role);
 }));
 $initial_team_count = count($filtered_membres);
-$display_membres = $membres;
+$display_membres = $filtered_membres;
 ?>
 <!DOCTYPE html>
 <html lang="fr">
@@ -257,97 +270,414 @@ $display_membres = $membres;
         body {
             font-family: 'Barlow', sans-serif;
             min-height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: flex-start;
-            padding: 10px;
-            background: linear-gradient(135deg, rgba(30, 30, 30, 0.85), rgba(20, 60, 20, 0.85)),
-                url('../../assets/img/fardc2.png') center/cover no-repeat fixed;
+            background: linear-gradient(135deg, #1a472a 0%, #0d2818 100%);
+            padding: 20px;
         }
 
         .equipe-card {
             width: 100%;
-            max-width: 1380px;
-            background: rgba(255, 255, 255, 0.97);
-            border-radius: 14px;
-            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.24);
+            max-width: 1400px;
+            margin: 0 auto;
+            background: #ffffff;
+            border-radius: 16px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
             overflow: hidden;
-            display: flex;
-            flex-direction: column;
         }
 
         .equipe-header {
-            background: linear-gradient(135deg, #2e7d32, #1b5e20);
-            padding: 10px 16px;
+            background: linear-gradient(135deg, #1e7e34 0%, #145c24 100%);
+            padding: 20px 24px;
             color: white;
             display: flex;
             justify-content: space-between;
             align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
         }
 
         .equipe-header h2 {
-            font-size: 1rem;
+            font-size: 1.5rem;
             font-weight: 700;
+            margin: 0;
             display: flex;
             align-items: center;
-            gap: 6px;
+            gap: 10px;
         }
 
         .user-badge {
-            background: rgba(255, 255, 255, 0.15);
-            padding: 3px 8px;
-            border-radius: 18px;
-            font-size: 0.76rem;
+            background: rgba(255, 255, 255, 0.2);
+            padding: 8px 16px;
+            border-radius: 50px;
+            font-size: 0.9rem;
             display: flex;
             align-items: center;
-            gap: 5px;
+            gap: 8px;
         }
 
         .equipe-body {
-            padding: 10px;
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
+            padding: 24px;
         }
 
         .info-line {
             background: #e8f5e9;
-            padding: 6px 10px;
-            border-radius: 6px;
-            font-size: 0.78rem;
-            color: #2e7d32;
+            padding: 12px 16px;
+            border-radius: 10px;
+            font-size: 0.9rem;
+            color: #1e7e34;
             display: flex;
             align-items: center;
-            gap: 6px;
+            gap: 10px;
+            margin-bottom: 20px;
+            border-left: 4px solid #1e7e34;
+        }
+
+        .stats-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+
+        .stat-card {
+            background: white;
+            border-radius: 12px;
+            padding: 16px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            transition: all 0.3s ease;
+            border: 1px solid #e0e0e0;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 16px rgba(30, 126, 52, 0.15);
+            border-color: #1e7e34;
+        }
+
+        .stat-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.3rem;
+            flex-shrink: 0;
+        }
+
+        .stat-icon.total-effectifs { background: linear-gradient(135deg, #1e7e34, #145c24); }
+        .stat-icon.role-chef-card { background: linear-gradient(135deg, #ff9800, #f57c00); }
+        .stat-icon.role-inspecteur-card { background: linear-gradient(135deg, #17a2b8, #138496); }
+        .stat-icon.role-operateur-card { background: linear-gradient(135deg, #007bff, #0056b3); }
+        .stat-icon.role-controleur-card { background: linear-gradient(135deg, #dc3545, #c82333); }
+        .stat-icon.role-superviseur-card { background: linear-gradient(135deg, #6c757d, #5a6268); }
+
+        .stat-info {
+            flex: 1;
+        }
+
+        .stat-label {
+            color: #6c757d;
+            font-weight: 600;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 5px;
+        }
+
+        .stat-value {
+            font-size: 1.6rem;
+            font-weight: 700;
+            line-height: 1;
+        }
+
+        .stat-value.total-effectifs { color: #1e7e34; }
+        .stat-value.role-chef-card { color: #f57c00; }
+        .stat-value.role-inspecteur-card { color: #138496; }
+        .stat-value.role-operateur-card { color: #0056b3; }
+        .stat-value.role-controleur-card { color: #c82333; }
+        .stat-value.role-superviseur-card { color: #5a6268; }
+
+        .form-section {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 25px;
+            border: 1px solid #e0e0e0;
+        }
+
+        .form-section h4 {
+            font-size: 1rem;
+            font-weight: 700;
+            color: #1e7e34;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .form-row-member {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 12px;
+            align-items: end;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .form-group label {
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: #495057;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .form-group input,
+        .form-group select {
+            padding: 8px 12px;
+            border: 2px solid #dee2e6;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            font-family: 'Barlow', sans-serif;
+            transition: all 0.2s;
+            text-transform: uppercase;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #1e7e34;
+            box-shadow: 0 0 0 3px rgba(30, 126, 52, 0.1);
+        }
+
+        .btn-add {
+            background: linear-gradient(135deg, #1e7e34, #145c24);
+            color: white;
+            border: none;
+            padding: 8px 20px;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s;
+            height: 38px;
+        }
+
+        .btn-add:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(30, 126, 52, 0.3);
+        }
+
+        .membres-section {
+            background: #ffffff;
+            border-radius: 12px;
+            border: 1px solid #e0e0e0;
+            margin-bottom: 25px;
+        }
+
+        .section-header {
+            padding: 16px 20px;
+            border-bottom: 2px solid #f0f0f0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .section-header h4 {
+            font-size: 1rem;
+            font-weight: 700;
+            color: #1e7e34;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .filters-grid {
+            display: flex;
+            gap: 15px;
+            align-items: flex-end;
+            flex-wrap: wrap;
+        }
+
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .filter-group label {
+            font-size: 0.7rem;
+            font-weight: 700;
+            color: #495057;
+            text-transform: uppercase;
+        }
+
+        .filter-group select,
+        .filter-group input {
+            padding: 6px 12px;
+            border: 2px solid #dee2e6;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            font-family: 'Barlow', sans-serif;
+            background: white;
+        }
+
+        .table-responsive {
+            padding: 0 20px 20px 20px;
+            overflow-x: auto;
+        }
+
+        .membres-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .membres-table thead th {
+            background: #f8f9fa;
+            color: #495057;
+            padding: 12px;
+            text-align: left;
+            font-weight: 700;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border-bottom: 2px solid #dee2e6;
+        }
+
+        .membres-table tbody td {
+            padding: 12px;
+            border-bottom: 1px solid #f0f0f0;
+            vertical-align: middle;
+            text-transform: uppercase;
+            font-weight: 500;
+        }
+
+        .membres-table tbody tr:hover {
+            background: #f8f9fa;
+        }
+
+        .role-pill {
+            display: inline-flex;
+            align-items: center;
+            padding: 4px 12px;
+            border-radius: 50px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+
+        .role-chef { background: #fff3e0; color: #f57c00; }
+        .role-inspecteur { background: #d1ecf1; color: #0c5460; }
+        .role-operateur { background: #cce5ff; color: #004085; }
+        .role-controleur { background: #f8d7da; color: #721c24; }
+        .role-superviseur { background: #e2e3e5; color: #383d41; }
+        .role-default { background: #e9ecef; color: #495057; }
+
+        .btn-delete {
+            background: #dc3545;
+            color: white;
+            border: none;
+            padding: 5px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.75rem;
+            transition: background 0.2s;
+        }
+
+        .btn-delete:hover {
+            background: #c82333;
+        }
+
+        .actions-footer {
+            display: flex;
+            justify-content: flex-end;
+            padding-top: 10px;
+        }
+
+        .btn-continue {
+            background: linear-gradient(135deg, #1e7e34, #145c24);
+            color: white;
+            border: none;
+            padding: 10px 24px;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            text-decoration: none;
+            transition: all 0.3s;
+        }
+
+        .btn-continue:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(30, 126, 52, 0.3);
+            color: white;
+            text-decoration: none;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: #6c757d;
+        }
+
+        .empty-state i {
+            font-size: 3rem;
+            margin-bottom: 15px;
+            opacity: 0.5;
+        }
+
+        .badge-count {
+            background: #1e7e34;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 20px;
+            font-size: 0.7rem;
+            margin-left: 8px;
+        }
+
+        .alert-error,
+        .alert-success {
+            padding: 12px 16px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
         }
 
         .alert-error {
-            background: #fce4ec;
-            color: #c62828;
-            padding: 6px 10px;
-            border-radius: 6px;
-            font-size: 0.78rem;
-            display: flex;
-            align-items: center;
-            gap: 6px;
+            background: #f8d7da;
+            color: #721c24;
+            border-left: 4px solid #dc3545;
         }
 
         .alert-success {
-            background: #e8f5e9;
-            color: #2e7d32;
-            padding: 6px 10px;
-            border-radius: 6px;
-            font-size: 0.78rem;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            border: 1px solid #a5d6a7;
+            background: #d4edda;
+            color: #155724;
+            border-left: 4px solid #28a745;
         }
 
         .toast-container {
             position: fixed;
-            top: 18px;
-            right: 18px;
+            top: 20px;
+            right: 20px;
             z-index: 9999;
             display: flex;
             flex-direction: column;
@@ -356,32 +686,25 @@ $display_membres = $membres;
 
         .toast-message {
             min-width: 300px;
-            max-width: 420px;
-            background: linear-gradient(135deg, #2e7d32, #1b5e20);
-            color: #fff;
+            background: #28a745;
+            color: white;
             padding: 12px 16px;
-            border-radius: 12px;
-            box-shadow: 0 12px 28px rgba(0, 0, 0, 0.18);
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
             display: flex;
             align-items: center;
             gap: 10px;
-            font-size: 0.88rem;
-            animation: slideInRight 0.25s ease;
+            animation: slideInRight 0.3s ease;
         }
 
         .toast-message.error {
-            background: linear-gradient(135deg, #dc3545, #b02a37);
-        }
-
-        .toast-message.warning {
-            background: linear-gradient(135deg, #ffc107, #e0a800);
-            color: #212529;
+            background: #dc3545;
         }
 
         @keyframes slideInRight {
             from {
                 opacity: 0;
-                transform: translateX(24px);
+                transform: translateX(100%);
             }
             to {
                 opacity: 1;
@@ -389,463 +712,22 @@ $display_membres = $membres;
             }
         }
 
-        .form-section {
-            background: #f8f9fa;
-            border-radius: 8px;
-            padding: 14px;
-            border: 1px solid #e0e0e0;
-        }
-
-        .form-section h4 {
-            font-size: 0.9rem;
-            font-weight: 600;
-            color: #2e7d32;
-            margin-bottom: 10px;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-
-        .form-row {
-            display: grid;
-            grid-template-columns: 1fr 1fr 1fr;
-            gap: 8px;
-            margin-bottom: 10px;
-        }
-
-        .form-row.form-row-member {
-            grid-template-columns: 1.05fr 1.8fr 0.95fr 1.35fr 1.15fr auto;
-            align-items: end;
-        }
-
-        .form-actions-row {
-            display: contents;
-        }
-
-        .form-group.form-group-action {
-            justify-content: flex-end;
-        }
-
-        .form-group.form-group-action label {
-            visibility: hidden;
-        }
-
-        .form-group.form-group-action .btn-add {
-            width: 100%;
-            min-height: 40px;
-            height: 40px;
-            padding: 6px 12px;
-            justify-content: center;
-            white-space: nowrap;
-            border-radius: 6px;
-        }
-
-        .form-group {
-            display: flex;
-            flex-direction: column;
-            gap: 2px;
-        }
-
-        .form-group label {
-            font-size: 0.75rem;
-            font-weight: 600;
-            color: #555;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        .form-group input,
-        .form-group select {
-            padding: 6px 10px;
-            border: 2px solid #e0e0e0;
-            border-radius: 6px;
-            font-size: 0.85rem;
-            font-family: 'Barlow', sans-serif;
-            transition: border-color 0.2s;
-            background: white;
-        }
-
-        .form-group input:focus,
-        .form-group select:focus {
-            outline: none;
-            border-color: #2e7d32;
-            box-shadow: 0 0 0 3px rgba(46, 125, 50, 0.1);
-        }
-
-        .btn-add {
-            background: linear-gradient(135deg, #2e7d32, #1b5e20);
-            color: white;
-            border: none;
-            padding: 8px 16px;
-            border-radius: 6px;
-            font-size: 0.85rem;
-            font-weight: 600;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            gap: 5px;
-            font-family: 'Barlow', sans-serif;
-            transition: transform 0.15s, box-shadow 0.15s;
-        }
-
-        .btn-add:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 4px 12px rgba(46, 125, 50, 0.3);
-        }
-
-        .stats-container {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-            gap: 10px;
-            margin-bottom: 4px;
-        }
-
-        .stat-card {
-            background: white;
-            border-radius: 12px;
-            padding: 12px 14px;
-            min-width: 0;
-            width: 100%;
-            box-shadow: 0 3px 12px rgba(0, 0, 0, 0.05);
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            transition: all 0.3s;
-            border: 1px solid rgba(0, 0, 0, 0.05);
-        }
-
-        .stat-card:hover,
-        .stat-card.source-highlight {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 16px rgba(46, 125, 50, 0.14);
-            border-color: rgba(46, 125, 50, 0.2);
-        }
-
-        .stat-icon {
-            width: 48px;
-            height: 48px;
-            border-radius: 10px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-size: 1.35rem;
-            box-shadow: 0 4px 10px rgba(46, 125, 50, 0.3);
-            flex-shrink: 0;
-        }
-
-        .stat-icon.total-effectifs {
-            background: linear-gradient(135deg, #2e7d32 0%, #1b5e20 100%);
-        }
-
-        .stat-icon.present {
-            background: linear-gradient(135deg, #28a745 0%, #1e7e34 100%);
-        }
-
-        .stat-icon.favorable {
-            background: linear-gradient(135deg, #ffc107 0%, #e0a800 100%);
-        }
-
-        .stat-icon.inactif {
-            background: linear-gradient(135deg, #6c757d, #545b62);
-        }
-
-        .stat-info {
-            display: flex;
-            flex-direction: column;
-            gap: 3px;
-            min-width: 0;
-            flex: 1;
-        }
-
-        .stat-label {
-            color: #6c757d;
-            font-weight: 600;
-            font-size: 0.76rem;
-            line-height: 1.2;
-        }
-
-        .stat-value {
-            font-size: 1.35rem;
-            font-weight: 700;
-            line-height: 1.05;
-            margin: 0;
-        }
-
-        .stat-value.total-effectifs { color: #2e7d32; }
-        .stat-value.present { color: #28a745; }
-        .stat-value.favorable { color: #e0a800; }
-        .stat-value.inactif { color: #6c757d; }
-
-        .stat-icon.role-chef-card { background: linear-gradient(135deg, #ff9800 0%, #f57c00 100%); }
-        .stat-icon.role-inspecteur-card { background: linear-gradient(135deg, #17a2b8 0%, #11707f 100%); }
-        .stat-icon.role-operateur-card { background: linear-gradient(135deg, #0d6efd 0%, #0a58ca 100%); }
-        .stat-icon.role-controleur-card { background: linear-gradient(135deg, #dc3545 0%, #b02a37 100%); }
-        .stat-icon.role-superviseur-card { background: linear-gradient(135deg, #6c757d 0%, #495057 100%); }
-
-        .stat-value.role-chef-card { color: #f57c00; }
-        .stat-value.role-inspecteur-card { color: #11707f; }
-        .stat-value.role-operateur-card { color: #0a58ca; }
-        .stat-value.role-controleur-card { color: #b02a37; }
-        .stat-value.role-superviseur-card { color: #495057; }
-
-        .delete-inline-form {
-            display: inline-flex;
-            margin: 0;
-        }
-
-        .filters-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-            gap: 10px;
-            align-items: end;
-        }
-
-        .btn-filter,
-        .btn-continue {
-            border: none;
-            border-radius: 8px;
-            min-height: 38px;
-            padding: 7px 14px;
-            font-size: 0.85rem;
-            font-weight: 600;
-            cursor: pointer;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            gap: 5px;
-            text-decoration: none;
-            white-space: nowrap;
-            transition: all 0.3s;
-        }
-
-        .btn-filter i,
-        .btn-continue i {
-            font-size: 0.88rem;
-        }
-
-        .btn-apply,
-        .btn-continue {
-            background: #2e7d32;
-            color: #ffffff;
-            box-shadow: 0 4px 10px rgba(46, 125, 50, 0.28);
-        }
-
-        .btn-reset {
-            background: #6c757d;
-            color: #ffffff;
-            box-shadow: 0 4px 10px rgba(108, 117, 125, 0.24);
-        }
-
-        .btn-apply:hover,
-        .btn-continue:hover {
-            background: #ffc107;
-            color: #333333;
-            transform: translateY(-2px);
-            box-shadow: 0 6px 15px rgba(255, 193, 7, 0.38);
-            text-decoration: none;
-        }
-
-        .btn-reset:hover {
-            background: #5a6268;
-            color: #ffffff;
-            transform: translateY(-2px);
-            box-shadow: 0 6px 15px rgba(90, 98, 104, 0.28);
-            text-decoration: none;
-        }
-
-        .membres-section {
-            background: #ffffff;
-            border-radius: 10px;
-            padding: 12px;
-            border: 1px solid #e0e0e0;
-            box-shadow: 0 5px 16px rgba(0, 0, 0, 0.05);
-        }
-
-        .membres-section h4 {
-            font-size: 0.92rem;
-            font-weight: 700;
-            color: #2e7d32;
-            margin-bottom: 10px;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-
-        .table-responsive.fixed-team-table {
-            border: none;
-            border-radius: 10px;
-            overflow-x: visible;
-            overflow-y: visible;
-            width: 100%;
-            max-height: none;
-            background: transparent;
-        }
-
-        .membres-table {
-            width: 100%;
-            min-width: 0;
-            border-collapse: separate;
-            border-spacing: 0 6px;
-            font-size: 0.8rem;
-            table-layout: auto !important;
-            background: transparent;
-        }
-
-        .membres-table thead th {
-            background: linear-gradient(135deg, #2e7d32 0%, #1b5e20 100%);
-            color: #ffffff;
-            padding: 8px 10px;
-            text-align: left;
-            font-weight: 700;
-            font-size: 0.76rem;
-            text-transform: uppercase;
-            letter-spacing: 0.25px;
-            white-space: normal;
-            overflow-wrap: anywhere;
-            border: none;
-            vertical-align: middle;
-        }
-
-        .membres-table thead th:first-child {
-            border-radius: 10px 0 0 10px;
-        }
-
-        .membres-table thead th:last-child {
-            border-radius: 0 10px 10px 0;
-        }
-
-        .membres-table tbody tr {
-            background: #ffffff;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
-            border-radius: 10px;
-            transition: all 0.3s ease;
-        }
-
-        .membres-table tbody tr:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 20px rgba(46, 125, 50, 0.15);
-        }
-
-        .membres-table tbody td {
-            background: #ffffff;
-            padding: 8px 10px;
-            border: none;
-            white-space: normal;
-            word-break: break-word;
-            overflow-wrap: anywhere;
-            vertical-align: middle;
-            font-weight: 500;
-        }
-
-        .membres-table tbody td:first-child {
-            border-radius: 10px 0 0 10px;
-        }
-
-        .membres-table tbody td:last-child {
-            border-radius: 0 10px 10px 0;
-        }
-
-        .btn-delete {
-            background: #ef5350;
-            color: white;
-            border: none;
-            padding: 5px 10px;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 0.8rem;
-            transition: background 0.2s;
-            text-decoration: none;
-            display: inline-flex;
-            align-items: center;
-            gap: 4px;
-        }
-
-        .btn-delete:hover {
-            background: #c62828;
-            color: white;
-        }
-
-        .empty-state {
-            text-align: center;
-            padding: 15px;
-            color: #9e9e9e;
-        }
-
-        .empty-state i {
-            font-size: 1.5rem;
-            margin-bottom: 5px;
-            display: block;
-        }
-
-        .actions-footer {
-            display: flex;
-            justify-content: flex-end;
-            padding-top: 5px;
-        }
-
-        .btn-continue {
-            font-family: 'Barlow', sans-serif;
-        }
-
-        .badge-count {
-            background: rgba(255, 255, 255, 0.25);
-            padding: 2px 8px;
-            border-radius: 10px;
-            font-size: 0.8rem;
-            margin-left: 4px;
-        }
-
-        .role-pill {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            padding: 5px 12px;
-            border-radius: 999px;
-            font-size: 0.78rem;
-            font-weight: 700;
-            white-space: nowrap;
-        }
-
-        .role-chef { background: rgba(46, 125, 50, 0.12); color: #1b5e20; }
-        .role-inspecteur { background: rgba(23, 162, 184, 0.15); color: #0c5460; }
-        .role-operateur { background: rgba(13, 110, 253, 0.14); color: #0b5394; }
-        .role-controleur { background: rgba(220, 53, 69, 0.12); color: #842029; }
-        .role-superviseur { background: rgba(108, 117, 125, 0.15); color: #495057; }
-        .role-default { background: rgba(111, 66, 193, 0.12); color: #5a3d99; }
-
-        @media (max-width: 1100px) {
-            .stats-container {
-                grid-template-columns: repeat(2, minmax(0, 1fr));
-            }
-
-            .membres-table {
-                font-size: 0.78rem;
-            }
-        }
-
         @media (max-width: 768px) {
-            .form-row {
-                grid-template-columns: 1fr;
+            .equipe-body {
+                padding: 16px;
             }
-
+            
             .stats-container {
                 grid-template-columns: 1fr;
             }
-
+            
+            .form-row-member {
+                grid-template-columns: 1fr;
+            }
+            
             .equipe-header {
                 flex-direction: column;
-                gap: 8px;
                 text-align: center;
-            }
-
-            .equipe-header h2 {
-                font-size: 1.1rem;
-            }
-
-            .btn-continue {
-                width: 100%;
-                justify-content: center;
             }
         }
     </style>
@@ -857,101 +739,100 @@ $display_membres = $membres;
     <div class="equipe-card">
         <div class="equipe-header">
             <h2><i class="fas fa-users"></i> Équipe de contrôle</h2>
-            <div class="user-badge"><i class="fas fa-user-circle"></i>
-                <?= htmlspecialchars($_SESSION['user_nom'] ?? 'Utilisateur') ?></div>
+            <div class="user-badge">
+                <i class="fas fa-user-circle"></i>
+                <?= htmlspecialchars(strtoupper($_SESSION['user_nom'] ?? 'UTILISATEUR')) ?>
+            </div>
         </div>
 
         <div class="equipe-body">
             <?php if ($is_setup): ?>
-                <div class="info-line"><i class="fas fa-info-circle"></i> Enregistrez les membres de votre équipe de
-                    contrôle avant de continuer.</div>
+                <div class="info-line">
+                    <i class="fas fa-info-circle"></i>
+                    Enregistrez les membres de votre équipe de contrôle avant de continuer.
+                </div>
             <?php else: ?>
-                <div class="info-line"><i class="fas fa-info-circle"></i> Liste des membres de l'équipe de contrôle (lecture seule).</div>
+                <div class="info-line">
+                    <i class="fas fa-info-circle"></i>
+                    Liste des membres de l'équipe de contrôle (lecture seule).
+                </div>
             <?php endif; ?>
 
+            <!-- Statistiques -->
             <div class="stats-container">
                 <div class="stat-card">
                     <div class="stat-icon total-effectifs"><i class="fas fa-users"></i></div>
                     <div class="stat-info">
-                        <div class="stat-label">Membres enregistrés</div>
+                        <div class="stat-label">MEMBRES ENREGISTRÉS</div>
                         <div class="stat-value total-effectifs"><?= number_format($total_membres, 0, ',', ' ') ?></div>
                     </div>
                 </div>
                 <?php foreach ($role_stat_cards as $role_card): ?>
                     <div class="stat-card">
-                        <div class="stat-icon <?= htmlspecialchars($role_card['variant']) ?>"><i class="<?= htmlspecialchars($role_card['icon']) ?>"></i></div>
+                        <div class="stat-icon <?= htmlspecialchars($role_card['variant']) ?>">
+                            <i class="<?= htmlspecialchars($role_card['icon']) ?>"></i>
+                        </div>
                         <div class="stat-info">
-                            <div class="stat-label"><?= htmlspecialchars($role_card['label']) ?></div>
-                            <div class="stat-value <?= htmlspecialchars($role_card['variant']) ?>"><?= number_format((int) $role_card['count'], 0, ',', ' ') ?></div>
+                            <div class="stat-label"><?= strtoupper(htmlspecialchars($role_card['label'])) ?></div>
+                            <div class="stat-value <?= htmlspecialchars($role_card['variant']) ?>">
+                                <?= number_format((int) $role_card['count'], 0, ',', ' ') ?>
+                            </div>
                         </div>
                     </div>
                 <?php endforeach; ?>
             </div>
 
             <?php if ($error): ?>
-                <div class="alert-error"><i class="fas fa-exclamation-circle"></i> <?= htmlspecialchars($error) ?></div>
-            <?php endif; ?>
-
-            <?php if ($success): ?>
-                <div class="alert-success"><i class="fas fa-check-circle"></i> <?= htmlspecialchars($success) ?></div>
-            <?php endif; ?>
-
-            <?php if ($is_setup): ?>
-                <!-- Formulaire d'ajout (uniquement en mode setup) -->
-                <div class="form-section">
-                    <h4><i class="fas fa-user-plus"></i> Ajouter un membre</h4>
-                    <form method="post">
-                        <div class="form-row form-row-member">
-                            <div class="form-group">
-                                <label for="matricule">Matricule</label>
-                                <input type="text" id="matricule" name="matricule" placeholder="Ex: 123456" required>
-                            </div>
-                            <div class="form-group">
-                                <label for="noms">Noms complets</label>
-                                <input type="text" id="noms" name="noms" placeholder="Ex: KABONGO MUTOMBO" required>
-                            </div>
-                            <div class="form-group">
-                                <label for="grade">Grade</label>
-                                <input type="text" id="grade" name="grade" placeholder="Ex: Colonel" required>
-                            </div>
-                            <div class="form-group">
-                                <label for="unites">Unité</label>
-                                <input type="text" id="unites" name="unites" placeholder="Ex: EMG / 1ère Région" required>
-                            </div>
-                            <div class="form-group">
-                                <label for="role">Rôle</label>
-                                <select id="role" name="role" required>
-                                    <option value="">-- Choisir --</option>
-                                    <?php foreach ($roles_equipe as $role_option): ?>
-                                        <option value="<?= htmlspecialchars($role_option) ?>"><?= htmlspecialchars($role_option) ?></option>
-                                    <?php endforeach; ?>
-                                </select>
-                            </div>
-                            <div class="form-group form-group-action">
-                                <label for="submit_member">Action</label>
-                                <button type="submit" id="submit_member" class="btn-add"><i class="fas fa-plus"></i> Enregistrer</button>
-                            </div>
-                        </div>
-                    </form>
+                <div class="alert-error">
+                    <i class="fas fa-exclamation-circle"></i>
+                    <?= htmlspecialchars($error) ?>
                 </div>
             <?php endif; ?>
 
-            <?php if (!$is_setup): ?>
-                <div class="membres-section">
-                    <h4><i class="fas fa-filter"></i> Filtres du tableau équipe <span class="badge-count team-visible-count"><?= $initial_team_count ?></span></h4>
-                    <form method="get" class="filters-grid" id="teamFilterForm">
-                        <div class="form-group">
-                            <label for="role_filter"><i class="fas fa-user-tag"></i> Rôle</label>
-                            <select id="role_filter" name="role">
-                                <option value="">Tous les rôles</option>
-                                <?php foreach ($roles_equipe as $role_option): ?>
-                                    <option value="<?= htmlspecialchars($role_option) ?>" <?= $selected_role === $role_option ? 'selected' : '' ?>><?= htmlspecialchars($role_option) ?></option>
-                                <?php endforeach; ?>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label for="source_filter"><i class="fas fa-map-pin"></i> Source locale</label>
-                            <input type="text" id="source_filter" value="<?= htmlspecialchars($local_source_label) ?>" readonly>
+            <?php if ($success): ?>
+                <div class="alert-success">
+                    <i class="fas fa-check-circle"></i>
+                    <?= htmlspecialchars($success) ?>
+                </div>
+            <?php endif; ?>
+
+            <!-- Formulaire d'ajout (uniquement en mode setup) -->
+            <?php if ($is_setup): ?>
+                <div class="form-section">
+                    <h4><i class="fas fa-user-plus"></i> AJOUTER UN MEMBRE</h4>
+                    <form method="post">
+                        <div class="form-row-member">
+                            <div class="form-group">
+                                <label for="matricule">MATRICULE</label>
+                                <input type="text" id="matricule" name="matricule" placeholder="EX: 123456" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="noms">NOMS COMPLETS</label>
+                                <input type="text" id="noms" name="noms" placeholder="EX: KABONGO MUTOMBO" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="grade">GRADE</label>
+                                <input type="text" id="grade" name="grade" placeholder="EX: COLONEL" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="unites">UNITÉ</label>
+                                <input type="text" id="unites" name="unites" placeholder="EX: EMG / 1ÈRE RÉGION" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="role">RÔLE</label>
+                                <select id="role" name="role" required>
+                                    <option value="">-- CHOISIR --</option>
+                                    <?php foreach ($roles_equipe as $role_option): ?>
+                                        <option value="<?= htmlspecialchars($role_option) ?>"><?= strtoupper(htmlspecialchars($role_option)) ?></option>
+                                    <?php endforeach; ?>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>&nbsp;</label>
+                                <button type="submit" class="btn-add">
+                                    <i class="fas fa-plus"></i> ENREGISTRER
+                                </button>
+                            </div>
                         </div>
                     </form>
                 </div>
@@ -959,41 +840,68 @@ $display_membres = $membres;
 
             <!-- Liste des membres -->
             <div class="membres-section">
-                <h4><i class="fas fa-list"></i> Membres enregistrés <span
-                        class="badge-count team-visible-count"><?= $initial_team_count ?></span></h4>
+                <div class="section-header">
+                    <h4><i class="fas fa-list"></i> MEMBRES ENREGISTRÉS</h4>
+                    <?php if (!$is_setup): ?>
+                    <form method="get" class="filters-grid" id="teamFilterForm">
+                        <div class="filter-group">
+                            <label for="role_filter"><i class="fas fa-user-tag"></i> FILTRER PAR RÔLE</label>
+                            <select id="role_filter" name="role">
+                                <option value="">TOUS LES RÔLES</option>
+                                <?php foreach ($roles_equipe as $role_option): ?>
+                                    <option value="<?= htmlspecialchars($role_option) ?>" <?= $selected_role === $role_option ? 'selected' : '' ?>>
+                                        <?= strtoupper(htmlspecialchars($role_option)) ?>
+                                    </option>
+                                <?php endforeach; ?>
+                            </select>
+                        </div>
+                        <div class="filter-group">
+                            <label><i class="fas fa-map-pin"></i> SOURCE LOCALE</label>
+                            <input type="text" value="<?= htmlspecialchars(strtoupper($local_source_label)) ?>" readonly disabled>
+                        </div>
+                    </form>
+                    <?php endif; ?>
+                </div>
 
                 <?php if (empty($display_membres)): ?>
                     <div class="empty-state">
                         <i class="fas fa-users"></i>
-                        <p>Aucun membre enregistré</p>
+                        <p>AUCUN MEMBRE ENREGISTRÉ</p>
+                        <?php if ($is_setup): ?>
+                            <small>Utilisez le formulaire ci-dessus pour ajouter des membres.</small>
+                        <?php endif; ?>
                     </div>
                 <?php else: ?>
-                    <div class="table-responsive fixed-team-table">
-                        <table class="membres-table table-militaires" id="team-members-table">
+                    <div class="table-responsive">
+                        <table class="membres-table" id="team-members-table">
                             <thead>
                                 <tr>
-                                    <th>Matricule</th>
-                                    <th>Noms</th>
-                                    <th>Grade</th>
-                                    <th>Unité</th>
-                                    <th>Rôle</th>
-                                    <?php if ($is_setup): ?><th>Action</th><?php endif; ?>
+                                    <th>MATRICULE</th>
+                                    <th>NOMS</th>
+                                    <th>GRADE</th>
+                                    <th>UNITÉ</th>
+                                    <th>RÔLE</th>
+                                    <?php if ($is_setup): ?><th style="width: 80px">ACTION</th><?php endif; ?>
                                 </tr>
                             </thead>
                             <tbody>
                                 <?php foreach ($display_membres as $m): ?>
                                     <tr data-role="<?= htmlspecialchars(local_equipe_role_display_label($m['role'] ?? '')) ?>">
-                                        <td><?= htmlspecialchars($m['matricule'] ?? 'Non renseigné') ?></td>
-                                        <td><?= htmlspecialchars($m['noms']) ?></td>
-                                        <td><?= htmlspecialchars($m['grade']) ?></td>
-                                        <td><?= htmlspecialchars($m['unites'] ?? 'Non renseigné') ?></td>
-                                        <td><span class="<?= htmlspecialchars(local_equipe_role_badge_class($m['role'] ?? '')) ?>"><?= htmlspecialchars(local_equipe_role_display_label($m['role'] ?? '')) ?></span></td>
+                                        <td><?= format_upper($m['matricule'] ?? '') ?></td>
+                                        <td><?= format_upper($m['noms']) ?></td>
+                                        <td><?= format_upper($m['grade']) ?></td>
+                                        <td><?= format_upper($m['unites'] ?? '') ?></td>
+                                        <td><span class="role-pill <?= htmlspecialchars(local_equipe_role_badge_class($m['role'] ?? '')) ?>">
+                                            <?= htmlspecialchars(local_equipe_role_display_label($m['role'] ?? '')) ?>
+                                        </span></td>
                                         <?php if ($is_setup): ?>
                                             <td>
-                                                <form method="post" class="delete-inline-form" onsubmit="return confirm('Supprimer ce membre ?')">
+                                                <form method="post" onsubmit="return confirm('Supprimer ce membre ?')">
                                                     <input type="hidden" name="team_action" value="delete">
                                                     <input type="hidden" name="member_id" value="<?= (int) $m['id'] ?>">
-                                                    <button type="submit" class="btn-delete"><i class="fas fa-trash"></i></button>
+                                                    <button type="submit" class="btn-delete">
+                                                        <i class="fas fa-trash"></i>
+                                                    </button>
                                                 </form>
                                             </td>
                                         <?php endif; ?>
@@ -1002,270 +910,58 @@ $display_membres = $membres;
                             </tbody>
                         </table>
                     </div>
-                    <div class="empty-state" id="teamNoResults" style="display:none;">
-                        <i class="fas fa-filter"></i>
-                        <p>Aucun membre ne correspond au filtre sélectionné.</p>
-                    </div>
                 <?php endif; ?>
             </div>
 
-            <!-- Bouton footer -->
+            <!-- Actions -->
             <div class="actions-footer">
                 <?php if ($is_setup): ?>
-                    <a href="<?= htmlspecialchars(app_url('modules/equipes/index.php?continue=1')) ?>" class="btn-continue"><i class="fas fa-arrow-right"></i> Continuer</a>
+                    <a href="<?= htmlspecialchars(app_url('modules/equipes/index.php?continue=1')) ?>" class="btn-continue">
+                        <i class="fas fa-arrow-right"></i> CONTINUER
+                    </a>
                 <?php else: ?>
-                    <a href="<?= htmlspecialchars(app_url('index.php')) ?>" class="btn-continue"><i class="fas fa-arrow-left"></i> Retour</a>
+                    <a href="<?= htmlspecialchars(app_url('index.php')) ?>" class="btn-continue">
+                        <i class="fas fa-arrow-left"></i> RETOUR
+                    </a>
                 <?php endif; ?>
             </div>
         </div>
     </div>
 
-    <script     const toastContainer = document.getElementById('toastContainer');
-                if (!toastContainer || !message) {
-                    return;
-                }
-
-                const iconMap = {
-                    success: 'fa-check-circle',
-                    error: 'fa-exclamation-circle',
-                    warning: 'fa-info-circle'
-                };
-
+    <script>
+        (function() {
+            // Toast notification
+            <?php if ($toast_message): ?>
+            const toastContainer = document.getElementById('toastContainer');
+            if (toastContainer) {
                 const toast = document.createElement('div');
-                toast.className = `toast-message ${type}`;
+                toast.className = 'toast-message <?= $toast_type === 'error' ? 'error' : '' ?>';
                 toast.innerHTML = `
-                    <i class="fas ${iconMap[type] || iconMap.success}"></i>
-                    <span>${message}</span>
+                    <i class="fas <?= $toast_type === 'error' ? 'fa-exclamation-circle' : 'fa-check-circle' ?>"></i>
+                    <span><?= htmlspecialchars(strtoupper($toast_message), ENT_QUOTES) ?></span>
                 `;
-
                 toastContainer.appendChild(toast);
-
                 setTimeout(() => {
                     toast.style.opacity = '0';
-                    toast.style.transform = 'translateX(20px)';
                     setTimeout(() => toast.remove(), 250);
                 }, 5000);
             }
+            <?php endif; ?>
 
-            function escapeRegex(value) {
-                return String(value ?? '').replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-            }
-
-            function highlightSearchTerm(data, searchTerm) {
-                if (!searchTerm || !data) return data;
-                const searchRegex = new RegExp('(' + escapeRegex(searchTerm) + ')', 'gi');
-                if (typeof data === 'string') {
-                    if (data.indexOf('<') !== -1 && data.indexOf('>') !== -1) {
-                        const tempDiv = document.createElement('div');
-                        tempDiv.innerHTML = data;
-                        const textContent = tempDiv.textContent || tempDiv.innerText || '';
-                        if (textContent.match(searchRegex)) {
-                            return data.replace(new RegExp(escapeRegex(textContent), 'g'),
-                                textContent.replace(searchRegex, '<mark>$1</mark>'));
-                        }
-                        return data;
+            // Filtrage par rôle
+            const roleFilter = document.getElementById('role_filter');
+            if (roleFilter) {
+                roleFilter.addEventListener('change', function() {
+                    const selectedRole = this.value;
+                    const currentUrl = new URL(window.location.href);
+                    if (selectedRole) {
+                        currentUrl.searchParams.set('role', selectedRole);
+                    } else {
+                        currentUrl.searchParams.delete('role');
                     }
-                    return data.replace(searchRegex, '<mark>$1</mark>');
-                }
-                return data;
-            }
-
-            document.addEventListener('DOMContentLoaded', function() {
-                <?php if ($toast_message): ?>
-                showToast(<?= json_encode($toast_message, JSON_UNESCAPED_UNICODE) ?>, <?= json_encode($toast_type, JSON_UNESCAPED_UNICODE) ?>);
-                <?php endif; ?>
-
-                const teamFilterForm = document.getElementById('teamFilterForm');
-                const roleFilter = document.getElementById('role_filter');
-                const countBadges = document.querySelectorAll('.team-visible-count');
-                const noResultsState = document.getElementById('teamNoResults');
-                const tableElement = document.getElementById('team-members-table');
-                const headerCells = Array.from(document.querySelectorAll('#team-members-table thead th'));
-                const roleColumnIndex = headerCells.findIndex((cell) => {
-                    const label = (cell.textContent || '').trim().toLowerCase();
-                    return label === 'rôle' || label === 'role';
+                    window.location.href = currentUrl.toString();
                 });
-                const actionColumnIndex = headerCells.findIndex((cell) => (cell.textContent || '').trim().toLowerCase() === 'action');
-
-                const updateVisibleCount = (count) => {
-                    countBadges.forEach((badge) => {
-                        badge.textContent = new Intl.NumberFormat('fr-FR').format(count);
-                    });
-
-                    if (noResultsState) {
-                        noResultsState.style.display = count === 0 ? 'block' : 'none';
-                    }
-                };
-
-                if (window.jQuery && $.fn.DataTable && tableElement) {
-                    let searchTerm = '';
-
-                    const teamTable = $('#team-members-table').DataTable({
-                        language: {
-                            search: '<i class="fas fa-search"></i>',
-                            lengthMenu: 'Afficher _MENU_ éléments',
-                            info: 'Affichage de _START_ à _END_ sur _TOTAL_ éléments',
-                            infoEmpty: 'Affichage de 0 à 0 sur 0 élément',
-                            infoFiltered: '(filtré sur _MAX_ éléments au total)',
-                            zeroRecords: 'Aucun enregistrement correspondant',
-                            paginate: {
-                                first: 'Premier',
-                                previous: 'Précédent',
-                                next: 'Suivant',
-                                last: 'Dernier'
-                            }
-                        },
-                        dom: 'rt<"datatable-bottom d-flex justify-content-between align-items-center flex-wrap gap-2 mt-3"ip>',
-                        pageLength: 10,
-                        lengthMenu: [10, 25, 50, 100],
-                        autoWidth: true,
-                        responsive: false,
-                        scrollX: false,
-                        order: [],
-                        columnDefs: actionColumnIndex >= 0 ? [{
-                            orderable: false,
-                            targets: [actionColumnIndex]
-                        }] : [],
-                        createdRow: function(row) {
-                            if (!searchTerm) {
-                                return;
-                            }
-
-                            $(row).find('td').each(function() {
-                                const $td = $(this);
-                                if ($td.index() === actionColumnIndex) {
-                                    return;
-                                }
-                                $td.html(highlightSearchTerm($td.html(), searchTerm));
-                            });
-                        },
-                        initComplete: function() {
-                            this.api().columns.adjust();
-                            const filterDiv = $('#team-members-table_filter');
-                            filterDiv.css({
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'flex-end',
-                                gap: '10px',
-                                flexWrap: 'wrap'
-                            });
-
-                            if (!filterDiv.children('.search-icon').length) {
-                                filterDiv.prepend('<i class="fas fa-search search-icon" style="color: #2e7d32; font-size: 1rem;"></i>');
-                            }
-
-                            const searchLabel = filterDiv.find('label');
-                            searchLabel.css({
-                                display: 'flex',
-                                alignItems: 'center',
-                                marginBottom: '0',
-                                flex: '0 1 auto'
-                            });
-
-                            searchLabel.find('i').remove();
-                            searchLabel.contents().filter(function() {
-                                return this.nodeType === 3;
-                            }).remove();
-                            searchLabel.find('input').attr('placeholder', 'Rechercher dans le tableau...');
-                        }
-                    });
-
-                    const applyHighlight = () => {
-                        if (!searchTerm) {
-                            teamTable.rows().invalidate().draw(false);
-                            return;
-                        }
-
-                        $('#team-members-table tbody tr').each(function() {
-                            $(this).find('td').each(function() {
-                                const $td = $(this);
-                                if ($td.index() === actionColumnIndex) {
-                                    return;
-                                }
-
-                                const originalHtml = $td.html();
-                                if (!originalHtml || originalHtml.includes('<mark')) {
-                                    return;
-                                }
-
-                                $td.html(highlightSearchTerm(originalHtml, searchTerm));
-                            });
-                        });
-                    };
-
-                    $('#team-members-table_filter input').on('keyup search input', function() {
-                        searchTerm = $(this).val();
-                        setTimeout(applyHighlight, 80);
-                    });
-
-                    const applyRealtimeFilters = () => {
-                        const selectedRole = roleFilter ? roleFilter.value.trim() : '';
-
-                        if (roleColumnIndex >= 0) {
-                            teamTable.column(roleColumnIndex).search(selectedRole ? '^' + escapeRegex(selectedRole) + '$' : '', true, false);
-                        }
-
-                        teamTable.draw();
-                        updateVisibleCount(teamTable.rows({ filter: 'applied' }).count());
-                    };
-
-                    teamTable.on('draw', function() {
-                        updateVisibleCount(teamTable.rows({ filter: 'applied' }).count());
-                        if (searchTerm) {
-                            window.requestAnimationFrame(applyHighlight);
-                        }
-                    });
-
-                    if (teamFilterForm) {
-                        teamFilterForm.addEventListener('submit', function(event) {
-                            event.preventDefault();
-                            applyRealtimeFilters();
-                        });
-                    }
-
-                    if (roleFilter) {
-                        roleFilter.addEventListener('change', applyRealtimeFilters);
-                    }
-
-                    applyRealtimeFilters();
-                    return;
-                }
-
-                const tableRows = Array.from(document.querySelectorAll('#team-members-table tbody tr'));
-                const applyRealtimeFiltersFallback = () => {
-                    if (!roleFilter || tableRows.length === 0) {
-                        return;
-                    }
-
-                    const selectedRole = roleFilter.value.trim();
-                    let visibleCount = 0;
-
-                    tableRows.forEach((row) => {
-                        const rowRole = row.dataset.role || '';
-                        const matchesRole = selectedRole === '' || rowRole === selectedRole;
-
-                        row.style.display = matchesRole ? '' : 'none';
-                        if (matchesRole) {
-                            visibleCount++;
-                        }
-                    });
-
-                    updateVisibleCount(visibleCount);
-                };
-
-                if (teamFilterForm) {
-                    teamFilterForm.addEventListener('submit', function(event) {
-                        event.preventDefault();
-                        applyRealtimeFiltersFallback();
-                    });
-                }
-
-                if (roleFilter) {
-                    roleFilter.addEventListener('change', applyRealtimeFiltersFallback);
-                }
-
-                applyRealtimeFiltersFallback();
-            });
+            }
         })();
     </script>
 </body>

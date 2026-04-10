@@ -119,14 +119,14 @@ include '../../includes/header.php';
     }
 
     .sync-stat-icon.sync-team + .sync-stat-info .sync-stat-value {
-    color: #1565c0;
-}
-.sync-stat-icon.sync-pending + .sync-stat-info .sync-stat-value {
-    color: #2e7d32;
-}
-.sync-stat-icon.sync-history + .sync-stat-info .sync-stat-value {
-    color: #6c757d;
-}
+        color: #1565c0;
+    }
+    .sync-stat-icon.sync-pending + .sync-stat-info .sync-stat-value {
+        color: #2e7d32;
+    }
+    .sync-stat-icon.sync-history + .sync-stat-info .sync-stat-value {
+        color: #6c757d;
+    }
 
     .sync-stat-label {
         color: #6c757d;
@@ -481,6 +481,15 @@ include '../../includes/header.php';
     .auto-redirect-message i {
         margin-right: 5px;
     }
+    
+    /* SweetAlert personnalisé sans bouton */
+    .swal2-popup.no-confirm-button .swal2-confirm {
+        display: none !important;
+    }
+    
+    .swal2-popup.auto-close .swal2-confirm {
+        display: none !important;
+    }
 </style>
 
 <div class="sync-simple-page">
@@ -511,12 +520,10 @@ include '../../includes/header.php';
                 </div>
                 <div class="col-md-4">
                     <div class="sync-stat-card">
-                        <div class="sync-stat-icon" style="background: linear-gradient(135deg, #d32f2f, #b71c1c);"><i class="fas fa-equals"></i></div>
+                        <div class="sync-stat-icon sync-history"><i class="fas fa-history"></i></div>
                         <div class="sync-stat-info">
-                            <div class="sync-stat-value" style="color: #d32f2f;">
-                                <?= (int) $pending_equipes + (int) $pending_controles ?>
-                            </div>
-                            <div class="sync-stat-label">Total à envoyer</div>
+                            <div class="sync-stat-value"><?= count($last_syncs) ?></div>
+                            <div class="sync-stat-label">Tentatives enregistrées</div>
                         </div>
                     </div>
                 </div>
@@ -609,7 +616,6 @@ include '../../includes/header.php';
         if (typeof value === 'number' && Number.isFinite(value)) {
             return value;
         }
-
         const parsed = parseInt(value, 10);
         return Number.isFinite(parsed) ? parsed : 0;
     }
@@ -747,6 +753,32 @@ include '../../includes/header.php';
             syncTimer = null;
         }
         updateElapsedTime();
+    }
+
+    // Fonction pour afficher un toast SweetAlert sans bouton avec auto-fermeture
+    function showAutoCloseToast(icon, title, html, duration = 3000, redirectAfter = true) {
+        Swal.fire({
+            icon: icon,
+            title: title,
+            html: html,
+            timer: duration,
+            timerProgressBar: true,
+            showConfirmButton: false,
+            allowOutsideClick: false,
+            allowEscapeKey: false,
+            didOpen: () => {
+                // Ajouter une classe pour masquer le bouton
+                const popup = Swal.getPopup();
+                if (popup) {
+                    popup.classList.add('auto-close');
+                }
+            },
+            willClose: () => {
+                if (redirectAfter) {
+                    window.location.href = redirectUrl;
+                }
+            }
+        });
     }
 
     async function fetchJsonWithCsrf(endpoint, payload) {
@@ -900,10 +932,8 @@ include '../../includes/header.php';
         html += '<h4>Rapport des conflits de synchronisation</h4>';
         html += '</div>';
         
-        // Résumé des conflits
         const equipeConflicts = conflicts.filter(c => c.type === 'equipe' || c.type === 'team' || c.type === 'membre');
         const controleConflicts = conflicts.filter(c => c.type === 'controle' || c.type === 'control');
-        const autresConflicts = conflicts.filter(c => !equipeConflicts.includes(c) && !controleConflicts.includes(c));
         
         html += '<div class="conflict-summary">';
         html += '<div class="conflict-summary-item"><span class="conflict-summary-label">Total des conflits :</span><span class="conflict-summary-value">' + conflicts.length + '</span></div>';
@@ -915,15 +945,9 @@ include '../../includes/header.php';
         }
         html += '</div>';
         
-        // Tableau détaillé des conflits
         html += '<div class="conflict-report-container">';
         html += '<table class="conflict-table">';
-        html += '<thead><tr>';
-        html += '<th>Type</th>';
-        html += '<th>ID / Référence</th>';
-        html += '<th>Nom / Libellé</th>';
-        html += '<th>Détails du conflit</th>';
-        html += '</thead>';
+        html += '<thead><tr><th>Type</th><th>ID / Référence</th><th>Nom / Libellé</th><th>Détails du conflit</th></tr></thead>';
         html += '<tbody>';
         
         conflicts.forEach(conflict => {
@@ -952,29 +976,20 @@ include '../../includes/header.php';
                     detailsHtml += '<div>' + escapeHtml(conflict.details) + '</div>';
                 }
             }
-            if (conflict.date_conflit) {
-                detailsHtml += '<div><strong>Date:</strong> ' + escapeHtml(conflict.date_conflit) + '</div>';
-            }
             
-            html += '<tr>';
-            html += '<td><span class="conflict-badge ' + typeClass + '">' + typeLabel + '</span></td>';
-            html += '<td><code>' + escapeHtml(id) + '</code></td>';
-            html += '<td><strong>' + escapeHtml(name) + '</strong></td>';
-            html += '<td class="conflict-details-preview">' + (detailsHtml || '<em class="text-muted">Aucun détail supplémentaire</em>') + '</td>';
-            html += '</tr>';
+            html += `<tr>
+                        <td><span class="conflict-badge ${typeClass}">${typeLabel}</span></td>
+                        <td><code>${escapeHtml(id)}</code></td>
+                        <td><strong>${escapeHtml(name)}</strong></td>
+                        <td class="conflict-details-preview">${detailsHtml || '<em class="text-muted">Aucun détail supplémentaire</em>'}</td>
+                     </tr>`;
         });
         
-        html += '</tbody>';
-        html += '</table>';
-        html += '</div>';
-        
+        html += '</tbody></table></div>';
         html += '<div class="conflict-actions">';
-        html += '<button class="btn-view-conflicts" onclick="window.open(\'' + appUrl('admin/conflicts.php') + '\', \'_blank\')">';
+        html += `<button class="btn-view-conflicts" onclick="window.open('${appUrl('admin/conflicts.php')}', '_blank')">`;
         html += '<i class="fas fa-external-link-alt"></i> Voir tous les conflits sur le serveur';
-        html += '</button>';
-        html += '</div>';
-        
-        html += '</div>';
+        html += '</button></div></div>';
         return html;
     }
 
@@ -988,27 +1003,22 @@ include '../../includes/header.php';
                     <div><strong>IP Serveur :</strong> ${escapeHtml(serverIp)}</div>
                     <div><strong>Point de réception :</strong> ${escapeHtml(targetUrl)}</div>
                     <div style="margin-top:10px;">La connexion avec le serveur distant est disponible.</div>
-                    <!-- Message de redirection supprimé -->
-                    </div>
                 </div>
             `;
         }
 
         const sent = payload.sent || {};
-        const stats = payload.stats || {};
         const pendingConflicts = toSyncCount(payload.pending_conflicts || 0);
         const conflictsList = payload.conflicts_list || payload.conflicts || [];
-        const equipesCount = toSyncCount(sent.equipes ?? (stats.equipes && stats.equipes.recus) ?? stats.equipes ?? 0);
-        const controlesCount = toSyncCount(sent.controles ?? (stats.controles && stats.controles.recus) ?? stats.controles ?? 0);
+        const equipesCount = toSyncCount(sent.equipes ?? 0);
+        const controlesCount = toSyncCount(sent.controles ?? 0);
         const summary = payload.summary || data.message || 'Opération terminée.';
         
         let rapportHtml = '';
         
-        // Générer le rapport de conflits UNIQUEMENT s'il y a des conflits
         if (pendingConflicts > 0 && conflictsList.length > 0) {
             rapportHtml = buildConflictReportHtml(conflictsList);
         } else if (pendingConflicts > 0) {
-            // Si le serveur signale des conflits mais n'envoie pas la liste détaillée
             rapportHtml = `
                 <div class="conflict-report">
                     <div class="conflict-report-header">
@@ -1038,50 +1048,20 @@ include '../../includes/header.php';
                     <div><i class="fas fa-clipboard-check"></i> <strong>Contrôles synchronisés :</strong> ${controlesCount}</div>
                 </div>
                 ${rapportHtml}
-                <!-- Message de redirection supprimé -->
-                </div>
             </div>
         `;
     }
 
-    // Helper pour obtenir l'URL de l'application
     function appUrl(path) {
         const baseUrl = window.location.origin + window.location.pathname.replace(/\/modules\/controles\/[^/]*$/, '');
         return baseUrl + path;
-    }
-
-    function redirectToListeWithDelay(delay = 3000) {
-        let countdown = delay / 1000;
-        const countdownElement = document.getElementById('redirectCountdown');
-        
-        const interval = setInterval(() => {
-            countdown--;
-            if (countdownElement) {
-                countdownElement.textContent = countdown;
-            }
-            if (countdown <= 0) {
-                clearInterval(interval);
-                window.location.href = redirectUrl;
-            }
-        }, 1000);
-        
-        setTimeout(() => {
-            window.location.href = redirectUrl;
-        }, delay);
     }
 
     async function requestSync(mode) {
         if (mode === 'sync' && pendingEquipesCount === 0 && pendingControlesCount === 0) {
             hideSyncProgress();
             stopSyncProgress();
-            await Swal.fire({
-                icon: 'info',
-                title: 'Aucune donnée à synchroniser',
-                text: 'Aucun membre d\'équipe ni contrôle n\'est actuellement en attente de synchronisation.',
-                confirmButtonText: 'Fermer'
-            });
-            // Redirection après fermeture de la popup
-            redirectToListeWithDelay(1000);
+            showAutoCloseToast('info', 'Aucune donnée à synchroniser', 'Aucun membre d\'équipe ni contrôle n\'est actuellement en attente de synchronisation.', 3000, true);
             return;
         }
 
@@ -1121,7 +1101,10 @@ include '../../includes/header.php';
                     text: 'Vérification de la connexion au serveur...',
                     allowOutsideClick: false,
                     allowEscapeKey: false,
-                    didOpen: () => Swal.showLoading()
+                    showConfirmButton: false,
+                    didOpen: () => {
+                        Swal.showLoading();
+                    }
                 });
 
                 const data = await fetchJsonWithCsrf(testSyncEndpoint, {
@@ -1129,15 +1112,9 @@ include '../../includes/header.php';
                 });
 
                 setConnectionButtonState('success');
-                await Swal.fire({
-                    icon: 'success',
-                    title: 'Connexion établie',
-                    html: buildSyncFeedbackHtml('test', data, serverIp),
-                    confirmButtonText: 'Fermer',
-                    timer: 3000,
-                    timerProgressBar: true
-                });
-                // Suppression de la redirection automatique après test de connexion
+                
+                const feedbackHtml = buildSyncFeedbackHtml('test', data, serverIp);
+                showAutoCloseToast('success', 'Connexion établie', feedbackHtml, 3000, false);
                 return;
             }
 
@@ -1179,59 +1156,34 @@ include '../../includes/header.php';
                 await new Promise((resolve) => window.setTimeout(resolve, 2000));
             }
 
-            // Déterminer le titre et l'icône en fonction des conflits
             let icon = 'success';
             let title = 'Synchronisation terminée';
-            let width = '700px';
+            let duration = 3000;
             
             if (isNoData) {
                 icon = 'info';
                 title = 'Aucune donnée à synchroniser';
-                width = '500px';
             } else if (hasConflictsPending && pendingConflicts > 0) {
                 icon = 'warning';
-                title = '📊 Rapport de synchronisation - Conflits détectés';
-                width = '900px';
+                title = 'Rapport de synchronisation - Conflits détectés';
+                duration = 5000;
             } else if (isAlreadySynced) {
                 icon = 'info';
                 title = 'Données déjà synchronisées';
-                width = '500px';
             }
 
             const feedbackHtml = buildSyncFeedbackHtml('sync', data, serverIp);
             
-            await Swal.fire({
-                icon: 'success',
-                title: 'Synchronisation terminée',
-                html: feedbackHtml,
-                confirmButtonText: 'Fermer',
-                timer: 3000,
-                timerProgressBar: true,
-                width: width,
-                customClass: {
-                    popup: 'conflict-report-popup'
-                },
-                showConfirmButton: true,
-                allowOutsideClick: false
-            });
-            // Suppression de la redirection automatique après synchronisation
+            // Afficher le toast avec auto-fermeture et redirection
+            showAutoCloseToast(icon, title, feedbackHtml, duration, true);
             
         } catch (error) {
             if (mode === 'test') {
                 setConnectionButtonState('error');
             }
 
-            await Swal.fire({
-                icon: 'error',
-                title: mode === 'test' ? 'Connexion impossible' : 'Erreur de synchronisation',
-                text: error.message || 'Impossible de joindre le service de synchronisation.',
-                confirmButtonText: 'Fermer'
-            });
+            showAutoCloseToast('error', mode === 'test' ? 'Connexion impossible' : 'Erreur de synchronisation', error.message || 'Impossible de joindre le service de synchronisation.', 4000, mode === 'sync');
             
-            // Redirection même en cas d'erreur
-            if (mode === 'sync') {
-                redirectToListeWithDelay(2000);
-            }
         } finally {
             if (mode === 'sync') {
                 stopSyncProgress();
@@ -1259,29 +1211,3 @@ include '../../includes/header.php';
 </script>
 
 <?php include '../../includes/footer.php'; ?>
-<?php include 'sync_conflict_modal.php'; ?>
-<script src="modules/controles/sync_conflict.js"></script>
-<script>
-// Exemple d'utilisation lors de la synchro
-async function handleSyncConflict(id, localData) {
-    const response = await fetch('http://[IP_SERVEUR_CENTRAL]/api/sync_conflict.php?id=' + id, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(localData)
-    });
-    const res = await response.json();
-    if (res.conflict) {
-        showSyncConflictModal(res.client, res.server, async (choice, data) => {
-            // Ici, envoyer la version choisie à l'API pour validation
-            await fetch('http://[IP_SERVEUR_CENTRAL]/api/sync_conflict.php?id=' + id + '&resolve=1', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(data)
-            });
-            // Rafraîchir la liste ou notifier l'utilisateur
-        });
-    } else {
-        // Pas de conflit, continuer la synchro
-    }
-}
-</script>

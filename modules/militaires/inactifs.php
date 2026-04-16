@@ -415,8 +415,7 @@ body {
 }
 
 .stat-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 8px 25px rgba(46, 125, 50, 0.15);
+    /* Suppression de l'animation de survol : cartes fixes */
 }
 
 .stat-icon {

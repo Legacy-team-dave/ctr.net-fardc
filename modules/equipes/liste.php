@@ -33,6 +33,20 @@ if (!function_exists('local_equipe_role_order_sql')) {
     }
 }
 
+if (!function_exists('local_equipe_role_order_value')) {
+    function local_equipe_role_order_value(?string $role): int {
+        $normalized = strtolower(trim((string) $role));
+        return match ($normalized) {
+            "chef d'équipe", "chef d'equipe" => 1,
+            'inspecteur' => 2,
+            'opérateur pc', 'operateur pc', 'opérateur', 'operateur' => 3,
+            'contrôleur', 'controleur', 'contôleur' => 4,
+            'superviseur' => 5,
+            default => 99,
+        };
+    }
+}
+
 if (!function_exists('local_equipe_role_display_label')) {
     function local_equipe_role_display_label(?string $role): string
     {
@@ -48,7 +62,15 @@ if (!function_exists('local_equipe_role_display_label')) {
     }
 }
 
-// Récupération des équipes (même logique que index.php : base `equipes` + fallback militaires)
+// Fonction pour mettre en majuscules UNIQUEMENT les données du tableau
+if (!function_exists('format_upper_table')) {
+    function format_upper_table($value, $default = 'NON RENSEIGNÉ') {
+        $value = trim((string) $value);
+        return empty($value) ? $default : strtoupper($value);
+    }
+}
+
+// Récupération des équipes avec ordre personnalisé des rôles
 try {
     $stmt = $pdo->query("
         SELECT e.*, 
@@ -56,7 +78,10 @@ try {
                COALESCE(NULLIF(TRIM(e.grade), ''), NULLIF(TRIM(m.grade), ''), '') AS grade_affiche
         FROM equipes e
         LEFT JOIN militaires m ON e.matricule = m.matricule
-        ORDER BY " . local_equipe_role_order_sql('e.role') . ", grade_affiche ASC, nom_affiche ASC
+        ORDER BY 
+            " . local_equipe_role_order_sql('e.role') . ",
+            grade_affiche ASC, 
+            nom_affiche ASC
     ");
     $equipes = $stmt->fetchAll(PDO::FETCH_ASSOC);
 } catch (PDOException $e) {
@@ -66,7 +91,7 @@ try {
 
 $total_equipes = count($equipes);
 
-// Liste des rôles disponibles
+// Liste des rôles disponibles dans l'ordre d'affichage
 $roles_equipe = ["Chef d'équipe", 'Inspecteur', 'Opérateur PC', 'Contrôleur', 'Superviseur'];
 
 $role_counts = array_fill_keys($roles_equipe, 0);
@@ -77,39 +102,6 @@ foreach ($equipes as $equipeStat) {
     }
 }
 unset($equipeStat);
-
-$role_stat_cards = [
-    [
-        'label' => "Chef d'équipe",
-        'count' => $role_counts["Chef d'équipe"] ?? 0,
-        'icon' => 'fas fa-user-tie',
-        'variant' => 'role-chef-card',
-    ],
-    [
-        'label' => 'Inspecteur',
-        'count' => $role_counts['Inspecteur'] ?? 0,
-        'icon' => 'fas fa-user-secret',
-        'variant' => 'role-inspecteur-card',
-    ],
-    [
-        'label' => 'Opérateur PC',
-        'count' => $role_counts['Opérateur PC'] ?? 0,
-        'icon' => 'fas fa-desktop',
-        'variant' => 'role-operateur-card',
-    ],
-    [
-        'label' => 'Contrôleur',
-        'count' => $role_counts['Contrôleur'] ?? 0,
-        'icon' => 'fas fa-clipboard-check',
-        'variant' => 'role-controleur-card',
-    ],
-    [
-        'label' => 'Superviseur',
-        'count' => $role_counts['Superviseur'] ?? 0,
-        'icon' => 'fas fa-user-shield',
-        'variant' => 'role-superviseur-card',
-    ],
-];
 
 // Récupérer la liste des unités pour le filtre
 $stmt_unites = $pdo->query("SELECT DISTINCT unites FROM equipes WHERE unites IS NOT NULL AND unites != '' ORDER BY unites");
@@ -165,6 +157,7 @@ $unites_list = $stmt_unites->fetchAll(PDO::FETCH_COLUMN);
     backdrop-filter: blur(5px);
 }
 
+/* Filtres - Version modernisée (comme le fichier du haut) */
 .filters-row {
     display: flex;
     gap: 15px;
@@ -236,12 +229,11 @@ $unites_list = $stmt_unites->fetchAll(PDO::FETCH_COLUMN);
     background: linear-gradient(135deg, #2e7d32 0%, #1b5e20 100%);
     color: white;
     font-weight: 700;
-    font-size: 0.9rem;
-    padding: 12px 15px;
+    font-size: 0.85rem;
+    padding: 10px 12px;
     border: none;
     text-align: left;
     vertical-align: middle;
-    text-transform: uppercase;
 }
 
 .table-equipes thead th:first-child {
@@ -287,9 +279,9 @@ $unites_list = $stmt_unites->fetchAll(PDO::FETCH_COLUMN);
 }
 
 .table-equipes tbody td {
-    padding: 15px;
+    padding: 10px 12px;
     border: none;
-    font-size: 0.9rem;
+    font-size: 0.85rem;
     vertical-align: middle;
     font-weight: 500;
     white-space: nowrap;
@@ -305,6 +297,11 @@ $unites_list = $stmt_unites->fetchAll(PDO::FETCH_COLUMN);
     border-radius: 0 10px 10px 10px;
 }
 
+/* Style pour les données en majuscules DANS LE TABLEAU UNIQUEMENT */
+.table-equipes tbody td {
+    text-transform: uppercase;
+}
+
 .matricule-with-eye {
     display: flex;
     align-items: center;
@@ -313,7 +310,7 @@ $unites_list = $stmt_unites->fetchAll(PDO::FETCH_COLUMN);
 
 .matricule-with-eye i {
     color: #2e7d32;
-    font-size: 1rem;
+    font-size: 0.9rem;
     cursor: pointer;
     transition: all 0.3s;
 }
@@ -339,6 +336,7 @@ $unites_list = $stmt_unites->fetchAll(PDO::FETCH_COLUMN);
     border-radius: 8px;
     border: 1px solid #e0e0e0;
     padding: 6px 12px;
+    font-size: 0.9rem;
 }
 
 .dataTables_wrapper .dataTables_filter {
@@ -353,6 +351,7 @@ $unites_list = $stmt_unites->fetchAll(PDO::FETCH_COLUMN);
     display: flex;
     align-items: center;
     gap: 5px;
+    font-size: 0.9rem;
 }
 
 .dataTables_wrapper .dataTables_filter input {
@@ -360,6 +359,7 @@ $unites_list = $stmt_unites->fetchAll(PDO::FETCH_COLUMN);
     border: 1px solid #e0e0e0;
     padding: 6px 12px;
     width: 250px;
+    font-size: 0.9rem;
 }
 
 .dataTables_wrapper .dataTables_info {
@@ -372,6 +372,7 @@ $unites_list = $stmt_unites->fetchAll(PDO::FETCH_COLUMN);
 .dataTables_wrapper .dataTables_paginate {
     float: right;
     margin-top: 20px;
+    font-size: 0.9rem;
 }
 
 .dataTables_scrollBody {
@@ -379,31 +380,28 @@ $unites_list = $stmt_unites->fetchAll(PDO::FETCH_COLUMN);
     border-radius: 10px;
 }
 
+/* Styles des cartes statistiques - Version modernisée (comme le fichier du haut) */
 .stats-container {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-    gap: 10px;
-    margin-bottom: 20px;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+    margin-bottom: 30px;
 }
 
 .stat-card {
     background: white;
-    border-radius: 12px;
-    padding: 12px 14px;
-    min-width: 0;
-    width: 100%;
-    box-shadow: 0 3px 12px rgba(0, 0, 0, 0.05);
+    border-radius: 15px;
+    padding: 20px 25px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 20px;
     transition: all 0.3s;
     border: 1px solid rgba(0, 0, 0, 0.05);
 }
 
 .stat-card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 16px rgba(46, 125, 50, 0.14);
-    border-color: rgba(46, 125, 50, 0.2);
+    /* Suppression de l'animation de survol : cartes fixes */
 }
 
 .stat-icon {
@@ -417,45 +415,74 @@ $unites_list = $stmt_unites->fetchAll(PDO::FETCH_COLUMN);
     color: white;
     font-size: 1.8rem;
     box-shadow: 0 4px 10px rgba(46, 125, 50, 0.3);
-    flex-shrink: 0;
+}
+
+/* Couleurs spécifiques pour chaque type de carte */
+.stat-icon.total-card {
+    background: linear-gradient(135deg, #2e7d32 0%, #1b5e20 100%);
+}
+
+.stat-icon.role-chef-card {
+    background: linear-gradient(135deg, #ff9800 0%, #f57c00 100%);
+}
+
+.stat-icon.role-inspecteur-card {
+    background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
+}
+
+.stat-icon.role-operateur-card {
+    background: linear-gradient(135deg, #0d6efd 0%, #0a58ca 100%);
+}
+
+.stat-icon.role-controleur-card {
+    background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+}
+
+.stat-icon.role-superviseur-card {
+    background: linear-gradient(135deg, #6c757d 0%, #5a6268 100%);
 }
 
 .stat-info {
-    display: flex;
-    flex-direction: column;
-    gap: 3px;
-    min-width: 0;
     flex: 1;
 }
 
-.stat-label {
-    color: #6c757d;
-    font-weight: 600;
-    font-size: 0.76rem;
-    line-height: 1.2;
-}
-
-
-.stat-value {
+.stat-info h4 {
+    margin: 0;
     font-size: 1.8rem;
     font-weight: 700;
     color: #2e7d32;
-    line-height: 1.2;
-    margin: 0;
 }
 
-.stat-value.total-effectifs { color: #2e7d32; }
-.stat-icon.role-chef-card { background: linear-gradient(135deg, #ff9800 0%, #f57c00 100%); }
-.stat-icon.role-inspecteur-card { background: linear-gradient(135deg, #17a2b8 0%, #11707f 100%); }
-.stat-icon.role-operateur-card { background: linear-gradient(135deg, #0d6efd 0%, #0a58ca 100%); }
-.stat-icon.role-controleur-card { background: linear-gradient(135deg, #dc3545 0%, #b02a37 100%); }
-.stat-icon.role-superviseur-card { background: linear-gradient(135deg, #6c757d 0%, #495057 100%); }
+.stat-info p {
+    margin: 0;
+    font-size: 0.9rem;
+    color: #6c757d;
+}
 
-.stat-value.role-chef-card { color: #f57c00; }
-.stat-value.role-inspecteur-card { color: #11707f; }
-.stat-value.role-operateur-card { color: #0a58ca; }
-.stat-value.role-controleur-card { color: #b02a37; }
-.stat-value.role-superviseur-card { color: #495057; }
+/* Couleurs des valeurs */
+.stat-info h4.total-value {
+    color: #2e7d32;
+}
+
+.stat-info h4.role-chef-value {
+    color: #f57c00;
+}
+
+.stat-info h4.role-inspecteur-value {
+    color: #138496;
+}
+
+.stat-info h4.role-operateur-value {
+    color: #0a58ca;
+}
+
+.stat-info h4.role-controleur-value {
+    color: #c82333;
+}
+
+.stat-info h4.role-superviseur-value {
+    color: #5a6268;
+}
 
 .filtre-tags {
     margin-top: 10px;
@@ -471,6 +498,26 @@ $unites_list = $stmt_unites->fetchAll(PDO::FETCH_COLUMN);
 }
 
 @media (max-width: 992px) {
+    .stats-container {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 15px;
+    }
+
+    .stat-card {
+        padding: 15px 20px;
+        gap: 15px;
+    }
+
+    .stat-icon {
+        width: 50px;
+        height: 50px;
+        font-size: 1.5rem;
+    }
+
+    .stat-info h4 {
+        font-size: 1.5rem;
+    }
+
     .dataTables_wrapper .dataTables_filter {
         width: 100%;
     }
@@ -485,41 +532,116 @@ $unites_list = $stmt_unites->fetchAll(PDO::FETCH_COLUMN);
 }
 
 @media (max-width: 768px) {
+    .stats-container {
+        grid-template-columns: 1fr;
+        gap: 12px;
+    }
+
     .modern-card .card-header {
         flex-direction: column;
         align-items: flex-start;
     }
 
-    .stats-container {
+    .filters-row {
         flex-direction: column;
     }
 
-    .filters-row {
-        flex-direction: column;
+    .stat-card {
+        padding: 12px 18px;
+    }
+
+    .stat-icon {
+        width: 45px;
+        height: 45px;
+        font-size: 1.3rem;
+    }
+
+    .stat-info h4 {
+        font-size: 1.3rem;
+    }
+
+    .stat-info p {
+        font-size: 0.8rem;
+    }
+
+    .filter-item .form-label {
+        font-size: 0.8rem;
+    }
+
+    .filter-item .form-select,
+    .filter-item .form-control {
+        padding: 6px 10px;
+        font-size: 0.85rem;
+    }
+
+    .btn-reset-modern {
+        padding: 6px 12px;
+        font-size: 0.85rem;
     }
 }
 </style>
 
 <div class="container-fluid py-3">
 
-    <!-- Statistiques -->
+    <!-- Statistiques - Version modernisée (3 colonnes) -->
     <div class="stats-container">
+        <!-- Total membres -->
         <div class="stat-card">
-            <div class="stat-icon total-effectifs"><i class="fas fa-users"></i></div>
+            <div class="stat-icon total-card"><i class="fas fa-users"></i></div>
             <div class="stat-info">
-                <div class="stat-label">Membres enregistrés</div>
-                <div class="stat-value total-effectifs"><?= number_format($total_equipes, 0, ',', ' ') ?></div>
+                <h4 class="total-value"><?= number_format($total_equipes, 0, ',', ' ') ?></h4>
+                <p>Total membres</p>
             </div>
         </div>
-        <?php foreach ($role_stat_cards as $role_card): ?>
-            <div class="stat-card">
-                <div class="stat-icon <?= htmlspecialchars($role_card['variant']) ?>"><i class="<?= htmlspecialchars($role_card['icon']) ?>"></i></div>
-                <div class="stat-info">
-                    <div class="stat-label"><?= htmlspecialchars($role_card['label']) ?></div>
-                    <div class="stat-value <?= htmlspecialchars($role_card['variant']) ?>"><?= number_format((int) $role_card['count'], 0, ',', ' ') ?></div>
-                </div>
+
+        <!-- Chef d'équipe -->
+        <div class="stat-card">
+            <div class="stat-icon role-chef-card"><i class="fas fa-user-tie"></i></div>
+            <div class="stat-info">
+                <h4 class="role-chef-value"><?= number_format($role_counts["Chef d'équipe"] ?? 0, 0, ',', ' ') ?></h4>
+                <p>Chef d'équipe</p>
             </div>
-        <?php endforeach; ?>
+        </div>
+
+        <!-- Inspecteur -->
+        <div class="stat-card">
+            <div class="stat-icon role-inspecteur-card"><i class="fas fa-user-secret"></i></div>
+            <div class="stat-info">
+                <h4 class="role-inspecteur-value"><?= number_format($role_counts['Inspecteur'] ?? 0, 0, ',', ' ') ?>
+                </h4>
+                <p>Inspecteur</p>
+            </div>
+        </div>
+
+        <!-- Opérateur PC -->
+        <div class="stat-card">
+            <div class="stat-icon role-operateur-card"><i class="fas fa-desktop"></i></div>
+            <div class="stat-info">
+                <h4 class="role-operateur-value"><?= number_format($role_counts['Opérateur PC'] ?? 0, 0, ',', ' ') ?>
+                </h4>
+                <p>Opérateur PC</p>
+            </div>
+        </div>
+
+        <!-- Contrôleur -->
+        <div class="stat-card">
+            <div class="stat-icon role-controleur-card"><i class="fas fa-clipboard-check"></i></div>
+            <div class="stat-info">
+                <h4 class="role-controleur-value"><?= number_format($role_counts['Contrôleur'] ?? 0, 0, ',', ' ') ?>
+                </h4>
+                <p>Contrôleur</p>
+            </div>
+        </div>
+
+        <!-- Superviseur -->
+        <div class="stat-card">
+            <div class="stat-icon role-superviseur-card"><i class="fas fa-user-shield"></i></div>
+            <div class="stat-info">
+                <h4 class="role-superviseur-value"><?= number_format($role_counts['Superviseur'] ?? 0, 0, ',', ' ') ?>
+                </h4>
+                <p>Superviseur</p>
+            </div>
+        </div>
     </div>
 
     <div class="row">
@@ -530,7 +652,7 @@ $unites_list = $stmt_unites->fetchAll(PDO::FETCH_COLUMN);
                     <span class="total-badge"><i class="fas fa-database"></i> Total : <?= count($equipes) ?></span>
                 </div>
                 <div class="card-body">
-                    <!-- Filtres -->
+                    <!-- Filtres - Version modernisée -->
                     <div class="filters-row">
                         <div class="filter-item">
                             <label class="form-label"><i class="fas fa-user-tag"></i> Rôle</label>
@@ -558,7 +680,8 @@ $unites_list = $stmt_unites->fetchAll(PDO::FETCH_COLUMN);
                         </div>
                         <div class="filter-item">
                             <label class="form-label">&nbsp;</label>
-                            <button type="button" id="reset-filters" class="btn-reset-modern w-100"><i class="fas fa-undo-alt"></i> Réinitialiser</button>
+                            <button type="button" id="reset-filters" class="btn-reset-modern w-100"><i
+                                    class="fas fa-undo-alt"></i> Réinitialiser</button>
                         </div>
                     </div>
 
@@ -579,17 +702,19 @@ $unites_list = $stmt_unites->fetchAll(PDO::FETCH_COLUMN);
                         <tbody>
                             <?php foreach ($equipes as $e): ?>
                             <tr data-role="<?= htmlspecialchars(local_equipe_role_display_label($e['role'] ?? '')) ?>"
+                                data-role-order="<?= local_equipe_role_order_value($e['role'] ?? '') ?>"
                                 data-unites="<?= htmlspecialchars($e['unites'] ?? '') ?>"
                                 data-grade="<?= htmlspecialchars($e['grade_affiche'] ?? '') ?>">
                                 <td>
                                     <div class="matricule-with-eye">
-                                        <i class="fas fa-eye" onclick="window.location.href='voir.php?id=<?= urlencode($e['id']) ?>'"></i>
-                                        <strong><?= htmlspecialchars($e['matricule']) ?></strong>
+                                        <i class="fas fa-eye"
+                                            onclick="window.location.href='voir.php?id=<?= urlencode($e['id']) ?>'"></i>
+                                        <strong><?= htmlspecialchars(format_upper_table($e['matricule'] ?? '')) ?></strong>
                                     </div>
                                 </td>
-                                <td><?= htmlspecialchars($e['nom_affiche'] ?? '') ?></td>
-                                <td><?= htmlspecialchars($e['grade_affiche'] ?? '') ?></td>
-                                <td><?= htmlspecialchars($e['unites'] ?? '') ?></td>
+                                <td><?= htmlspecialchars(format_upper_table($e['nom_affiche'] ?? '')) ?></td>
+                                <td><?= htmlspecialchars(format_upper_table($e['grade_affiche'] ?? '')) ?></td>
+                                <td><?= htmlspecialchars(format_upper_table($e['unites'] ?? '')) ?></td>
                                 <td><?= htmlspecialchars(local_equipe_role_display_label($e['role'] ?? '')) ?></td>
                             </tr>
                             <?php endforeach; ?>
@@ -675,15 +800,19 @@ $(document).ready(function() {
             }
         },
         dom: 'rt<"datatable-bottom d-flex justify-content-between align-items-center flex-wrap gap-2 mt-3"ip>',
-        order: [[0, 'asc']],
+        order: [
+            [4, 'asc']
+        ],
         pageLength: 10,
         lengthMenu: [10, 25, 50, 100],
         autoWidth: true,
         orderCellsTop: true,
-        scrollX: false,
-        scrollY: false,
-        scrollCollapse: false,
         paging: true,
+        columnDefs: [{
+            targets: 4,
+            orderData: [4],
+            type: 'html'
+        }],
         createdRow: function(row, data, dataIndex) {
             if (searchTerm) {
                 $(row).find('td').each(function() {
@@ -716,7 +845,8 @@ $(document).ready(function() {
                         const $td = $(this);
                         const originalHtml = $td.html();
                         if (!originalHtml.includes('<mark')) {
-                            $td.html(highlightSearchTerm(originalHtml, searchTerm));
+                            $td.html(highlightSearchTerm(originalHtml,
+                                searchTerm));
                         }
                     });
                 });
@@ -729,7 +859,8 @@ $(document).ready(function() {
     function updateFilterTags() {
         const tags = [];
         if ($('#role-filter').val()) tags.push(`Rôle : ${$('#role-filter').val()}`);
-        if ($('#unites-filter').val()) tags.push(`Unités : ${$('#unites-filter').find('option:selected').text()}`);
+        if ($('#unites-filter').val()) tags.push(
+            `Unités : ${$('#unites-filter').find('option:selected').text()}`);
         if ($('#grade-filter').val()) tags.push(`Grade : ${$('#grade-filter').find('option:selected').text()}`);
 
         const $tagsContainer = $('.filtre-tags');

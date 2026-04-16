@@ -96,13 +96,16 @@ sync_progress_event('progress', [
     ],
 ]);
 
+
+// Construction du payload compatible serveur central (clé 'tables')
 $payload = [
-    'client_id' => $sourceInstance,
     'source_instance' => $sourceInstance,
     'source_label' => $sourceLabel,
     'sent_at' => gmdate('c'),
-    'equipes' => $equipesRows,
-    'controles' => $pendingControles,
+    'tables' => [
+        'equipes' => $equipesRows,
+        'controles' => $pendingControles,
+    ],
     'meta' => [
         'app_mode' => app_mode(),
         'sync_type' => 'equipes_controles',

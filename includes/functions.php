@@ -1725,175 +1725,196 @@ function build_xlsx_content($headers, $rows, $sheet_name = 'Donnees')
     }
 
     $sheet_xml = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
-        . '<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">'
-        . '<sheetData>' . $sheet_xml_rows . '</sheetData>'
-        . '</worksheet>';
+. '<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">'
+    . '<sheetData>' . $sheet_xml_rows . '</sheetData>'
+    . '</worksheet>';
 
-    $workbook_xml = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
-        . '<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" '
-        . 'xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">'
-        . '<sheets><sheet name="' . escape_xml_value($sheet_name_safe) . '" sheetId="1" r:id="rId1"/></sheets>'
-        . '</workbook>';
+$workbook_xml = '
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
+. '<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" '
+        . ' xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">'
+    . '<sheets>
+        <sheet name="' . escape_xml_value($sheet_name_safe) . '" sheetId="1" r:id="rId1" />
+    </sheets>'
+    . '</workbook>';
 
-    $content_types_xml = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
-        . '<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">'
-        . '<Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>'
-        . '<Default Extension="xml" ContentType="application/xml"/>'
-        . '<Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/>'
-        . '<Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>'
-        . '</Types>';
+$content_types_xml = '
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
+. '<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">'
+    . '
+    <Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml" />'
+    . '
+    <Default Extension="xml" ContentType="application/xml" />'
+    . '
+    <Override PartName="/xl/workbook.xml"
+        ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml" />'
+    . '
+    <Override PartName="/xl/worksheets/sheet1.xml"
+        ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml" />'
+    . '
+</Types>';
 
-    $rels_xml = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
-        . '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'
-        . '<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/>'
-        . '</Relationships>';
+$rels_xml = '
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
+. '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'
+    . '
+    <Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument"
+        Target="xl/workbook.xml" />'
+    . '
+</Relationships>';
 
-    $workbook_rels_xml = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
-        . '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'
-        . '<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/>'
-        . '</Relationships>';
+$workbook_rels_xml = '
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
+. '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'
+    . '
+    <Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet"
+        Target="worksheets/sheet1.xml" />'
+    . '
+</Relationships>';
 
-    $tmp = tempnam(sys_get_temp_dir(), 'xlsx_');
-    $zip = new ZipArchive();
-    if ($zip->open($tmp, ZipArchive::OVERWRITE) !== true) {
-        @unlink($tmp);
-        return false;
-    }
+$tmp = tempnam(sys_get_temp_dir(), 'xlsx_');
+$zip = new ZipArchive();
+if ($zip->open($tmp, ZipArchive::OVERWRITE) !== true) {
+@unlink($tmp);
+return false;
+}
 
-    $zip->addFromString('[Content_Types].xml', $content_types_xml);
-    $zip->addFromString('_rels/.rels', $rels_xml);
-    $zip->addFromString('xl/workbook.xml', $workbook_xml);
-    $zip->addFromString('xl/_rels/workbook.xml.rels', $workbook_rels_xml);
-    $zip->addFromString('xl/worksheets/sheet1.xml', $sheet_xml);
-    $zip->close();
+$zip->addFromString('[Content_Types].xml', $content_types_xml);
+$zip->addFromString('_rels/.rels', $rels_xml);
+$zip->addFromString('xl/workbook.xml', $workbook_xml);
+$zip->addFromString('xl/_rels/workbook.xml.rels', $workbook_rels_xml);
+$zip->addFromString('xl/worksheets/sheet1.xml', $sheet_xml);
+$zip->close();
 
-    $xlsx_content = file_get_contents($tmp);
-    @unlink($tmp);
-    return $xlsx_content;
+$xlsx_content = file_get_contents($tmp);
+@unlink($tmp);
+return $xlsx_content;
 }
 
 function create_incremental_backup_archive($datasets)
 {
-    $backup_dir = get_backup_dir_path();
-    $zip_file = $backup_dir . 'backup_consolide_latest.zip';
-    $temp_dir = rtrim(sys_get_temp_dir(), DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . 'ctr_backup_' . bin2hex(random_bytes(6));
+$backup_dir = get_backup_dir_path();
+$zip_file = $backup_dir . 'backup_consolide_latest.zip';
+$temp_dir = rtrim(sys_get_temp_dir(), DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . 'ctr_backup_' .
+bin2hex(random_bytes(6));
 
-    if (!@mkdir($temp_dir, 0755, true) && !is_dir($temp_dir)) {
-        error_log("Impossible de préparer le dossier temporaire de sauvegarde.");
-        return false;
-    }
+if (!@mkdir($temp_dir, 0755, true) && !is_dir($temp_dir)) {
+error_log("Impossible de préparer le dossier temporaire de sauvegarde.");
+return false;
+}
 
-    $cleanup = static function (string $dir): void {
-        if (!is_dir($dir)) {
-            return;
-        }
+$cleanup = static function (string $dir): void {
+if (!is_dir($dir)) {
+return;
+}
 
-        $iterator = new RecursiveIteratorIterator(
-            new RecursiveDirectoryIterator($dir, FilesystemIterator::SKIP_DOTS),
-            RecursiveIteratorIterator::CHILD_FIRST
-        );
+$iterator = new RecursiveIteratorIterator(
+new RecursiveDirectoryIterator($dir, FilesystemIterator::SKIP_DOTS),
+RecursiveIteratorIterator::CHILD_FIRST
+);
 
-        foreach ($iterator as $item) {
-            if ($item->isDir()) {
-                @rmdir($item->getPathname());
-            } else {
-                @unlink($item->getPathname());
-            }
-        }
+foreach ($iterator as $item) {
+if ($item->isDir()) {
+@rmdir($item->getPathname());
+} else {
+@unlink($item->getPathname());
+}
+}
 
-        @rmdir($dir);
-    };
+@rmdir($dir);
+};
 
-    $manifest = [
-        'updated_at' => date('c'),
-        'mode' => 'consolidated_latest',
-        'datasets' => []
-    ];
+$manifest = [
+'updated_at' => date('c'),
+'mode' => 'consolidated_latest',
+'datasets' => []
+];
 
-    try {
-        foreach ($datasets as $dataset_key => $dataset) {
-            $headers = $dataset['headers'];
-            $rows = $dataset['rows'];
-            $csv = build_csv_content($headers, $rows, ';');
-            $xlsx = build_xlsx_content($headers, $rows, $dataset['sheet_name'] ?? ucfirst($dataset_key));
+try {
+foreach ($datasets as $dataset_key => $dataset) {
+$headers = $dataset['headers'];
+$rows = $dataset['rows'];
+$csv = build_csv_content($headers, $rows, ';');
+$xlsx = build_xlsx_content($headers, $rows, $dataset['sheet_name'] ?? ucfirst($dataset_key));
 
-            file_put_contents($temp_dir . DIRECTORY_SEPARATOR . $dataset_key . '.csv', $csv);
-            if ($xlsx !== false) {
-                file_put_contents($temp_dir . DIRECTORY_SEPARATOR . $dataset_key . '.xlsx', $xlsx);
-            }
+file_put_contents($temp_dir . DIRECTORY_SEPARATOR . $dataset_key . '.csv', $csv);
+if ($xlsx !== false) {
+file_put_contents($temp_dir . DIRECTORY_SEPARATOR . $dataset_key . '.xlsx', $xlsx);
+}
 
-            $manifest['datasets'][$dataset_key] = [
-                'rows' => count($rows),
-                'formats' => $xlsx !== false ? ['csv', 'xlsx'] : ['csv']
-            ];
-        }
+$manifest['datasets'][$dataset_key] = [
+'rows' => count($rows),
+'formats' => $xlsx !== false ? ['csv', 'xlsx'] : ['csv']
+];
+}
 
-        file_put_contents(
-            $temp_dir . DIRECTORY_SEPARATOR . 'manifest.json',
-            json_encode($manifest, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE)
-        );
+file_put_contents(
+$temp_dir . DIRECTORY_SEPARATOR . 'manifest.json',
+json_encode($manifest, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE)
+);
 
-        if (class_exists('ZipArchive')) {
-            $zip = new ZipArchive();
-            if ($zip->open($zip_file, ZipArchive::CREATE | ZipArchive::OVERWRITE) !== true) {
-                error_log("Impossible de créer l'archive de sauvegarde consolidée.");
-                return false;
-            }
+if (class_exists('ZipArchive')) {
+$zip = new ZipArchive();
+if ($zip->open($zip_file, ZipArchive::CREATE | ZipArchive::OVERWRITE) !== true) {
+error_log("Impossible de créer l'archive de sauvegarde consolidée.");
+return false;
+}
 
-            $files = new RecursiveIteratorIterator(
-                new RecursiveDirectoryIterator($temp_dir, FilesystemIterator::SKIP_DOTS),
-                RecursiveIteratorIterator::SELF_FIRST
-            );
+$files = new RecursiveIteratorIterator(
+new RecursiveDirectoryIterator($temp_dir, FilesystemIterator::SKIP_DOTS),
+RecursiveIteratorIterator::SELF_FIRST
+);
 
-            foreach ($files as $fileInfo) {
-                if (!$fileInfo->isFile()) {
-                    continue;
-                }
+foreach ($files as $fileInfo) {
+if (!$fileInfo->isFile()) {
+continue;
+}
 
-                $localName = substr($fileInfo->getPathname(), strlen($temp_dir) + 1);
-                $zip->addFile($fileInfo->getPathname(), str_replace('\\', '/', $localName));
-            }
+$localName = substr($fileInfo->getPathname(), strlen($temp_dir) + 1);
+$zip->addFile($fileInfo->getPathname(), str_replace('\\', '/', $localName));
+}
 
-            $zip->close();
-            return $zip_file;
-        }
+$zip->close();
+return $zip_file;
+}
 
-        if (DIRECTORY_SEPARATOR === '\\') {
-            $sourcePath = str_replace("'", "''", $temp_dir . DIRECTORY_SEPARATOR . '*');
-            $destinationPath = str_replace("'", "''", $zip_file);
-            $psScript = "if (Test-Path -LiteralPath '$destinationPath') { Remove-Item -LiteralPath '$destinationPath' -Force }; Compress-Archive -Path '$sourcePath' -DestinationPath '$destinationPath' -Force";
-            $command = 'powershell.exe -NoProfile -ExecutionPolicy Bypass -Command ' . escapeshellarg($psScript);
+if (DIRECTORY_SEPARATOR === '\\') {
+$sourcePath = str_replace("'", "''", $temp_dir . DIRECTORY_SEPARATOR . '*');
+$destinationPath = str_replace("'", "''", $zip_file);
+$psScript = "if (Test-Path -LiteralPath '$destinationPath') { Remove-Item -LiteralPath '$destinationPath' -Force };
+Compress-Archive -Path '$sourcePath' -DestinationPath '$destinationPath' -Force";
+$command = 'powershell.exe -NoProfile -ExecutionPolicy Bypass -Command ' . escapeshellarg($psScript);
 
-            exec($command, $output, $exitCode);
-            if ($exitCode === 0 && file_exists($zip_file)) {
-                return $zip_file;
-            }
-        }
+exec($command, $output, $exitCode);
+if ($exitCode === 0 && file_exists($zip_file)) {
+return $zip_file;
+}
+}
 
-        error_log("Impossible de créer l'archive ZIP de sauvegarde (ZipArchive absent). ");
-        return false;
-    } finally {
-        $cleanup($temp_dir);
-    }
+error_log("Impossible de créer l'archive ZIP de sauvegarde (ZipArchive absent). ");
+return false;
+} finally {
+$cleanup($temp_dir);
+}
 }
 
 /**
- * Purge les archives ZIP de sauvegarde:
- * - supprime les archives identiques (même hash, conserve la plus récente)
- * - supprime les archives de plus de $max_days jours
- * - conserve uniquement les $max_unique_keep archives non identiques les plus récentes
- *
- * @param int $max_unique_keep
- * @param int $max_days Nombre de jours avant suppression automatique (défaut: 60)
- * @return array
- */
+* Purge les archives ZIP de sauvegarde:
+* - supprime les archives identiques (même hash, conserve la plus récente)
+* - supprime les archives de plus de $max_days jours
+* - conserve uniquement les $max_unique_keep archives non identiques les plus récentes
+*
+* @param int $max_unique_keep
+* @param int $max_days Nombre de jours avant suppression automatique (défaut: 60)
+* @return array
+*/
 function purge_backup_archives($max_unique_keep = 30, $max_days = 60)
 {
-    $backup_dir = get_backup_dir_path();
-    $files = glob($backup_dir . '*.zip') ?: [];
+$backup_dir = get_backup_dir_path();
+$files = glob($backup_dir . '*.zip') ?: [];
 
-    usort($files, function ($a, $b) {
-        return filemtime($b) <=> filemtime($a);
+usort($files, function ($a, $b) {
+return filemtime($b) <=> filemtime($a);
     });
 
     $seen_hashes = [];
@@ -1905,45 +1926,28 @@ function purge_backup_archives($max_unique_keep = 30, $max_days = 60)
     $cutoff_time = time() - ($max_days * 86400);
 
     foreach ($files as $file) {
-        if (!is_file($file)) {
-            continue;
-        }
-
-        // Supprimer les fichiers de plus de $max_days jours
-        if (filemtime($file) < $cutoff_time) {
-            $to_delete[] = $file;
-            $deleted_expired++;
-            continue;
-        }
-
-        $hash = @hash_file('sha256', $file);
-        if ($hash === false) {
-            continue;
-        }
-
-        if (isset($seen_hashes[$hash])) {
-            $to_delete[] = $file;
-            $deleted_duplicates++;
-            continue;
-        }
-
-        $seen_hashes[$hash] = $file;
-        $unique_kept[] = $file;
-
-        if (count($unique_kept) > (int)$max_unique_keep) {
-            $to_delete[] = $file;
-            $deleted_overflow++;
-        }
+    if (!is_file($file)) {
+    continue;
     }
 
-    $deleted_files = [];
-    foreach ($to_delete as $file) {
+    // Supprimer les fichiers de plus de $max_days jours
+    if (filemtime($file) < $cutoff_time) { $to_delete[]=$file; $deleted_expired++; continue; }
+        $hash=@hash_file('sha256', $file); if ($hash===false) { continue; } if (isset($seen_hashes[$hash])) {
+        $to_delete[]=$file; $deleted_duplicates++; continue; } $seen_hashes[$hash]=$file; $unique_kept[]=$file; if
+        (count($unique_kept)> (int)$max_unique_keep) {
+        $to_delete[] = $file;
+        $deleted_overflow++;
+        }
+        }
+
+        $deleted_files = [];
+        foreach ($to_delete as $file) {
         if (@unlink($file)) {
-            $deleted_files[] = $file;
+        $deleted_files[] = $file;
         }
-    }
+        }
 
-    return [
+        return [
         'max_unique_keep' => (int)$max_unique_keep,
         'max_days' => (int)$max_days,
         'scanned' => count($files),
@@ -1953,208 +1957,195 @@ function purge_backup_archives($max_unique_keep = 30, $max_days = 60)
         'deleted_overflow' => $deleted_overflow,
         'deleted_expired' => $deleted_expired,
         'deleted_files' => $deleted_files
-    ];
-}
+        ];
+        }
 
-/**
- * Exécute la sauvegarde consolidée (8h) :
- * - seulement si intervalle atteint (sauf force=true)
- * - met à jour un ZIP unique contenant l'ensemble des données à jour
- */
-function maybe_create_backup($force = false)
-{
-    global $pdo;
+        /**
+        * Exécute la sauvegarde consolidée (8h) :
+        * - seulement si intervalle atteint (sauf force=true)
+        * - met à jour un ZIP unique contenant l'ensemble des données à jour
+        */
+        function maybe_create_backup($force = false)
+        {
+        global $pdo;
 
-    $state = read_backup_state();
-    $now = time();
-    $interval = get_backup_interval_seconds();
-    $lastBackupAt = (int) ($state['last_backup_at'] ?? 0);
+        $state = read_backup_state();
+        $now = time();
+        $interval = get_backup_interval_seconds();
+        $lastBackupAt = (int) ($state['last_backup_at'] ?? 0);
 
-    if (!$force && $lastBackupAt > 0 && ($now - $lastBackupAt) < $interval) {
-        return [
-            'created' => false,
+        if (!$force && $lastBackupAt > 0 && ($now - $lastBackupAt) < $interval) { return [ 'created'=> false,
             'reason' => 'interval_not_elapsed',
             'next_run_in_seconds' => $interval - ($now - $lastBackupAt)
-        ];
-    }
+            ];
+            }
 
-    $control_fields = ['id', 'matricule', 'type_controle', 'nom_beneficiaire', 'new_beneficiaire', 'lien_parente', 'date_controle', 'mention', 'observations', 'cree_le'];
-    $non_vus_fields = ['SERIE', 'MATRICULE', 'NOMS', 'GRADE', 'UNITE', 'BENEFICIAIRE', 'GARNISON', 'PROVINCE', 'CATEGORIE', 'ZDEF'];
+            $control_fields = ['id', 'matricule', 'type_controle', 'nom_beneficiaire', 'new_beneficiaire',
+            'lien_parente', 'date_controle', 'mention', 'observations', 'cree_le'];
+            $non_vus_fields = ['SERIE', 'MATRICULE', 'NOMS', 'GRADE', 'UNITE', 'BENEFICIAIRE', 'GARNISON', 'PROVINCE',
+            'CATEGORIE', 'ZDEF'];
 
-    $max_control_id = (int) $pdo->query("SELECT COALESCE(MAX(id), 0) FROM controles")->fetchColumn();
-    $current_non_vus = get_non_vus_rows_for_backup();
-    $current_non_vus_snapshot = get_non_vus_matricule_snapshot($current_non_vus);
+            $max_control_id = (int) $pdo->query("SELECT COALESCE(MAX(id), 0) FROM controles")->fetchColumn();
+            $current_non_vus = get_non_vus_rows_for_backup();
+            $current_non_vus_snapshot = get_non_vus_matricule_snapshot($current_non_vus);
 
-    $isInitialBackup = $lastBackupAt <= 0;
-    $hasControlChanges = $max_control_id > (int) ($state['last_control_id'] ?? 0);
-    $hasNonVusChanges = $current_non_vus_snapshot !== (array) ($state['non_vus_snapshot'] ?? []);
+            $isInitialBackup = $lastBackupAt <= 0; $hasControlChanges=$max_control_id> (int) ($state['last_control_id']
+                ?? 0);
+                $hasNonVusChanges = $current_non_vus_snapshot !== (array) ($state['non_vus_snapshot'] ?? []);
 
-    if (!$force && !$isInitialBackup && !$hasControlChanges && !$hasNonVusChanges) {
-        $state['last_run_at'] = $now;
-        write_backup_state($state);
+                if (!$force && !$isInitialBackup && !$hasControlChanges && !$hasNonVusChanges) {
+                $state['last_run_at'] = $now;
+                write_backup_state($state);
 
-        return [
-            'created' => false,
-            'reason' => 'no_new_control_data',
-            'counts' => [
+                return [
+                'created' => false,
+                'reason' => 'no_new_control_data',
+                'counts' => [
                 'controles' => $max_control_id,
                 'non_vus' => count($current_non_vus)
-            ]
-        ];
-    }
-
-    $all_controles = fetch_full_rows_for_table('controles', $control_fields);
-
-    $datasets = [
-        'controles' => [
-            'headers' => $control_fields,
-            'rows' => $all_controles,
-            'sheet_name' => 'Controles'
-        ],
-        'non_vus' => [
-            'headers' => $non_vus_fields,
-            'rows' => $current_non_vus,
-            'sheet_name' => 'NonVus'
-        ]
-    ];
-
-    $zip_file = create_incremental_backup_archive($datasets);
-    if ($zip_file === false) {
-        return [
-            'created' => false,
-            'reason' => 'zip_creation_failed'
-        ];
-    }
-
-    $state['last_backup_at'] = $now;
-    $state['last_run_at'] = $now;
-    $state['last_control_id'] = $max_control_id;
-    $state['non_vus_snapshot'] = $current_non_vus_snapshot;
-    write_backup_state($state);
-
-    return [
-        'created' => true,
-        'reason' => 'backup_updated',
-        'file' => $zip_file,
-        'counts' => [
-            'controles' => count($all_controles),
-            'non_vus' => count($current_non_vus)
-        ]
-    ];
-}
-
-/**
- * Wrapper de compatibilité avec l'ancien appel.
- */
-function generate_backup($include_non_vus = true)
-{
-    $result = maybe_create_backup(true);
-    return (bool)($result['created'] ?? false);
-}
-
-/**
- * Nettoie les caches et données temporaires de l'application.
- * Exécutable via cron (includes/cache_cleanup.php) ou manuellement.
- *
- * Cibles nettoyées :
- * - Fichiers temporaires XLSX orphelins (sys_get_temp_dir())
- * - Fichier verrou de sauvegarde obsolète (> 1h)
- * - Tokens "remember me" expirés (table utilisateurs)
- * - Tokens de reset de mot de passe expirés (table utilisateurs)
- * - Logs anciens (> $jours_logs jours)
- *
- * @param int $jours_logs Nombre de jours de logs à conserver (défaut: 90)
- * @return array Rapport détaillé du nettoyage
- */
-function nettoyer_caches($jours_logs = 90)
-{
-    global $pdo;
-
-    $rapport = [
-        'timestamp' => date('c'),
-        'temp_xlsx_supprimes' => 0,
-        'lock_files_supprimes' => 0,
-        'remember_tokens_expires' => 0,
-        'reset_tokens_expires' => 0,
-        'logs_supprimes' => 0,
-        'erreurs' => []
-    ];
-
-    // 1. Nettoyer les fichiers temporaires XLSX orphelins (> 1h)
-    try {
-        $tempDir = sys_get_temp_dir();
-        $cutoff = time() - 3600;
-        $pattern = $tempDir . DIRECTORY_SEPARATOR . 'xlsx_*';
-        $tempFiles = glob($pattern) ?: [];
-        foreach ($tempFiles as $file) {
-            if (is_file($file) && filemtime($file) < $cutoff) {
-                if (@unlink($file)) {
-                    $rapport['temp_xlsx_supprimes']++;
+                ]
+                ];
                 }
-            }
-        }
-    } catch (\Exception $e) {
-        $rapport['erreurs'][] = 'temp_xlsx: ' . $e->getMessage();
-    }
 
-    // 2. Supprimer le fichier verrou de sauvegarde obsolète (> 1h)
-    try {
-        $lockFile = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'backup_cron.lock';
-        if (is_file($lockFile) && filemtime($lockFile) < (time() - 3600)) {
-            if (@unlink($lockFile)) {
-                $rapport['lock_files_supprimes']++;
-            }
-        }
-    } catch (\Exception $e) {
-        $rapport['erreurs'][] = 'lock_file: ' . $e->getMessage();
-    }
+                $all_controles = fetch_full_rows_for_table('controles', $control_fields);
 
-    // 3. Purger les remember_tokens expirés
-    try {
-        $stmt = $pdo->prepare(
-            "UPDATE utilisateurs SET remember_token = NULL, remember_token_expires = NULL 
-             WHERE remember_token IS NOT NULL AND remember_token_expires < NOW()"
-        );
-        $stmt->execute();
-        $rapport['remember_tokens_expires'] = $stmt->rowCount();
-    } catch (\PDOException $e) {
-        $rapport['erreurs'][] = 'remember_tokens: ' . $e->getMessage();
-    }
+                $datasets = [
+                'controles' => [
+                'headers' => $control_fields,
+                'rows' => $all_controles,
+                'sheet_name' => 'Controles'
+                ],
+                'non_vus' => [
+                'headers' => $non_vus_fields,
+                'rows' => $current_non_vus,
+                'sheet_name' => 'NonVus'
+                ]
+                ];
 
-    // 4. Purger les reset_tokens expirés
-    try {
-        $stmt = $pdo->prepare(
-            "UPDATE utilisateurs SET reset_token = NULL, reset_expires = NULL 
-             WHERE reset_token IS NOT NULL AND reset_expires < NOW()"
-        );
-        $stmt->execute();
-        $rapport['reset_tokens_expires'] = $stmt->rowCount();
-    } catch (\PDOException $e) {
-        $rapport['erreurs'][] = 'reset_tokens: ' . $e->getMessage();
-    }
+                $zip_file = create_incremental_backup_archive($datasets);
+                if ($zip_file === false) {
+                return [
+                'created' => false,
+                'reason' => 'zip_creation_failed'
+                ];
+                }
 
-    // 5. Nettoyer les anciens logs
-    try {
-        $rapport['logs_supprimes'] = nettoyer_anciens_logs($jours_logs);
-    } catch (\Exception $e) {
-        $rapport['erreurs'][] = 'logs: ' . $e->getMessage();
-    }
+                $state['last_backup_at'] = $now;
+                $state['last_run_at'] = $now;
+                $state['last_control_id'] = $max_control_id;
+                $state['non_vus_snapshot'] = $current_non_vus_snapshot;
+                write_backup_state($state);
 
-    $total = $rapport['temp_xlsx_supprimes']
-        + $rapport['lock_files_supprimes']
-        + $rapport['remember_tokens_expires']
-        + $rapport['reset_tokens_expires']
-        + $rapport['logs_supprimes'];
+                return [
+                'created' => true,
+                'reason' => 'backup_updated',
+                'file' => $zip_file,
+                'counts' => [
+                'controles' => count($all_controles),
+                'non_vus' => count($current_non_vus)
+                ]
+                ];
+                }
 
-    if ($total > 0) {
-        error_log(
-            "Nettoyage caches: temp_xlsx=" . $rapport['temp_xlsx_supprimes']
-                . " | lock=" . $rapport['lock_files_supprimes']
-                . " | remember_tokens=" . $rapport['remember_tokens_expires']
-                . " | reset_tokens=" . $rapport['reset_tokens_expires']
-                . " | logs=" . $rapport['logs_supprimes']
-        );
-    }
+                /**
+                * Wrapper de compatibilité avec l'ancien appel.
+                */
+                function generate_backup($include_non_vus = true)
+                {
+                $result = maybe_create_backup(true);
+                return (bool)($result['created'] ?? false);
+                }
 
-    return $rapport;
-}
+                /**
+                * Nettoie les caches et données temporaires de l'application.
+                * Exécutable via cron (includes/cache_cleanup.php) ou manuellement.
+                *
+                * Cibles nettoyées :
+                * - Fichiers temporaires XLSX orphelins (sys_get_temp_dir())
+                * - Fichier verrou de sauvegarde obsolète (> 1h)
+                * - Tokens "remember me" expirés (table utilisateurs)
+                * - Tokens de reset de mot de passe expirés (table utilisateurs)
+                * - Logs anciens (> $jours_logs jours)
+                *
+                * @param int $jours_logs Nombre de jours de logs à conserver (défaut: 90)
+                * @return array Rapport détaillé du nettoyage
+                */
+                function nettoyer_caches($jours_logs = 90)
+                {
+                global $pdo;
+
+                $rapport = [
+                'timestamp' => date('c'),
+                'temp_xlsx_supprimes' => 0,
+                'lock_files_supprimes' => 0,
+                'remember_tokens_expires' => 0,
+                'reset_tokens_expires' => 0,
+                'logs_supprimes' => 0,
+                'erreurs' => []
+                ];
+
+                // 1. Nettoyer les fichiers temporaires XLSX orphelins (> 1h)
+                try {
+                $tempDir = sys_get_temp_dir();
+                $cutoff = time() - 3600;
+                $pattern = $tempDir . DIRECTORY_SEPARATOR . 'xlsx_*';
+                $tempFiles = glob($pattern) ?: [];
+                foreach ($tempFiles as $file) {
+                if (is_file($file) && filemtime($file) < $cutoff) { if (@unlink($file)) {
+                    $rapport['temp_xlsx_supprimes']++; } } } } catch (\Exception $e) {
+                    $rapport['erreurs'][]='temp_xlsx: ' . $e->getMessage();
+                    }
+
+                    // 2. Supprimer le fichier verrou de sauvegarde obsolète (> 1h)
+                    try {
+                    $lockFile = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'backup_cron.lock';
+                    if (is_file($lockFile) && filemtime($lockFile) < (time() - 3600)) { if (@unlink($lockFile)) {
+                        $rapport['lock_files_supprimes']++; } } } catch (\Exception $e) {
+                        $rapport['erreurs'][]='lock_file: ' . $e->getMessage();
+                        }
+
+                        // 3. Purger les remember_tokens expirés
+                        try {
+                        $stmt = $pdo->prepare(
+                        "UPDATE utilisateurs SET remember_token = NULL, remember_token_expires = NULL
+                        WHERE remember_token IS NOT NULL AND remember_token_expires < NOW()" ); $stmt->execute();
+                            $rapport['remember_tokens_expires'] = $stmt->rowCount();
+                            } catch (\PDOException $e) {
+                            $rapport['erreurs'][] = 'remember_tokens: ' . $e->getMessage();
+                            }
+
+                            // 4. Purger les reset_tokens expirés
+                            try {
+                            $stmt = $pdo->prepare(
+                            "UPDATE utilisateurs SET reset_token = NULL, reset_expires = NULL
+                            WHERE reset_token IS NOT NULL AND reset_expires < NOW()" ); $stmt->execute();
+                                $rapport['reset_tokens_expires'] = $stmt->rowCount();
+                                } catch (\PDOException $e) {
+                                $rapport['erreurs'][] = 'reset_tokens: ' . $e->getMessage();
+                                }
+
+                                // 5. Nettoyer les anciens logs
+                                try {
+                                $rapport['logs_supprimes'] = nettoyer_anciens_logs($jours_logs);
+                                } catch (\Exception $e) {
+                                $rapport['erreurs'][] = 'logs: ' . $e->getMessage();
+                                }
+
+                                $total = $rapport['temp_xlsx_supprimes']
+                                + $rapport['lock_files_supprimes']
+                                + $rapport['remember_tokens_expires']
+                                + $rapport['reset_tokens_expires']
+                                + $rapport['logs_supprimes'];
+
+                                if ($total > 0) {
+                                error_log(
+                                "Nettoyage caches: temp_xlsx=" . $rapport['temp_xlsx_supprimes']
+                                . " | lock=" . $rapport['lock_files_supprimes']
+                                . " | remember_tokens=" . $rapport['remember_tokens_expires']
+                                . " | reset_tokens=" . $rapport['reset_tokens_expires']
+                                . " | logs=" . $rapport['logs_supprimes']
+                                );
+                                }
+
+                                return $rapport;
+                                }

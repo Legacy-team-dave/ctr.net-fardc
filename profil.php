@@ -598,7 +598,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <?php if (!$can_edit_full_profile): ?>
                     <div class="alert-modern info">
                         <i class="fas fa-user-lock"></i>
-                        Seul le profil <strong>ADMIN_IG</strong> peut modifier le nom complet, l'email et le mot de passe. Pour votre profil, seule la mise à jour de l'avatar est autorisée.
+                       Votre profil, ne peut mettre à jour que l'avatar.
                     </div>
                 <?php endif; ?>
 
@@ -693,7 +693,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             <?php else: ?>
                                 <div class="alert-modern info full-width">
                                     <i class="fas fa-lock"></i>
-                                    Les champs du mot de passe sont réservés au profil <strong>ADMIN_IG</strong>.
+                                    Les champs du mot de passe sont réservés au profil <strong>ADMINISTRATEUR</strong>.
                                 </div>
                             <?php endif; ?>
                         </div> <!-- fin form-grid -->

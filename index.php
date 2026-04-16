@@ -656,6 +656,27 @@ $categories_filtre_js = $filtres_actifs['categories'] ?? [];
 ?>
 
 <style>
+        /* Harmonisation hauteur cartes analyses détaillées */
+        .analyses-detaillees-row {
+            display: flex;
+            gap: 0;
+        }
+        .analyses-detaillees-row > .col-md-6 {
+            display: flex;
+            flex-direction: column;
+        }
+        .analyses-detaillees-row .card-modern {
+            flex: 1 1 0%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+        .analyses-detaillees-row .card-modern .card-body {
+            flex: 1 1 0%;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+        }
     /* Police Barlow */
     body,
     html,
@@ -827,8 +848,9 @@ $categories_filtre_js = $filtres_actifs['categories'] ?? [];
     }
 
     .stat-card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 8px 25px rgba(46, 125, 50, 0.15);
+        /* Cartes fixes : aucune animation de survol */
+        transform: none !important;
+        box-shadow: none !important;
     }
 
     .stat-icon {
@@ -1049,7 +1071,7 @@ $categories_filtre_js = $filtres_actifs['categories'] ?? [];
     }
 
     .card-modern:hover {
-        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        /* Cartes fixes : aucune animation de survol */
     }
 
     .card-modern .card-header {
@@ -1122,11 +1144,7 @@ $categories_filtre_js = $filtres_actifs['categories'] ?? [];
     }
 
     .quick-action-btn:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 8px 25px rgba(46, 125, 50, 0.15);
-        text-decoration: none;
-        color: #333;
-        border-color: rgba(46, 125, 50, 0.2);
+        /* Cartes fixes : aucune animation de survol */
     }
 
     .quick-action-btn i {
@@ -1636,7 +1654,7 @@ $categories_filtre_js = $filtres_actifs['categories'] ?? [];
         }
     }
 </style>
-
+<link rel="stylesheet" href="../../assets/fontawesome/css/all.min.css">
 <!-- Dépendances Leaflet pour la carte -->
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -2099,7 +2117,7 @@ $categories_filtre_js = $filtres_actifs['categories'] ?? [];
                     </div>
                 </div>
             </div>
-            <div class="row">
+            <div class="row analyses-detaillees-row">
                 <?php if (!empty($stats_detaillees['par_garnison'])): ?>
                     <div class="col-md-6">
                         <div class="card-modern">

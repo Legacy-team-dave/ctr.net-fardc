@@ -30,7 +30,7 @@ try {
     $stmt = $pdo->prepare("
         SELECT c.id, c.matricule, c.mention, c.type_controle, c.lien_parente,
                c.nom_beneficiaire, c.new_beneficiaire, c.observations,
-               c.date_controle, m.noms, m.grade
+               c.date_controle, m.noms, m.grade, m.unite
         FROM controles c
         LEFT JOIN militaires m ON c.matricule = m.matricule
         WHERE c.id > ?
@@ -58,5 +58,17 @@ try {
 } catch (PDOException $e) {
     error_log("Poll controles error: " . $e->getMessage());
     http_response_code(500);
-    echo json_encode(['success' => false]);
+    echo json_encode([
+        'success' => false,
+        'error' => 'Erreur PDO: ' . $e->getMessage(),
+        'file' => __FILE__,
+        'line' => __LINE__,
+        'since_id' => $since_id,
+        'request_uri' => $_SERVER['REQUEST_URI'] ?? null
+    ]);
+    exit;
 }
+// Log d'accès dans un fichier local du projet (controles_poll.log)
+$logfile = __DIR__ . '/controles_poll.log';
+$logmsg = date('Y-m-d H:i:s') . " | since_id=$since_id | URI=" . ($_SERVER['REQUEST_URI'] ?? 'CLI') . "\n";
+file_put_contents($logfile, $logmsg, FILE_APPEND);

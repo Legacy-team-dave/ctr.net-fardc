@@ -64,6 +64,7 @@ $success = null;
 $toast_message = $_SESSION['toast_message'] ?? null;
 $toast_type = $_SESSION['toast_type'] ?? 'success';
 unset($_SESSION['toast_message'], $_SESSION['toast_type']);
+
 $roles_equipe = ["Chef d'équipe", 'Inspecteur', 'Opérateur PC', 'Contrôleur', 'Superviseur'];
 
 if (!function_exists('local_equipe_role_order_sql')) {
@@ -85,17 +86,31 @@ if (!function_exists('local_equipe_role_order_sql')) {
     }
 }
 
+if (!function_exists('local_equipe_role_order_value')) {
+    function local_equipe_role_order_value(?string $role): int {
+        $normalized = strtolower(trim((string) $role));
+        return match ($normalized) {
+            "chef d'équipe", "chef d'equipe" => 1,
+            'inspecteur' => 2,
+            'opérateur pc', 'operateur pc', 'opérateur', 'operateur' => 3,
+            'contrôleur', 'controleur', 'contôleur' => 4,
+            'superviseur' => 5,
+            default => 99,
+        };
+    }
+}
+
 if (!function_exists('local_equipe_role_display_label')) {
     function local_equipe_role_display_label(?string $role): string
     {
         $normalized = strtolower(trim((string) $role));
         return match ($normalized) {
-            "chef d'équipe", "chef d'equipe" => "CHEF D'ÉQUIPE",
-            'inspecteur' => 'INSPECTEUR',
-            'opérateur pc', 'operateur pc', 'opérateur', 'operateur' => 'OPÉRATEUR PC',
-            'contrôleur', 'controleur', 'contôleur' => 'CONTRÔLEUR',
-            'superviseur' => 'SUPERVISEUR',
-            default => strtoupper(trim((string) $role) !== '' ? trim((string) $role) : 'NON DÉFINI'),
+            "chef d'équipe", "chef d'equipe" => "Chef d'équipe",
+            'inspecteur' => 'Inspecteur',
+            'opérateur pc', 'operateur pc', 'opérateur', 'operateur' => 'Opérateur PC',
+            'contrôleur', 'controleur', 'contôleur' => 'Contrôleur',
+            'superviseur' => 'Superviseur',
+            default => trim((string) $role) !== '' ? trim((string) $role) : 'Non défini',
         };
     }
 }
@@ -105,19 +120,19 @@ if (!function_exists('local_equipe_role_badge_class')) {
     {
         $normalized = strtolower(trim((string) $role));
         return match ($normalized) {
-            "chef d'équipe", "chef d'equipe" => 'role-pill role-chef',
-            'inspecteur' => 'role-pill role-inspecteur',
-            'opérateur pc', 'operateur pc', 'opérateur', 'operateur' => 'role-pill role-operateur',
-            'contrôleur', 'controleur', 'contôleur' => 'role-pill role-controleur',
-            'superviseur' => 'role-pill role-superviseur',
-            default => 'role-pill role-default',
+            "chef d'équipe", "chef d'equipe" => 'role-chef',
+            'inspecteur' => 'role-inspecteur',
+            'opérateur pc', 'operateur pc', 'opérateur', 'operateur' => 'role-operateur',
+            'contrôleur', 'controleur', 'contôleur' => 'role-controleur',
+            'superviseur' => 'role-superviseur',
+            default => 'role-default',
         };
     }
 }
 
-// Fonction pour mettre en majuscules les données
-if (!function_exists('format_upper')) {
-    function format_upper($value, $default = 'NON RENSEIGNÉ') {
+// Fonction pour mettre en majuscules UNIQUEMENT les données du tableau
+if (!function_exists('format_upper_table')) {
+    function format_upper_table($value, $default = 'NON RENSEIGNÉ') {
         $value = trim((string) $value);
         return empty($value) ? $default : strtoupper($value);
     }
@@ -139,7 +154,7 @@ if ($is_setup) {
                 $stmt->execute([$memberId]);
 
                 $_SESSION['toast_message'] = $deletedMemberName !== ''
-                    ? 'Membre <strong>' . htmlspecialchars(strtoupper($deletedMemberName), ENT_QUOTES, 'UTF-8') . '</strong> supprimé avec succès.'
+                    ? 'Membre <strong>' . htmlspecialchars($deletedMemberName, ENT_QUOTES, 'UTF-8') . '</strong> supprimé avec succès.'
                     : 'Le membre sélectionné a été supprimé avec succès.';
                 $_SESSION['toast_type'] = 'success';
 
@@ -179,7 +194,7 @@ if ($is_setup) {
     }
 }
 
-// Récupérer les membres
+// Récupérer les membres avec ordre personnalisé
 try {
     $membres = $pdo->query("SELECT * FROM equipes ORDER BY " . local_equipe_role_order_sql('role') . ", grade ASC, noms ASC")->fetchAll(PDO::FETCH_ASSOC);
 } catch (PDOException $e) {
@@ -196,65 +211,31 @@ if ($local_source_label === '') {
 $role_counts = array_fill_keys($roles_equipe, 0);
 foreach ($membres as $membreStat) {
     $roleLabel = local_equipe_role_display_label($membreStat['role'] ?? '');
-    // Convertir le label en majuscules pour la comparaison
-    $roleLabelUpper = strtoupper($roleLabel);
-    foreach ($role_counts as $key => $value) {
-        if (strtoupper($key) === $roleLabelUpper) {
-            $role_counts[$key]++;
-            break;
-        }
+    if (isset($role_counts[$roleLabel])) {
+        $role_counts[$roleLabel]++;
     }
 }
 unset($membreStat);
 
-$role_stat_cards = [
-    [
-        'label' => "Chef d'équipe",
-        'count' => $role_counts["Chef d'équipe"] ?? 0,
-        'icon' => 'fas fa-user-tie',
-        'variant' => 'role-chef-card',
-    ],
-    [
-        'label' => 'Inspecteur',
-        'count' => $role_counts['Inspecteur'] ?? 0,
-        'icon' => 'fas fa-user-secret',
-        'variant' => 'role-inspecteur-card',
-    ],
-    [
-        'label' => 'Opérateur PC',
-        'count' => $role_counts['Opérateur PC'] ?? 0,
-        'icon' => 'fas fa-desktop',
-        'variant' => 'role-operateur-card',
-    ],
-    [
-        'label' => 'Contrôleur',
-        'count' => $role_counts['Contrôleur'] ?? 0,
-        'icon' => 'fas fa-clipboard-check',
-        'variant' => 'role-controleur-card',
-    ],
-    [
-        'label' => 'Superviseur',
-        'count' => $role_counts['Superviseur'] ?? 0,
-        'icon' => 'fas fa-user-shield',
-        'variant' => 'role-superviseur-card',
-    ],
-];
-
 $selected_role = trim((string) ($_GET['role'] ?? ''));
 $filtered_membres = array_values(array_filter($membres, static function (array $membre) use ($selected_role): bool {
     $roleLabel = local_equipe_role_display_label($membre['role'] ?? '');
-    return $selected_role === '' || strtoupper($roleLabel) === strtoupper($selected_role);
+    return $selected_role === '' || $roleLabel === $selected_role;
 }));
-$initial_team_count = count($filtered_membres);
 $display_membres = $filtered_membres;
+
+// Récupérer la liste des unités pour le filtre
+$stmt_unites = $pdo->query("SELECT DISTINCT unites FROM equipes WHERE unites IS NOT NULL AND unites != '' ORDER BY unites");
+$unites_list = $stmt_unites->fetchAll(PDO::FETCH_COLUMN);
 ?>
+
 <!DOCTYPE html>
 <html lang="fr">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CTR.NET FARDC - Équipe de contrôle</title>
+    <link rel="stylesheet" href="../../assets/fontawesome/css/all.min.css">
     <link rel="stylesheet" href="../../assets/css/all.min.css">
     <link rel="stylesheet" href="../../assets/css/adminlte.min.css">
     <link rel="stylesheet" href="../../assets/css/tables-unified.css">
@@ -274,7 +255,7 @@ $display_membres = $filtered_membres;
             padding: 20px;
         }
 
-        .equipe-card {
+        .modern-card {
             width: 100%;
             max-width: 1400px;
             margin: 0 auto;
@@ -284,10 +265,10 @@ $display_membres = $filtered_membres;
             overflow: hidden;
         }
 
-        .equipe-header {
-            background: linear-gradient(135deg, #1e7e34 0%, #145c24 100%);
-            padding: 20px 24px;
-            color: white;
+        .modern-card .card-header {
+            background: linear-gradient(135deg, #2e7d32 0%, #1b5e20 100%);
+            padding: 15px 25px;
+            border: none;
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -295,111 +276,129 @@ $display_membres = $filtered_membres;
             gap: 15px;
         }
 
-        .equipe-header h2 {
-            font-size: 1.5rem;
-            font-weight: 700;
+        .modern-card .card-header h3 {
+            color: white;
             margin: 0;
-            display: flex;
-            align-items: center;
-            gap: 10px;
+            font-weight: 600;
+            font-size: 1.3rem;
         }
 
-        .user-badge {
+        .modern-card .card-header h3 i {
+            margin-right: 8px;
+        }
+
+        .modern-card .card-body {
+            padding: 25px;
+        }
+
+        .total-badge {
             background: rgba(255, 255, 255, 0.2);
-            padding: 8px 16px;
-            border-radius: 50px;
-            font-size: 0.9rem;
-            display: flex;
+            color: white;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-weight: 500;
+            font-size: 0.85rem;
+            display: inline-flex;
             align-items: center;
-            gap: 8px;
+            gap: 5px;
         }
 
-        .equipe-body {
-            padding: 24px;
-        }
-
-        .info-line {
-            background: #e8f5e9;
-            padding: 12px 16px;
-            border-radius: 10px;
-            font-size: 0.9rem;
-            color: #1e7e34;
+        .filters-row {
             display: flex;
-            align-items: center;
-            gap: 10px;
-            margin-bottom: 20px;
-            border-left: 4px solid #1e7e34;
-        }
-
-        .stats-container {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
             gap: 15px;
-            margin-bottom: 25px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            align-items: flex-end;
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 10px;
         }
 
-        .stat-card {
-            background: white;
-            border-radius: 12px;
-            padding: 16px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            transition: all 0.3s ease;
+        .filter-item {
+            flex: 1;
+            min-width: 150px;
+        }
+
+        .filter-item .form-label {
+            font-weight: 600;
+            font-size: 0.75rem;
+            color: #2e7d32;
+            margin-bottom: 5px;
+            display: block;
+        }
+
+        .filter-item .form-label i {
+            margin-right: 4px;
+        }
+
+        .filter-item .form-select,
+        .filter-item .form-control {
+            border-radius: 6px;
             border: 1px solid #e0e0e0;
+            padding: 6px 10px;
+            font-size: 0.85rem;
+            width: 100%;
         }
 
-        .stat-card:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 6px 16px rgba(30, 126, 52, 0.15);
-            border-color: #1e7e34;
-        }
-
-        .stat-icon {
-            width: 50px;
-            height: 50px;
-            border-radius: 12px;
-            display: flex;
+        .btn-reset-modern {
+            border: none;
+            border-radius: 6px;
+            padding: 6px 12px;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            width: 100%;
+            display: inline-flex;
             align-items: center;
             justify-content: center;
+            gap: 5px;
+            background: #6c757d;
             color: white;
-            font-size: 1.3rem;
-            flex-shrink: 0;
+            font-weight: 500;
         }
 
-        .stat-icon.total-effectifs { background: linear-gradient(135deg, #1e7e34, #145c24); }
-        .stat-icon.role-chef-card { background: linear-gradient(135deg, #ff9800, #f57c00); }
-        .stat-icon.role-inspecteur-card { background: linear-gradient(135deg, #17a2b8, #138496); }
-        .stat-icon.role-operateur-card { background: linear-gradient(135deg, #007bff, #0056b3); }
-        .stat-icon.role-controleur-card { background: linear-gradient(135deg, #dc3545, #c82333); }
-        .stat-icon.role-superviseur-card { background: linear-gradient(135deg, #6c757d, #5a6268); }
-
-        .stat-info {
-            flex: 1;
+        .btn-reset-modern:hover {
+            background: #5a6268;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(108, 117, 125, 0.3);
         }
 
-        .stat-label {
-            color: #6c757d;
+        .btn-add {
+            background: linear-gradient(135deg, #2e7d32, #1b5e20);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            padding: 6px 16px;
+            font-size: 0.85rem;
             font-weight: 600;
-            font-size: 0.8rem;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            margin-bottom: 5px;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.3s;
+            height: 34px;
+            white-space: nowrap;
         }
 
-        .stat-value {
-            font-size: 1.6rem;
-            font-weight: 700;
-            line-height: 1;
+        .btn-add:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(46, 125, 50, 0.3);
         }
 
-        .stat-value.total-effectifs { color: #1e7e34; }
-        .stat-value.role-chef-card { color: #f57c00; }
-        .stat-value.role-inspecteur-card { color: #138496; }
-        .stat-value.role-operateur-card { color: #0056b3; }
-        .stat-value.role-controleur-card { color: #c82333; }
-        .stat-value.role-superviseur-card { color: #5a6268; }
+        .btn-delete {
+            background: #dc3545;
+            color: white;
+            border: none;
+            padding: 4px 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.7rem;
+            transition: background 0.2s;
+        }
+
+        .btn-delete:hover {
+            background: #c82333;
+        }
 
         .form-section {
             background: #f8f9fa;
@@ -412,7 +411,7 @@ $display_membres = $filtered_membres;
         .form-section h4 {
             font-size: 1rem;
             font-weight: 700;
-            color: #1e7e34;
+            color: #2e7d32;
             margin-bottom: 15px;
             display: flex;
             align-items: center;
@@ -420,20 +419,22 @@ $display_membres = $filtered_membres;
         }
 
         .form-row-member {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            display: flex;
+            flex-wrap: wrap;
             gap: 12px;
-            align-items: end;
+            align-items: flex-end;
         }
 
         .form-group {
+            flex: 1;
+            min-width: 140px;
             display: flex;
             flex-direction: column;
-            gap: 5px;
+            gap: 4px;
         }
 
         .form-group label {
-            font-size: 0.75rem;
+            font-size: 0.7rem;
             font-weight: 700;
             color: #495057;
             text-transform: uppercase;
@@ -442,142 +443,185 @@ $display_membres = $filtered_membres;
 
         .form-group input,
         .form-group select {
-            padding: 8px 12px;
+            padding: 6px 10px;
             border: 2px solid #dee2e6;
-            border-radius: 8px;
+            border-radius: 6px;
             font-size: 0.85rem;
             font-family: 'Barlow', sans-serif;
             transition: all 0.2s;
-            text-transform: uppercase;
         }
 
         .form-group input:focus,
         .form-group select:focus {
             outline: none;
-            border-color: #1e7e34;
-            box-shadow: 0 0 0 3px rgba(30, 126, 52, 0.1);
+            border-color: #2e7d32;
+            box-shadow: 0 0 0 3px rgba(46, 125, 50, 0.1);
         }
 
-        .btn-add {
-            background: linear-gradient(135deg, #1e7e34, #145c24);
+        .form-group:last-child {
+            flex: 0 0 auto;
+            min-width: auto;
+        }
+
+        .table-equipes {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0 10px;
+            min-width: 800px;
+        }
+
+        .table-equipes thead th {
+            background: linear-gradient(135deg, #2e7d32 0%, #1b5e20 100%);
             color: white;
-            border: none;
-            padding: 8px 20px;
-            border-radius: 8px;
+            font-weight: 700;
             font-size: 0.85rem;
-            font-weight: 600;
-            cursor: pointer;
-            display: inline-flex;
+            padding: 10px 12px;
+            border: none;
+            text-align: left;
+            vertical-align: middle;
+        }
+
+        .table-equipes thead th:first-child {
+            border-radius: 10px 0 0 10px;
+        }
+
+        .table-equipes thead th:last-child {
+            border-radius: 0 10px 10px 0;
+        }
+
+        .dataTables_wrapper table.dataTable thead tr:not(:first-child) {
+            visibility: collapse !important;
+            height: 0 !important;
+        }
+
+        .table-equipes tbody tr {
+            background: white;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            border-radius: 10px;
+            transition: all 0.3s;
+        }
+
+        .table-equipes tbody tr:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(46, 125, 50, 0.15);
+        }
+
+        .table-equipes tbody td {
+            padding: 10px 12px;
+            border: none;
+            font-size: 0.85rem;
+            vertical-align: middle;
+            font-weight: 500;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        /* Style pour les données en majuscules DANS LE TABLEAU UNIQUEMENT */
+        .table-equipes tbody td {
+            text-transform: uppercase;
+        }
+
+        .table-equipes tbody td:first-child {
+            border-radius: 10px 0 0 10px;
+        }
+
+        .table-equipes tbody td:last-child {
+            border-radius: 0 10px 10px 10px;
+        }
+
+        .matricule-with-eye {
+            display: flex;
             align-items: center;
             gap: 8px;
+        }
+
+        .matricule-with-eye i {
+            color: #2e7d32;
+            font-size: 0.9rem;
+            cursor: pointer;
             transition: all 0.3s;
-            height: 38px;
         }
 
-        .btn-add:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(30, 126, 52, 0.3);
+        .matricule-with-eye i:hover {
+            color: #ffc107;
+            transform: scale(1.1);
         }
 
-        .membres-section {
-            background: #ffffff;
-            border-radius: 12px;
-            border: 1px solid #e0e0e0;
+        /* Styles des cartes statistiques - 3 colonnes */
+        .stats-container {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
             margin-bottom: 25px;
         }
 
-        .section-header {
-            padding: 16px 20px;
-            border-bottom: 2px solid #f0f0f0;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 15px;
-        }
-
-        .section-header h4 {
-            font-size: 1rem;
-            font-weight: 700;
-            color: #1e7e34;
-            margin: 0;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .filters-grid {
-            display: flex;
-            gap: 15px;
-            align-items: flex-end;
-            flex-wrap: wrap;
-        }
-
-        .filter-group {
-            display: flex;
-            flex-direction: column;
-            gap: 5px;
-        }
-
-        .filter-group label {
-            font-size: 0.7rem;
-            font-weight: 700;
-            color: #495057;
-            text-transform: uppercase;
-        }
-
-        .filter-group select,
-        .filter-group input {
-            padding: 6px 12px;
-            border: 2px solid #dee2e6;
-            border-radius: 8px;
-            font-size: 0.85rem;
-            font-family: 'Barlow', sans-serif;
+        .stat-card {
             background: white;
+            border-radius: 12px;
+            padding: 15px 20px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            transition: all 0.3s;
+            border: 1px solid rgba(0, 0, 0, 0.05);
         }
 
-        .table-responsive {
-            padding: 0 20px 20px 20px;
-            overflow-x: auto;
+        /* Suppression de l'animation de survol : cartes fixes */
         }
 
-        .membres-table {
-            width: 100%;
-            border-collapse: collapse;
+        .stat-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 10px;
+            background: linear-gradient(135deg, #2e7d32 0%, #1b5e20 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.5rem;
+            box-shadow: 0 4px 10px rgba(46, 125, 50, 0.3);
         }
 
-        .membres-table thead th {
-            background: #f8f9fa;
-            color: #495057;
-            padding: 12px;
-            text-align: left;
+        .stat-icon.total-card { background: linear-gradient(135deg, #2e7d32 0%, #1b5e20 100%); }
+        .stat-icon.role-chef-card { background: linear-gradient(135deg, #ff9800 0%, #f57c00 100%); }
+        .stat-icon.role-inspecteur-card { background: linear-gradient(135deg, #17a2b8 0%, #138496 100%); }
+        .stat-icon.role-operateur-card { background: linear-gradient(135deg, #0d6efd 0%, #0a58ca 100%); }
+        .stat-icon.role-controleur-card { background: linear-gradient(135deg, #dc3545 0%, #c82333 100%); }
+        .stat-icon.role-superviseur-card { background: linear-gradient(135deg, #6c757d 0%, #5a6268 100%); }
+
+        .stat-info {
+            flex: 1;
+        }
+
+        .stat-info h4 {
+            margin: 0;
+            font-size: 1.5rem;
             font-weight: 700;
+            color: #2e7d32;
+        }
+
+        .stat-info p {
+            margin: 0;
             font-size: 0.8rem;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            border-bottom: 2px solid #dee2e6;
+            color: #6c757d;
         }
 
-        .membres-table tbody td {
-            padding: 12px;
-            border-bottom: 1px solid #f0f0f0;
-            vertical-align: middle;
-            text-transform: uppercase;
-            font-weight: 500;
-        }
-
-        .membres-table tbody tr:hover {
-            background: #f8f9fa;
-        }
+        .stat-info h4.total-value { color: #2e7d32; }
+        .stat-info h4.role-chef-value { color: #f57c00; }
+        .stat-info h4.role-inspecteur-value { color: #138496; }
+        .stat-info h4.role-operateur-value { color: #0a58ca; }
+        .stat-info h4.role-controleur-value { color: #c82333; }
+        .stat-info h4.role-superviseur-value { color: #5a6268; }
 
         .role-pill {
             display: inline-flex;
             align-items: center;
-            padding: 4px 12px;
+            padding: 4px 10px;
             border-radius: 50px;
-            font-size: 0.75rem;
+            font-size: 0.7rem;
             font-weight: 700;
-            text-transform: uppercase;
         }
 
         .role-chef { background: #fff3e0; color: #f57c00; }
@@ -586,50 +630,6 @@ $display_membres = $filtered_membres;
         .role-controleur { background: #f8d7da; color: #721c24; }
         .role-superviseur { background: #e2e3e5; color: #383d41; }
         .role-default { background: #e9ecef; color: #495057; }
-
-        .btn-delete {
-            background: #dc3545;
-            color: white;
-            border: none;
-            padding: 5px 12px;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 0.75rem;
-            transition: background 0.2s;
-        }
-
-        .btn-delete:hover {
-            background: #c82333;
-        }
-
-        .actions-footer {
-            display: flex;
-            justify-content: flex-end;
-            padding-top: 10px;
-        }
-
-        .btn-continue {
-            background: linear-gradient(135deg, #1e7e34, #145c24);
-            color: white;
-            border: none;
-            padding: 10px 24px;
-            border-radius: 8px;
-            font-size: 0.9rem;
-            font-weight: 600;
-            cursor: pointer;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            text-decoration: none;
-            transition: all 0.3s;
-        }
-
-        .btn-continue:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(30, 126, 52, 0.3);
-            color: white;
-            text-decoration: none;
-        }
 
         .empty-state {
             text-align: center;
@@ -643,35 +643,35 @@ $display_membres = $filtered_membres;
             opacity: 0.5;
         }
 
-        .badge-count {
-            background: #1e7e34;
-            color: white;
-            padding: 2px 8px;
-            border-radius: 20px;
-            font-size: 0.7rem;
-            margin-left: 8px;
-        }
-
-        .alert-error,
-        .alert-success {
-            padding: 12px 16px;
-            border-radius: 8px;
-            margin-bottom: 20px;
+        .actions-footer {
             display: flex;
+            justify-content: flex-end;
+            padding-top: 20px;
+            margin-top: 20px;
+            border-top: 1px solid #e0e0e0;
+        }
+
+        .btn-continue {
+            background: linear-gradient(135deg, #2e7d32, #1b5e20);
+            color: white;
+            border: none;
+            padding: 8px 20px;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: inline-flex;
             align-items: center;
-            gap: 10px;
+            gap: 8px;
+            text-decoration: none;
+            transition: all 0.3s;
         }
 
-        .alert-error {
-            background: #f8d7da;
-            color: #721c24;
-            border-left: 4px solid #dc3545;
-        }
-
-        .alert-success {
-            background: #d4edda;
-            color: #155724;
-            border-left: 4px solid #28a745;
+        .btn-continue:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(46, 125, 50, 0.3);
+            color: white;
+            text-decoration: none;
         }
 
         .toast-container {
@@ -701,6 +701,11 @@ $display_membres = $filtered_membres;
             background: #dc3545;
         }
 
+        .toast-message strong {
+            color: #ffd700;
+            font-weight: 700;
+        }
+
         @keyframes slideInRight {
             from {
                 opacity: 0;
@@ -712,22 +717,49 @@ $display_membres = $filtered_membres;
             }
         }
 
-        @media (max-width: 768px) {
-            .equipe-body {
-                padding: 16px;
+        .info-line {
+            background: #e8f5e9;
+            padding: 12px 16px;
+            border-radius: 10px;
+            font-size: 0.85rem;
+            color: #1e7e34;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 20px;
+            border-left: 4px solid #1e7e34;
+        }
+
+        @media (max-width: 992px) {
+            .stats-container {
+                grid-template-columns: repeat(2, 1fr);
             }
-            
+        }
+
+        @media (max-width: 768px) {
             .stats-container {
                 grid-template-columns: 1fr;
             }
             
-            .form-row-member {
-                grid-template-columns: 1fr;
+            .modern-card .card-body {
+                padding: 16px;
             }
             
-            .equipe-header {
+            .form-row-member {
+                flex-direction: column;
+            }
+            
+            .form-group:last-child {
+                flex: 1;
+            }
+            
+            .modern-card .card-header {
                 flex-direction: column;
                 text-align: center;
+            }
+
+            .filters-row {
+                flex-direction: column;
             }
         }
     </style>
@@ -736,16 +768,13 @@ $display_membres = $filtered_membres;
 <body>
     <div class="toast-container" id="toastContainer"></div>
 
-    <div class="equipe-card">
-        <div class="equipe-header">
-            <h2><i class="fas fa-users"></i> Équipe de contrôle</h2>
-            <div class="user-badge">
-                <i class="fas fa-user-circle"></i>
-                <?= htmlspecialchars(strtoupper($_SESSION['user_nom'] ?? 'UTILISATEUR')) ?>
-            </div>
+    <div class="modern-card">
+        <div class="card-header">
+            <h3><i class="fas fa-users"></i> Équipe de contrôle</h3>
+            <span class="total-badge"><i class="fas fa-database"></i> Total : <?= count($display_membres) ?></span>
         </div>
 
-        <div class="equipe-body">
+        <div class="card-body">
             <?php if ($is_setup): ?>
                 <div class="info-line">
                     <i class="fas fa-info-circle"></i>
@@ -758,79 +787,93 @@ $display_membres = $filtered_membres;
                 </div>
             <?php endif; ?>
 
-            <!-- Statistiques -->
+            <!-- Statistiques - 3 colonnes -->
             <div class="stats-container">
                 <div class="stat-card">
-                    <div class="stat-icon total-effectifs"><i class="fas fa-users"></i></div>
+                    <div class="stat-icon total-card"><i class="fas fa-users"></i></div>
                     <div class="stat-info">
-                        <div class="stat-label">MEMBRES ENREGISTRÉS</div>
-                        <div class="stat-value total-effectifs"><?= number_format($total_membres, 0, ',', ' ') ?></div>
+                        <h4 class="total-value"><?= number_format($total_membres, 0, ',', ' ') ?></h4>
+                        <p>Total membres</p>
                     </div>
                 </div>
-                <?php foreach ($role_stat_cards as $role_card): ?>
-                    <div class="stat-card">
-                        <div class="stat-icon <?= htmlspecialchars($role_card['variant']) ?>">
-                            <i class="<?= htmlspecialchars($role_card['icon']) ?>"></i>
-                        </div>
-                        <div class="stat-info">
-                            <div class="stat-label"><?= strtoupper(htmlspecialchars($role_card['label'])) ?></div>
-                            <div class="stat-value <?= htmlspecialchars($role_card['variant']) ?>">
-                                <?= number_format((int) $role_card['count'], 0, ',', ' ') ?>
-                            </div>
-                        </div>
+                <div class="stat-card">
+                    <div class="stat-icon role-chef-card"><i class="fas fa-user-tie"></i></div>
+                    <div class="stat-info">
+                        <h4 class="role-chef-value"><?= number_format($role_counts["Chef d'équipe"] ?? 0, 0, ',', ' ') ?></h4>
+                        <p>Chef d'équipe</p>
                     </div>
-                <?php endforeach; ?>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon role-inspecteur-card"><i class="fas fa-user-secret"></i></div>
+                    <div class="stat-info">
+                        <h4 class="role-inspecteur-value"><?= number_format($role_counts['Inspecteur'] ?? 0, 0, ',', ' ') ?></h4>
+                        <p>Inspecteur</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon role-operateur-card"><i class="fas fa-desktop"></i></div>
+                    <div class="stat-info">
+                        <h4 class="role-operateur-value"><?= number_format($role_counts['Opérateur PC'] ?? 0, 0, ',', ' ') ?></h4>
+                        <p>Opérateur PC</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon role-controleur-card"><i class="fas fa-clipboard-check"></i></div>
+                    <div class="stat-info">
+                        <h4 class="role-controleur-value"><?= number_format($role_counts['Contrôleur'] ?? 0, 0, ',', ' ') ?></h4>
+                        <p>Contrôleur</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon role-superviseur-card"><i class="fas fa-user-shield"></i></div>
+                    <div class="stat-info">
+                        <h4 class="role-superviseur-value"><?= number_format($role_counts['Superviseur'] ?? 0, 0, ',', ' ') ?></h4>
+                        <p>Superviseur</p>
+                    </div>
+                </div>
             </div>
 
             <?php if ($error): ?>
-                <div class="alert-error">
+                <div class="alert-error" style="background: #f8d7da; color: #721c24; padding: 12px 16px; border-radius: 8px; margin-bottom: 20px; border-left: 4px solid #dc3545;">
                     <i class="fas fa-exclamation-circle"></i>
                     <?= htmlspecialchars($error) ?>
-                </div>
-            <?php endif; ?>
-
-            <?php if ($success): ?>
-                <div class="alert-success">
-                    <i class="fas fa-check-circle"></i>
-                    <?= htmlspecialchars($success) ?>
                 </div>
             <?php endif; ?>
 
             <!-- Formulaire d'ajout (uniquement en mode setup) -->
             <?php if ($is_setup): ?>
                 <div class="form-section">
-                    <h4><i class="fas fa-user-plus"></i> AJOUTER UN MEMBRE</h4>
+                    <h4><i class="fas fa-user-plus"></i> Ajouter un membre</h4>
                     <form method="post">
                         <div class="form-row-member">
                             <div class="form-group">
                                 <label for="matricule">MATRICULE</label>
-                                <input type="text" id="matricule" name="matricule" placeholder="EX: 123456" required>
+                                <input type="text" id="matricule" name="matricule" placeholder="123456" required>
                             </div>
                             <div class="form-group">
-                                <label for="noms">NOMS COMPLETS</label>
-                                <input type="text" id="noms" name="noms" placeholder="EX: KABONGO MUTOMBO" required>
+                                <label for="noms">NOMS</label>
+                                <input type="text" id="noms" name="noms" placeholder="KABONGO MUTOMBO" required>
                             </div>
                             <div class="form-group">
                                 <label for="grade">GRADE</label>
-                                <input type="text" id="grade" name="grade" placeholder="EX: COLONEL" required>
+                                <input type="text" id="grade" name="grade" placeholder="COLONEL" required>
                             </div>
                             <div class="form-group">
                                 <label for="unites">UNITÉ</label>
-                                <input type="text" id="unites" name="unites" placeholder="EX: EMG / 1ÈRE RÉGION" required>
+                                <input type="text" id="unites" name="unites" placeholder="EMG / 1ÈRE RÉGION" required>
                             </div>
                             <div class="form-group">
                                 <label for="role">RÔLE</label>
                                 <select id="role" name="role" required>
                                     <option value="">-- CHOISIR --</option>
                                     <?php foreach ($roles_equipe as $role_option): ?>
-                                        <option value="<?= htmlspecialchars($role_option) ?>"><?= strtoupper(htmlspecialchars($role_option)) ?></option>
+                                        <option value="<?= htmlspecialchars($role_option) ?>"><?= htmlspecialchars($role_option) ?></option>
                                     <?php endforeach; ?>
                                 </select>
                             </div>
                             <div class="form-group">
-                                <label>&nbsp;</label>
                                 <button type="submit" class="btn-add">
-                                    <i class="fas fa-plus"></i> ENREGISTRER
+                                    <i class="fas fa-plus"></i> Enregistrer
                                 </button>
                             </div>
                         </div>
@@ -838,132 +881,229 @@ $display_membres = $filtered_membres;
                 </div>
             <?php endif; ?>
 
+            <!-- Filtres -->
+            <div class="filters-row">
+                <div class="filter-item">
+                    <label class="form-label"><i class="fas fa-user-tag"></i> Rôle</label>
+                    <select id="role-filter" class="form-select">
+                        <option value="">Tous</option>
+                        <?php foreach ($roles_equipe as $role): ?>
+                        <option value="<?= htmlspecialchars($role) ?>" <?= $selected_role === $role ? 'selected' : '' ?>><?= htmlspecialchars($role) ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+                <div class="filter-item">
+                    <label class="form-label"><i class="fas fa-building"></i> Unités</label>
+                    <select id="unites-filter" class="form-select">
+                        <option value="">Toutes</option>
+                        <?php foreach ($unites_list as $unite): ?>
+                        <option value="<?= htmlspecialchars($unite) ?>"><?= htmlspecialchars($unite) ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+                <div class="filter-item">
+                    <label class="form-label"><i class="fas fa-fist-raised"></i> Grade</label>
+                    <select id="grade-filter" class="form-select">
+                        <option value="">Tous</option>
+                    </select>
+                </div>
+                <div class="filter-item">
+                    <label class="form-label">&nbsp;</label>
+                    <button type="button" id="reset-filters" class="btn-reset-modern w-100"><i class="fas fa-undo-alt"></i> Réinitialiser</button>
+                </div>
+            </div>
+
             <!-- Liste des membres -->
-            <div class="membres-section">
-                <div class="section-header">
-                    <h4><i class="fas fa-list"></i> MEMBRES ENREGISTRÉS</h4>
-                    <?php if (!$is_setup): ?>
-                    <form method="get" class="filters-grid" id="teamFilterForm">
-                        <div class="filter-group">
-                            <label for="role_filter"><i class="fas fa-user-tag"></i> FILTRER PAR RÔLE</label>
-                            <select id="role_filter" name="role">
-                                <option value="">TOUS LES RÔLES</option>
-                                <?php foreach ($roles_equipe as $role_option): ?>
-                                    <option value="<?= htmlspecialchars($role_option) ?>" <?= $selected_role === $role_option ? 'selected' : '' ?>>
-                                        <?= strtoupper(htmlspecialchars($role_option)) ?>
-                                    </option>
-                                <?php endforeach; ?>
-                            </select>
-                        </div>
-                        <div class="filter-group">
-                            <label><i class="fas fa-map-pin"></i> SOURCE LOCALE</label>
-                            <input type="text" value="<?= htmlspecialchars(strtoupper($local_source_label)) ?>" readonly disabled>
-                        </div>
-                    </form>
+            <?php if (empty($display_membres)): ?>
+                <div class="empty-state">
+                    <i class="fas fa-users"></i>
+                    <p>Aucun membre enregistré</p>
+                    <?php if ($is_setup): ?>
+                        <small>Utilisez le formulaire ci-dessus pour ajouter des membres.</small>
                     <?php endif; ?>
                 </div>
-
-                <?php if (empty($display_membres)): ?>
-                    <div class="empty-state">
-                        <i class="fas fa-users"></i>
-                        <p>AUCUN MEMBRE ENREGISTRÉ</p>
-                        <?php if ($is_setup): ?>
-                            <small>Utilisez le formulaire ci-dessus pour ajouter des membres.</small>
-                        <?php endif; ?>
-                    </div>
-                <?php else: ?>
-                    <div class="table-responsive">
-                        <table class="membres-table" id="team-members-table">
-                            <thead>
-                                <tr>
-                                    <th>MATRICULE</th>
-                                    <th>NOMS</th>
-                                    <th>GRADE</th>
-                                    <th>UNITÉ</th>
-                                    <th>RÔLE</th>
-                                    <?php if ($is_setup): ?><th style="width: 80px">ACTION</th><?php endif; ?>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <?php foreach ($display_membres as $m): ?>
-                                    <tr data-role="<?= htmlspecialchars(local_equipe_role_display_label($m['role'] ?? '')) ?>">
-                                        <td><?= format_upper($m['matricule'] ?? '') ?></td>
-                                        <td><?= format_upper($m['noms']) ?></td>
-                                        <td><?= format_upper($m['grade']) ?></td>
-                                        <td><?= format_upper($m['unites'] ?? '') ?></td>
-                                        <td><span class="role-pill <?= htmlspecialchars(local_equipe_role_badge_class($m['role'] ?? '')) ?>">
-                                            <?= htmlspecialchars(local_equipe_role_display_label($m['role'] ?? '')) ?>
-                                        </span></td>
-                                        <?php if ($is_setup): ?>
-                                            <td>
-                                                <form method="post" onsubmit="return confirm('Supprimer ce membre ?')">
-                                                    <input type="hidden" name="team_action" value="delete">
-                                                    <input type="hidden" name="member_id" value="<?= (int) $m['id'] ?>">
-                                                    <button type="submit" class="btn-delete">
-                                                        <i class="fas fa-trash"></i>
-                                                    </button>
-                                                </form>
-                                            </td>
-                                        <?php endif; ?>
-                                    </tr>
-                                <?php endforeach; ?>
-                            </tbody>
-                        </table>
-                    </div>
-                <?php endif; ?>
-            </div>
+            <?php else: ?>
+                <table id="table-equipes" class="table-equipes" style="width:100%">
+                    <thead>
+                        <tr>
+                            <th>Matricule</th>
+                            <th>Noms</th>
+                            <th>Grade</th>
+                            <th>Unités</th>
+                            <th>Rôle</th>
+                            <?php if ($is_setup): ?><th style="width: 70px">Action</th><?php endif; ?>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php foreach ($display_membres as $m): ?>
+                        <tr data-role="<?= htmlspecialchars(local_equipe_role_display_label($m['role'] ?? '')) ?>"
+                            data-role-order="<?= local_equipe_role_order_value($m['role'] ?? '') ?>"
+                            data-unites="<?= htmlspecialchars($m['unites'] ?? '') ?>"
+                            data-grade="<?= htmlspecialchars($m['grade'] ?? '') ?>">
+                            <td>
+                                <?php if (!$is_setup): ?>
+                                <div class="matricule-with-eye">
+                                    <i class="fas fa-eye" onclick="window.location.href='voir.php?id=<?= urlencode($m['id']) ?>'"></i>
+                                    <strong><?= htmlspecialchars(format_upper_table($m['matricule'] ?? '')) ?></strong>
+                                </div>
+                                <?php else: ?>
+                                <strong><?= htmlspecialchars(format_upper_table($m['matricule'] ?? '')) ?></strong>
+                                <?php endif; ?>
+                            </td>
+                            <td><?= htmlspecialchars(format_upper_table($m['noms'])) ?></td>
+                            <td><?= htmlspecialchars(format_upper_table($m['grade'])) ?></td>
+                            <td><?= htmlspecialchars(format_upper_table($m['unites'] ?? '')) ?></td>
+                            <td>
+                                <span class="role-pill <?= htmlspecialchars(local_equipe_role_badge_class($m['role'] ?? '')) ?>">
+                                    <?= htmlspecialchars(local_equipe_role_display_label($m['role'] ?? '')) ?>
+                                </span>
+                            </td>
+                            <?php if ($is_setup): ?>
+                            <td>
+                                <form method="post" onsubmit="return confirm('Supprimer ce membre ?')">
+                                    <input type="hidden" name="team_action" value="delete">
+                                    <input type="hidden" name="member_id" value="<?= (int) $m['id'] ?>">
+                                    <button type="submit" class="btn-delete">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </form>
+                            </td>
+                            <?php endif; ?>
+                        </tr>
+                        <?php endforeach; ?>
+                    </tbody>
+                </table>
+            <?php endif; ?>
 
             <!-- Actions -->
             <div class="actions-footer">
                 <?php if ($is_setup): ?>
                     <a href="<?= htmlspecialchars(app_url('modules/equipes/index.php?continue=1')) ?>" class="btn-continue">
-                        <i class="fas fa-arrow-right"></i> CONTINUER
+                        <i class="fas fa-arrow-right"></i> Continuer
                     </a>
                 <?php else: ?>
                     <a href="<?= htmlspecialchars(app_url('index.php')) ?>" class="btn-continue">
-                        <i class="fas fa-arrow-left"></i> RETOUR
+                        <i class="fas fa-arrow-left"></i> Retour
                     </a>
                 <?php endif; ?>
             </div>
         </div>
     </div>
 
-    <script>
-        (function() {
-            // Toast notification
-            <?php if ($toast_message): ?>
-            const toastContainer = document.getElementById('toastContainer');
-            if (toastContainer) {
-                const toast = document.createElement('div');
-                toast.className = 'toast-message <?= $toast_type === 'error' ? 'error' : '' ?>';
-                toast.innerHTML = `
-                    <i class="fas <?= $toast_type === 'error' ? 'fa-exclamation-circle' : 'fa-check-circle' ?>"></i>
-                    <span><?= htmlspecialchars(strtoupper($toast_message), ENT_QUOTES) ?></span>
-                `;
-                toastContainer.appendChild(toast);
-                setTimeout(() => {
-                    toast.style.opacity = '0';
-                    setTimeout(() => toast.remove(), 250);
-                }, 5000);
-            }
-            <?php endif; ?>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
 
-            // Filtrage par rôle
-            const roleFilter = document.getElementById('role_filter');
-            if (roleFilter) {
-                roleFilter.addEventListener('change', function() {
-                    const selectedRole = this.value;
-                    const currentUrl = new URL(window.location.href);
-                    if (selectedRole) {
-                        currentUrl.searchParams.set('role', selectedRole);
-                    } else {
-                        currentUrl.searchParams.delete('role');
+    <script>
+    $(document).ready(function() {
+        // Récupérer les grades uniques pour le filtre
+        const grades = [...new Set($('#table-equipes tbody tr').map(function() {
+            return $(this).data('grade');
+        }).get())].filter(g => g).sort();
+
+        grades.forEach(grade => {
+            $('#grade-filter').append(`<option value="${grade}">${grade}</option>`);
+        });
+
+        function cleanupDuplicateHeaderRows() {
+            const $wrapper = $('#table-equipes').closest('.dataTables_wrapper');
+            if ($wrapper.length) {
+                $wrapper.find('table.dataTable thead tr').each(function(index) {
+                    if (index > 0) {
+                        $(this).css({
+                            display: 'none',
+                            height: 0,
+                            visibility: 'collapse'
+                        });
                     }
-                    window.location.href = currentUrl.toString();
                 });
             }
-        })();
+        }
+
+        // Initialiser DataTable
+        const table = $('#table-equipes').DataTable({
+            language: {
+                url: '//cdn.datatables.net/plug-ins/1.11.5/i18n/fr-FR.json',
+                search: '<i class="fas fa-search"></i>',
+                lengthMenu: "Afficher _MENU_ éléments",
+                info: "Affichage de _START_ à _END_ sur _TOTAL_ éléments",
+                infoEmpty: "Affichage de 0 à 0 sur 0 élément",
+                infoFiltered: "(filtré sur _MAX_ éléments au total)",
+                zeroRecords: "Aucun enregistrement correspondant",
+                paginate: {
+                    first: "Premier",
+                    previous: "Précédent",
+                    next: "Suivant",
+                    last: "Dernier"
+                }
+            },
+            dom: 'rt<"datatable-bottom d-flex justify-content-between align-items-center flex-wrap gap-2 mt-3"ip>',
+            order: [[4, 'asc']],
+            pageLength: 10,
+            lengthMenu: [10, 25, 50, 100],
+            autoWidth: true,
+            orderCellsTop: true,
+            paging: true,
+            initComplete: function() {
+                cleanupDuplicateHeaderRows();
+            }
+        });
+
+        table.on('draw.dt', function() {
+            cleanupDuplicateHeaderRows();
+        });
+
+        cleanupDuplicateHeaderRows();
+
+        // Filtres personnalisés
+        $.fn.dataTable.ext.search.push(function(settings, data, dataIndex) {
+            if (settings.nTable.id !== 'table-equipes') return true;
+
+            const row = table.row(dataIndex);
+            const rowNode = row.node();
+            const $row = $(rowNode);
+
+            const role = $row.data('role') || '';
+            const unites = $row.data('unites') || '';
+            const grade = $row.data('grade') || '';
+
+            const roleFilter = $('#role-filter').val();
+            const unitesFilter = $('#unites-filter').val();
+            const gradeFilter = $('#grade-filter').val();
+
+            if (roleFilter && role !== roleFilter) return false;
+            if (unitesFilter && unites !== unitesFilter) return false;
+            if (gradeFilter && grade !== gradeFilter) return false;
+
+            return true;
+        });
+
+        $('#role-filter, #unites-filter, #grade-filter').on('change', function() {
+            table.draw();
+        });
+
+        $('#reset-filters').on('click', function() {
+            $('#role-filter, #unites-filter, #grade-filter').val('');
+            table.draw();
+        });
+
+        // Toast notification
+        <?php if ($toast_message): ?>
+        const toastContainer = document.getElementById('toastContainer');
+        if (toastContainer) {
+            const toast = document.createElement('div');
+            toast.className = 'toast-message <?= $toast_type === 'error' ? 'error' : '' ?>';
+            toast.innerHTML = `
+                <i class="fas <?= $toast_type === 'error' ? 'fa-exclamation-circle' : 'fa-check-circle' ?>"></i>
+                <span><?= htmlspecialchars($toast_message, ENT_QUOTES) ?></span>
+            `;
+            toastContainer.appendChild(toast);
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                setTimeout(() => toast.remove(), 250);
+            }, 5000);
+        }
+        <?php endif; ?>
+    });
     </script>
 </body>
-
 </html>

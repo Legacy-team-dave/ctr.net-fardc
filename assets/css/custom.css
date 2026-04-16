@@ -1,6 +1,29 @@
 /* Styles personnalisés */
 
 /* Police Barlow globale */
+/* Harmonisation couleurs stat-cards */
+.stat-value.present {
+    color: #28a745;
+}
+.stat-value.favorable {
+    color: #ffc107;
+}
+.stat-card:hover {
+    transform: none;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+.stat-value.defavorable {
+    color: #dc3545;
+}
+/* Harmonisation couleurs stat-cards */
+.stat-value.present {
+    color: #28a745;
+}
+.stat-value.favorable {
+    color: #ffc107;
+}
+.stat-value.defavorable {
+    color: #dc3545;
+}
 body, h1, h2, h3, h4, h5, h6,
 p, a, span, div, button, input, select,
 textarea, table, th, td, .nav-link {

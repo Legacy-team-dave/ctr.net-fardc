@@ -24,7 +24,12 @@ function sync_forward_request_headers(bool $includeContentType = true): array
     if (function_exists('sync_config')) {
         $config = sync_config();
         $sharedToken = trim((string) ($config['shared_token'] ?? ''));
-        $instanceId = trim((string) ($config['instance_id'] ?? ''));
+
+        // ── Instance ID : auto-détecté en priorité, sinon config manuelle ──
+        $instanceId = $GLOBALS['sync_auto_instance_id'] ?? '';
+        if ($instanceId === '') {
+            $instanceId = trim((string) ($config['instance_id'] ?? ''));
+        }
 
         if ($sharedToken !== '') {
             $headers[] = 'Authorization: Bearer ' . $sharedToken;
@@ -208,7 +213,6 @@ function build_server_receiver_urls(string $serverAddress): array
         append_server_receiver_candidates($urls, $baseUrl, $appRoot);
     }
 
-    // Fallback legacy
     $urls[] = $baseUrl . '/com.serverur/api_receiver.php';
     $urls[] = $baseUrl . '/com.serveur/api_receiver.php';
 

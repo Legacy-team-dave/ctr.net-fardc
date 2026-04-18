@@ -16,13 +16,13 @@ if (strtoupper((string) ($_SERVER['REQUEST_METHOD'] ?? 'GET')) !== 'POST') {
     sync_json_response(false, 'Méthode POST requise.', 405, 'METHOD_NOT_ALLOWED');
 }
 
-$csrfToken = $_SERVER['HTTP_X_CSRF_TOKEN'] ?? '';
+ $csrfToken = $_SERVER['HTTP_X_CSRF_TOKEN'] ?? '';
 if (!verify_csrf_token($csrfToken)) {
     sync_json_response(false, 'Token CSRF invalide.', 403, 'CSRF_INVALID');
 }
 
-$rawInput = file_get_contents('php://input');
-$input = json_decode($rawInput ?: '[]', true);
+ $rawInput = file_get_contents('php://input');
+ $input = json_decode($rawInput ?: '[]', true);
 if (!is_array($input)) {
     $input = [];
 }
@@ -31,8 +31,8 @@ if (!empty($_POST)) {
     $input = array_merge($input, $_POST);
 }
 
-$isProgressRequest = (string) ($input['ajax_progress'] ?? '') === '1';
-$GLOBALS['sync_stream_enabled'] = $isProgressRequest;
+ $isProgressRequest = (string) ($input['ajax_progress'] ?? '') === '1';
+ $GLOBALS['sync_stream_enabled'] = $isProgressRequest;
 
 if ($isProgressRequest) {
     @ini_set('output_buffering', 'off');
@@ -42,7 +42,7 @@ if ($isProgressRequest) {
     header('X-Accel-Buffering: no');
 }
 
-$serverIp = trim((string) ($input['server_ip'] ?? $input['server_url'] ?? ''));
+ $serverIp = trim((string) ($input['server_ip'] ?? $input['server_url'] ?? ''));
 if ($serverIp === '') {
     sync_json_response(false, 'Adresse du serveur manquante.', 400, 'SERVER_ADDRESS_MISSING');
 }
@@ -51,21 +51,27 @@ if (!is_valid_server_address($serverIp)) {
     sync_json_response(false, 'Adresse du serveur invalide.', 400, 'SERVER_ADDRESS_INVALID');
 }
 
-$_SESSION['sync_server_ip'] = $serverIp;
+ $_SESSION['sync_server_ip'] = $serverIp;
 
-$config = sync_config();
+ $config = sync_config();
 ensure_equipes_sync_columns($pdo);
 ensure_sync_log_table($pdo);
-$selectedGarnisons = function_exists('preferred_garnison_labels') ? preferred_garnison_labels() : [];
-$baseSourceLabel = sync_join_garnison_labels($selectedGarnisons);
+
+// ── Détection automatique de l'instance ID ──
+ $autoInstanceId = sync_auto_instance_id($pdo);
+ $GLOBALS['sync_auto_instance_id'] = $autoInstanceId;
+
+ $selectedGarnisons = function_exists('preferred_garnison_labels') ? preferred_garnison_labels() : [];
+ $baseSourceLabel = sync_join_garnison_labels($selectedGarnisons);
 if ($baseSourceLabel === '') {
     $baseSourceLabel = 'SITE LOCAL 01';
 }
 
-$pendingControles = $pdo->query("SELECT * FROM controles WHERE COALESCE(sync_status, 'local') <> 'synced' ORDER BY date_controle ASC, id ASC")->fetchAll(PDO::FETCH_ASSOC);
-$equipesRows = $pdo->query("SELECT * FROM equipes WHERE COALESCE(sync_status, 'local') <> 'synced' ORDER BY id ASC")->fetchAll(PDO::FETCH_ASSOC);
-$sourceInstance = sync_build_source_instance((string) ($config['instance_id'] ?? ''));
-$sourceLabel = sync_build_source_label($baseSourceLabel, $sourceInstance);
+ $pendingControles = $pdo->query("SELECT * FROM controles WHERE COALESCE(sync_status, 'local') <> 'synced' ORDER BY date_controle ASC, id ASC")->fetchAll(PDO::FETCH_ASSOC);
+ $equipesRows = $pdo->query("SELECT * FROM equipes WHERE COALESCE(sync_status, 'local') <> 'synced' ORDER BY id ASC")->fetchAll(PDO::FETCH_ASSOC);
+
+ $sourceInstance = sync_build_source_instance($autoInstanceId);
+ $sourceLabel = sync_build_source_label($baseSourceLabel, $sourceInstance);
 
 if (empty($pendingControles) && empty($equipesRows)) {
     sync_json_response(true, 'Aucune donnée à synchroniser.', 200, null, [
@@ -96,9 +102,7 @@ sync_progress_event('progress', [
     ],
 ]);
 
-
-// Construction du payload compatible serveur central (clé 'tables')
-$payload = [
+ $payload = [
     'source_instance' => $sourceInstance,
     'source_label' => $sourceLabel,
     'sent_at' => gmdate('c'),
@@ -111,11 +115,11 @@ $payload = [
         'sync_type' => 'equipes_controles',
         'total_records' => count($equipesRows) + count($pendingControles),
         'source_label' => $sourceLabel,
-        'origin_instance_id' => (string) ($config['instance_id'] ?? ''),
+        'origin_instance_id' => $autoInstanceId,
     ],
 ];
 
-$payloadJson = json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+ $payloadJson = json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
 if ($payloadJson === false) {
     sync_json_response(false, 'Impossible de préparer les données à envoyer.', 500, 'PAYLOAD_BUILD_FAILED');
 }
@@ -129,7 +133,7 @@ sync_progress_event('progress', [
     ],
 ]);
 
-$syncTimeout = min(max(15, (int) ($config['timeout'] ?? 30)), 120);
+ $syncTimeout = min(max(15, (int) ($config['timeout'] ?? 30)), 120);
 
 try {
     $forwardResponse = forward_sync_payload_to_server($serverIp, $payloadJson, $syncTimeout);
@@ -151,8 +155,8 @@ if ($forwardResponse['body'] === false) {
     ]);
 }
 
-$cleanRemoteBody = sync_extract_json_payload((string) ($forwardResponse['body'] ?? ''));
-$remote = json_decode($cleanRemoteBody, true);
+ $cleanRemoteBody = sync_extract_json_payload((string) ($forwardResponse['body'] ?? ''));
+ $remote = json_decode($cleanRemoteBody, true);
 if (!is_array($remote)) {
     sync_json_response(false, 'Réponse invalide du serveur distant.', 502, 'REMOTE_INVALID_RESPONSE', [
         'target_url' => $forwardResponse['target_url'],
@@ -161,16 +165,16 @@ if (!is_array($remote)) {
     ]);
 }
 
-$remoteStats = is_array($remote['stats'] ?? null) ? $remote['stats'] : [];
-$remoteEquipes = is_array($remoteStats['equipes'] ?? null) ? $remoteStats['equipes'] : [];
-$remoteControles = is_array($remoteStats['controles'] ?? null) ? $remoteStats['controles'] : [];
-$duplicatesTotal = (int) ($remoteEquipes['doublons'] ?? 0) + (int) ($remoteControles['doublons'] ?? 0);
-$invalidTotal = (int) ($remoteEquipes['invalides'] ?? 0) + (int) ($remoteControles['invalides'] ?? 0);
-$insertedTotal = (int) ($remoteEquipes['inseres'] ?? 0) + (int) ($remoteControles['inseres'] ?? 0);
-$updatedTotal = (int) ($remoteEquipes['maj'] ?? 0) + (int) ($remoteControles['maj'] ?? 0);
-$remotePendingConflicts = (int) ($remote['pending_conflicts'] ?? 0);
-$hasRemoteConflicts = $remotePendingConflicts > 0;
-$isRemoteAlreadySynced = !($remote['success'] ?? false)
+ $remoteStats = is_array($remote['stats'] ?? null) ? $remote['stats'] : [];
+ $remoteEquipes = is_array($remoteStats['equipes'] ?? null) ? $remoteStats['equipes'] : [];
+ $remoteControles = is_array($remoteStats['controles'] ?? null) ? $remoteStats['controles'] : [];
+ $duplicatesTotal = (int) ($remoteEquipes['doublons'] ?? 0) + (int) ($remoteControles['doublons'] ?? 0);
+ $invalidTotal = (int) ($remoteEquipes['invalides'] ?? 0) + (int) ($remoteControles['invalides'] ?? 0);
+ $insertedTotal = (int) ($remoteEquipes['inseres'] ?? 0) + (int) ($remoteControles['inseres'] ?? 0);
+ $updatedTotal = (int) ($remoteEquipes['maj'] ?? 0) + (int) ($remoteControles['maj'] ?? 0);
+ $remotePendingConflicts = (int) ($remote['pending_conflicts'] ?? 0);
+ $hasRemoteConflicts = $remotePendingConflicts > 0;
+ $isRemoteAlreadySynced = !($remote['success'] ?? false)
     && $duplicatesTotal > 0
     && $invalidTotal === 0
     && ($insertedTotal + $updatedTotal) === 0;
@@ -205,21 +209,21 @@ sync_progress_event('progress', [
     ],
 ]);
 
-$controleIds = array_values(array_filter(array_map(static fn($row) => (int) ($row['id'] ?? 0), $pendingControles)));
+ $controleIds = array_values(array_filter(array_map(static fn($row) => (int) ($row['id'] ?? 0), $pendingControles)));
 if (!empty($controleIds)) {
     $placeholders = implode(',', array_fill(0, count($controleIds), '?'));
     $stmtUpdate = $pdo->prepare("UPDATE controles SET sync_status = 'synced', sync_date = NOW() WHERE id IN ($placeholders)");
     $stmtUpdate->execute($controleIds);
 }
 
-$equipeIds = array_values(array_filter(array_map(static fn($row) => (int) ($row['id'] ?? 0), $equipesRows)));
+ $equipeIds = array_values(array_filter(array_map(static fn($row) => (int) ($row['id'] ?? 0), $equipesRows)));
 if (!empty($equipeIds)) {
     $placeholders = implode(',', array_fill(0, count($equipeIds), '?'));
     $stmtUpdate = $pdo->prepare("UPDATE equipes SET sync_status = 'synced', sync_date = NOW() WHERE id IN ($placeholders)");
     $stmtUpdate->execute($equipeIds);
 }
 
-$summaryParts = [];
+ $summaryParts = [];
 if (!empty($equipesRows)) {
     $summaryParts[] = sprintf('%d membre(s) d\'équipe', count($equipesRows));
 }
@@ -227,9 +231,9 @@ if (!empty($pendingControles)) {
     $summaryParts[] = sprintf('%d contrôle(s)', count($pendingControles));
 }
 
-$syncState = $hasRemoteConflicts ? 'conflicts_pending' : ($isRemoteAlreadySynced ? 'already_synced' : 'completed');
-$summary = $hasRemoteConflicts
-    ? 'Synchronisation transmise : ' . $remotePendingConflicts . ' conflit(s) sont en attente d’arbitrage sur le serveur central.'
+ $syncState = $hasRemoteConflicts ? 'conflicts_pending' : ($isRemoteAlreadySynced ? 'already_synced' : 'completed');
+ $summary = $hasRemoteConflicts
+    ? 'Synchronisation transmise : ' . $remotePendingConflicts . ' conflit(s) sont en attente d\'arbitrage sur le serveur central.'
     : ($isRemoteAlreadySynced
         ? 'Synchronisation vérifiée : les données existaient déjà sur le serveur central. Les statuts locaux ont été mis à jour.'
         : 'Synchronisation effectuée : ' . implode(' et ', $summaryParts) . ' envoyé(s) vers ' . $serverIp . '.');
@@ -274,6 +278,92 @@ sync_json_response(true, $hasRemoteConflicts
         'controles' => ['recus' => count($pendingControles), 'inseres' => count($pendingControles), 'maj' => 0],
     ],
 ]);
+
+// =====================================================================
+// DÉTECTION AUTOMATIQUE DE L'INSTANCE ID
+// =====================================================================
+
+/**
+ * Détecte ou génère automatiquement un identifiant d'instance unique.
+ *
+ * Algorithme :
+ *   1. Lecture depuis la BDD locale (table sync_local_config)
+ *   2. Sinon, lecture depuis le fichier instance_id.txt
+ *   3. Sinon, génération automatique : <hostname>-<4hex>
+ *   4. Persistance dans BDD + fichier pour les prochains appels
+ *
+ * Format généré : ex "poste-gestion01-a3f2"
+ * Aucune configuration manuelle requise.
+ */
+function sync_auto_instance_id(PDO $pdo): string
+{
+    // Cache en mémoire pour la requête courante
+    if (!empty($GLOBALS['sync_cached_instance_id'])) {
+        return $GLOBALS['sync_cached_instance_id'];
+    }
+
+    // ── 1. Lecture depuis la BDD locale ──
+    try {
+        $pdo->exec("CREATE TABLE IF NOT EXISTS sync_local_config (
+            config_key VARCHAR(100) NOT NULL PRIMARY KEY,
+            config_value TEXT NOT NULL,
+            updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+
+        $stmt = $pdo->prepare("SELECT config_value FROM sync_local_config WHERE config_key = 'instance_id' LIMIT 1");
+        $stmt->execute();
+        $existing = $stmt->fetchColumn();
+        if ($existing !== false && trim((string) $existing) !== '') {
+            $GLOBALS['sync_cached_instance_id'] = trim((string) $existing);
+            return $GLOBALS['sync_cached_instance_id'];
+        }
+    } catch (Throwable $e) {
+        // Continuer vers le fallback fichier
+    }
+
+    // ── 2. Lecture depuis le fichier ──
+    $file = __DIR__ . '/../instance_id.txt';
+    if (file_exists($file) && is_readable($file)) {
+        $existing = trim(file_get_contents($file));
+        if ($existing !== '') {
+            // Migrer vers la BDD pour les prochains appels
+            try {
+                $stmt = $pdo->prepare("INSERT INTO sync_local_config (config_key, config_value) VALUES ('instance_id', ?) ON DUPLICATE KEY UPDATE config_value = VALUES(config_value)");
+                $stmt->execute([$existing]);
+            } catch (Throwable $e) {}
+            $GLOBALS['sync_cached_instance_id'] = $existing;
+            return $existing;
+        }
+    }
+
+    // ── 3. Génération automatique ──
+    $hostname = gethostname() ?: php_uname('n') ?: 'poste';
+    $hostname = preg_replace('/[^a-zA-Z0-9]/', '-', strtolower($hostname)) ?? 'poste';
+    $hostname = trim($hostname, '-_');
+    if ($hostname === '' || strlen($hostname) < 2) {
+        $hostname = 'poste';
+    }
+
+    // Suffixe aléatoire de 4 caractères hex pour unicité
+    $random = strtolower(bin2hex(random_bytes(2)));
+    $instanceId = $hostname . '-' . $random;
+
+    // Normalisation finale
+    $instanceId = preg_replace('/[^a-zA-Z0-9_-]+/', '-', strtolower($instanceId)) ?? 'poste-unknown';
+    $instanceId = trim($instanceId, '-_');
+    $instanceId = substr($instanceId, 0, 50);
+
+    // ── 4. Persistance BDD + fichier ──
+    try {
+        $stmt = $pdo->prepare("INSERT INTO sync_local_config (config_key, config_value) VALUES ('instance_id', ?) ON DUPLICATE KEY UPDATE config_value = VALUES(config_value)");
+        $stmt->execute([$instanceId]);
+    } catch (Throwable $e) {}
+
+    @file_put_contents($file, $instanceId, LOCK_EX);
+
+    $GLOBALS['sync_cached_instance_id'] = $instanceId;
+    return $instanceId;
+}
 
 function ensure_sync_log_table(PDO $pdo): void
 {

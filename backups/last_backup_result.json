@@ -1,7 +1,10 @@
 {
-    "generated_at": "2026-04-07T18:06:50+01:00",
-    "created": false,
-    "reason": "interval_not_elapsed",
-    "file": null,
-    "counts": []
+    "generated_at": "2026-04-18T18:36:24+01:00",
+    "created": true,
+    "reason": "backup_updated",
+    "file": "C:\\laragon\\www\\ctr.net-fardc\/backups\/backup_consolide_latest.zip",
+    "counts": {
+        "controles": 40,
+        "non_vus": 36868
+    }
 }

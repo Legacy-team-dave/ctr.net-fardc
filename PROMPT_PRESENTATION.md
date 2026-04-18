@@ -6,7 +6,7 @@ Copiez-collez ce prompt dans votre assistant IA pour générer une présentation
 
 ## Prompt prêt à utiliser
 
-Tu es un expert en communication de solutions métier et en systèmes d'information publics.
+Tu es un expert en dévéloppement de solutions métier et en systèmes d'information publics.
 Je dois présenter l'application CTR.NET-FARDC devant [type de public: direction / opérateurs / équipe technique / partenaires].
 
 Objectif de la présentation:
@@ -18,7 +18,7 @@ Objectif de la présentation:
 Contexte fonctionnel réel à respecter:
 - Profils: ADMIN_IG, OPERATEUR, CONTROLEUR, ENROLEUR
 - Mentions de contrôle: Présent, Favorable, Défavorable
-- Flux d'accès: ADMIN_IG vers dashboard, OPERATEUR selon préférences, CONTROLEUR via `CTR.NET`, ENROLEUR via `ENROL.NET`
+- Flux d'accès: ADMIN_IG vers dashboard, OPERATEUR selon préférences, CONTROLEUR via `CTR.OPS Contrôle`.
 - Modules principaux: Administration, Militaires, Contrôles, Synchronisation, Tableau de bord
 - Sécurité: authentification, contrôle d'accès, journalisation des actions
 - 🔐 Chiffrement: Fichiers sensibles protégés par AES-256-CBC (v1.1.0+) - transparence applicative totale

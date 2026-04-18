@@ -2,7 +2,7 @@
 
 ## Section 1: Résumé exécutif
 
-CTR.NET-FARDC est une application de contrôle des effectifs qui structure le travail de terrain autour de quatre profils (`ADMIN_IG`, `OPERATEUR`, `CONTROLEUR`, `ENROLEUR`), de règles de saisie claires et d’une traçabilité systématique des actions sensibles. La solution centralise la gestion des militaires, la saisie des contrôles, la synchronisation des équipes et la supervision via tableaux de bord, avec un fonctionnement adapté aux responsabilités de chaque profil. L’enjeu principal est d’améliorer la fiabilité des données, d’accélérer les opérations de contrôle et de sécuriser la gouvernance grâce aux journaux d’audit et aux sauvegardes automatiques.
+CTR.NET-FARDC est une application de contrôle des effectifs qui structure le travail de terrain autour de quatre profils (`ADMIN_IG`, `OPERATEUR`, `CONTROLEUR`), de règles de saisie claires et d’une traçabilité systématique des actions sensibles. La solution centralise la gestion des militaires, la saisie des contrôles, la synchronisation des équipes et la supervision via tableaux de bord, avec un fonctionnement adapté aux responsabilités de chaque profil. L’enjeu principal est d’améliorer la fiabilité des données, d’accélérer les opérations de contrôle et de sécuriser la gouvernance grâce aux journaux d’audit et aux sauvegardes automatiques.
 
 ---
 
@@ -50,8 +50,7 @@ Quatre profils structurent l’accès et les responsabilités opérationnelles.
 **Points à dire à l’oral**
 - `ADMIN_IG`: pilotage, supervision, administration complète.
 - `OPERATEUR`: exécution opérationnelle avec tableau de bord et contrôles.
-- `CONTROLEUR`: saisie ciblée des contrôles via l'application mobile `CTR.NET`.
-- `ENROLEUR`: enrôlement terrain des militaires vivants via l'application mobile `ENROL.NET`.
+- `CONTROLEUR`: saisie ciblée des contrôles via l'application mobile `CTR.OPS Contrôle`.
 - Cette séparation réduit les risques d’accès non pertinent.
 
 ## Slide 5 — Flux d’accès réel (connexion/redirection)
@@ -62,7 +61,7 @@ Après connexion, chaque profil est guidé vers son point d’entrée utile.
 **Points à dire à l’oral**
 - `ADMIN_IG` est orienté vers le dashboard (`index.php`).
 - `OPERATEUR` passe par `preferences.php` si ses préférences sont absentes.
-- `CONTROLEUR` et `ENROLEUR` n'accèdent plus au web ; ils utilisent `CTR.NET` et `ENROL.NET`.
+- `CONTROLEUR` n'accède plus au web ; ils utilisent `CTR.OPS Contrôle`.
 - Cette logique réduit les étapes inutiles et accélère l’action.
 
 ## Slide 6 — Saisie d’un contrôle: règles métier

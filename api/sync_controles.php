@@ -56,31 +56,36 @@ if (!is_valid_server_address($serverIp)) {
  $config = sync_config();
 ensure_equipes_sync_columns($pdo);
 
-/*
- * ========================================================================
- * POINT CRITIQUE : l'instance_id est lu depuis le FICHIER LOCAL.
- *
- * Pourquoi pas depuis la BDD ?
- * -------------------------------
- * Quand on clone le repo depuis Git, la BDD est copiée avec
- * l'instance_id du PC d'origine. Si on lit depuis la BDD, tous les
- * PCs clonés auront le même ID → même source_instance → les données
- * se mélangent sur le serveur central → une seule carte affichée.
- *
- * Le fichier instance_id.txt est local à chaque machine et n'est
- * JAMAIS versionné dans Git (ajouté dans .gitignore). Donc :
- *   - Clone Git = fichier absent = détection garantie de clone
- *   - Fichier présent = ID valide de ce PC précis
- *
- * La BDD ne sert qu'à mémoriser l'ID pour reference,
- * jamais à le décider.
- * ========================================================================
- */
  $autoInstanceId = sync_auto_instance_id($pdo);
  $GLOBALS['sync_auto_instance_id'] = $autoInstanceId;
 
+/*
+ * ========================================================================
+ * LECTURE DU LABEL STOCKÉ LOCALEMENT AVANT D'ENVOYER LE PAYLOAD.
+ *
+ * Si le serveur a déjà renommé "KINSHASA" en "KINSHASA 1" lors d'une
+ * synchronisation précédente, le client doit envoyer "KINSHASA 1" (pas "KINSHASA").
+ *
+ * Sinon le serveur le renommerait à chaque sync → numéros instables.
+ * ========================================================================
+ */
+ $storedSourceLabel = '';
+try {
+    $stmt = $pdo->prepare("SELECT source_label FROM sync_source_labels WHERE source_instance = ? LIMIT 1");
+    $stmt->execute([$autoInstanceId]);
+    $storedSourceLabel = $stmt->fetchColumn();
+} catch (Throwable $e) {
+    $storedSourceLabel = false;
+}
+
+// Utiliser le label stocké s'il existe, sinon le label de base de la garnison
+ $baseSourceLabel = ($storedSourceLabel !== false && trim((string) $storedSourceLabel) !== '')
+    ? trim((string) $storedSourceLabel)
+    : $baseSourceLabel;
+
+ $sourceLabel = sync_build_source_label($baseSourceLabel, $sourceInstance);
+
  $selectedGarnisons = function_exists('preferred_garnison_labels') ? preferred_garnison_labels() : [];
- $baseSourceLabel = sync_join_garnison_labels($selectedGarnisons);
 if ($baseSourceLabel === '') {
     $baseSourceLabel = 'SITE LOCAL 01';
 }
@@ -89,11 +94,10 @@ if ($baseSourceLabel === '') {
  $equipesRows = $pdo->query("SELECT * FROM equipes WHERE COALESCE(sync_status, 'local') <> 'synced' ORDER BY id ASC")->fetchAll(PDO::FETCH_ASSOC);
 
  $sourceInstance = sync_build_source_instance($autoInstanceId);
- $sourceLabel = sync_build_source_label($baseSourceLabel, $sourceInstance);
 
 if (empty($pendingControles) && empty($equipesRows)) {
     sync_json_response(true, 'Aucune donnée à synchroniser.', 200, null, [
-        'summary' => 'Aucun membre d\'équipe ni contrôle n\'est actuellement en attente de synchronisation.',
+        'summary' => 'Aucune donnée en attente de synchronisation.',
         'sync_state' => 'no_data',
         'sent' => ['equipes' => 0, 'controles' => 0],
         'stats' => ['equipes' => 0, 'controles' => 0],
@@ -246,6 +250,30 @@ log_sync_attempt($pdo, $controleIds, $equipeIds, 'succes', json_encode([
 
 audit_action('SYNC_CONTROLES', 'synchronisation', null, $summary);
 
+/*
+ * ========================================================================
+ * STOCKAGE DU LABEL FINAL RENVOYÉ PAR LE SERVEUR
+ *
+ * Le serveur renvoie "final_source_label" dans la réponse après avoir
+ * potentiellement renuméroté les labels en conflit.
+ *
+ * Le client le stocke dans sa table sync_source_labels locale pour envoyer
+ * le bon label à la prochaine synchronisation, garantissant un numéro stable.
+ * ========================================================================
+ */
+ $finalLabelFromServer = $remote['final_source_label'] ?? $sourceLabel;
+if ($finalLabelFromServer !== '' && trim((string) $finalLabelFromServer) !== '') {
+    try {
+        $pdo->prepare(
+            "INSERT INTO sync_source_labels (source_instance, source_label, updated_at)
+             VALUES (?, ?, NOW())
+             ON DUPLICATE KEY UPDATE source_label = VALUES(source_label), updated_at = NOW()"
+        )->execute([$autoInstanceId, trim((string) $finalLabelFromServer)]);
+    } catch (Throwable $e) {
+        error_log('sync_store_final_label: ' . $e->getMessage());
+    }
+}
+
 sync_progress_event('progress', [
     'percentage' => 100,
     'step' => $hasRemoteConflicts
@@ -311,9 +339,13 @@ function ensure_equipes_sync_columns(PDO $pdo): void
         }
     }
 
-    $pdo->exec("CREATE TABLE IF NOT EXISTS sync_local_config (
-        config_key VARCHAR(100) NOT NULL PRIMARY KEY,
-        config_value TEXT NOT NULL,
+    /*
+     * Table locale pour stocker le label renvoyé par le serveur.
+     * Permet d'envoyer le bon label numéroté à la prochaine sync.
+     */
+    $pdo->exec("CREATE TABLE IF NOT EXISTS sync_source_labels (
+        source_instance VARCHAR(120) NOT NULL PRIMARY KEY,
+        source_label VARCHAR(150) NOT NULL,
         updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
 
@@ -348,40 +380,13 @@ function ensure_sync_log_table(PDO $pdo): void
 
 
 // =====================================================================
-// IDENTIFIANT UNIQUE DU PC CLIENT
+// IDENTIFIANT UNIQUE DU PC CLIENT (basé sur le fichier local)
 // =====================================================================
 
 /**
  * Récupère ou génère l'identifiant unique de CE poste client.
- *
- * ╔════════════════════════════════════════════════════════════════════╗
- * ║  PRINCIPE : le fichier instance_id.txt est la SOURCE DE VÉRITÉ. ║
- * ║  La BDD ne sert qu'à mémoriser, jamais à décider.                ║
- * ╚════════════════════════════════════════════════════════════════════╝
- *
- * Pourquoi ce choix ?
- * ------------------
- * Quand on clone un repo Git, deux choses sont copiées :
- *   1. Les fichiers PHP (versionnés) → identiques sur tous les PCs
- *   2. La BDD locale (NON versionnée) → copiée avec l'ID d'origine
- *
- * Si on lit l'ID depuis la BDD, tous les PCs clonés auront le même
- * ID → même source_instance → données mélangées sur le serveur →
- * une seule carte affichée.
- *
- * Le fichier instance_id.txt est ajouté au .gitignore du projet.
- * Il n'existe JAMAIS après un clone Git. Donc :
- *   - Clone Git → fichier absent → NOUVEL ID généré automatiquement
- *   - Lancement normal → fichier présent → ID lu depuis le fichier
- *
- * Ce fichier est le seul endroit qui distingue physiquement deux PCs
- * ayant le même hostname et la même BDD copiée.
- *
- * FORMAT : <hostname-nettoyé>-<4 caractères hexa>
- * Exemples : "wendie-pc-1a58", "poste-gestion-7f2e"
- *
- * @param PDO $pdo Connexion BDD locale (utilisation : mémorisation uniquement)
- * @return string Identifiant unique de ce PC
+ * Le fichier instance_id.txt est la source de vérité (non versionné dans Git).
+ * Si absent → clone Git détecté → nouvel ID généré automatiquement.
  */
 function sync_auto_instance_id(PDO $pdo): string
 {
@@ -389,115 +394,57 @@ function sync_auto_instance_id(PDO $pdo): string
         return $GLOBALS['sync_cached_instance_id'];
     }
 
-    /*
-     * Chemin du fichier local.
-     * Placé à la racine du projet (même niveau que index.php).
-     * Ce fichier DOIT être dans .gitignore pour ne jamais être versionné.
-     */
     $file = __DIR__ . '/../instance_id.txt';
 
-    // ──────────────────────────────────────────────────────────
-    // CAS 1 : le fichier existe → ID valide de ce PC précis
-    // ──────────────────────────────────────────────────────────
+    // Fichier existe → ID valide de ce PC précis
     if (file_exists($file) && is_readable($file)) {
         $idFromFile = trim(file_get_contents($file));
-
         if ($idFromFile !== '' && strlen($idFromFile) >= 5) {
-            // Mémoriser dans la BDD pour référence (pas pour décision)
             sync_persist_instance_id($pdo, $idFromFile);
-
-            error_log(sprintf(
-                'sync_auto_instance_id: ID lu depuis le fichier local : "%s"',
-                $idFromFile
-            ));
-
             $GLOBALS['sync_cached_instance_id'] = $idFromFile;
             return $idFromFile;
         }
-
-        // Fichier existe mais vide/corrompu → le recréer
-        error_log('sync_auto_instance_id: fichier local corrompu ou vide, régénération.');
     }
 
-    // ──────────────────────────────────────────────────────────
-    // CAS 2 : le fichier N'EXISTE PAS → clone Git détecté
-    // ──────────────────────────────────────────────────────────
-    //
-    // La BDD a peut-être un ID (copié du PC d'origine), mais on
-    // l'ignore complètement. Seul le fichier fait autorité.
-    // On génère un nouvel ID unique pour CE PC.
-    //
+    // Fichier absent → clone Git → générer un nouvel ID
     error_log('sync_auto_instance_id: fichier local absent → clone Git détecté → génération d\'un nouvel ID.');
-
     $newId = sync_generate_unique_instance_id($pdo, $file);
 
     $GLOBALS['sync_cached_instance_id'] = $newId;
     return $newId;
 }
 
-/**
- * Génère un identifiant unique : <hostname>-<4 hex>
- *
- * @param PDO $pdo
- * @param string $file Chemin du fichier à créer
- * @return string
- */
 function sync_generate_unique_instance_id(PDO $pdo, string $file): string
 {
     $hostname = gethostname() ?: php_uname('n') ?: 'poste';
-
-    // Nettoyer : lettres, chiffres et tirets uniquement
     $hostname = preg_replace('/[^a-zA-Z0-9]/', '-', strtolower($hostname)) ?? 'poste';
     $hostname = trim($hostname, '-_');
-    if ($hostname === '' || strlen($hostname) < 2) {
-        $hostname = 'poste';
-    }
+    if ($hostname === '' || strlen($hostname) < 2) $hostname = 'poste';
     $hostname = substr($hostname, 0, 35);
 
-    // Tenter jusqu'à 5 fois en cas de collision (théoriquement impossible)
     for ($attempt = 0; $attempt < 5; $attempt++) {
-        // 2 octets aléatoires = 4 caractères hexa (65 536 combinaisons)
-        $suffix = strtolower(bin2hex(random_bytes(2)));
+        $suffix = strtolower(bin2hex(random_bytes(2));
         $instanceId = $hostname . '-' . $suffix;
-
-        // Normalisation
         $instanceId = preg_replace('/[^a-zA-Z0-9_-]+/', '-', $instanceId) ?? 'poste-unknown';
         $instanceId = trim($instanceId, '-_');
         $instanceId = substr($instanceId, 0, 50);
 
-        if ($instanceId === '' || strlen($instanceId) < 5) {
-            continue;
-        }
+        if ($instanceId === '' || strlen($instanceId) < 5) continue;
 
-        // Vérifier que cet ID n'existe pas déjà sur le serveur central
-        // (au cas où la BDD aurait été copiée puis le fichier recréé manuellement)
         if (sync_is_instance_id_locally_unique($pdo, $instanceId)) {
             sync_persist_instance_id($pdo, $instanceId);
             @file_put_contents($file, $instanceId, LOCK_EX);
-
-            error_log(sprintf(
-                'sync_auto_instance_id: nouvel ID généré : "%s" (tentative %d)',
-                $instanceId,
-                $attempt + 1
-            ));
-
             return $instanceId;
         }
     }
 
-    // Dernier recours : ajouter un timestamp pour garantie absolue
     $instanceId = $hostname . '-' . strtolower(bin2hex(random_bytes(2))) . '-' . time();
     $instanceId = substr($instanceId, 0, 50);
     sync_persist_instance_id($pdo, $instanceId);
     @file_put_contents($file, $instanceId, LOCK_EX);
-
     return $instanceId;
 }
 
-/**
- * Vérifie qu'un ID n'existe pas déjà dans la BDD locale.
- * Sécurité supplémentaire au cas où on recréerait manuellement le fichier.
- */
 function sync_is_instance_id_locally_unique(PDO $pdo, string $instanceId): bool
 {
     try {
@@ -509,19 +456,14 @@ function sync_is_instance_id_locally_unique(PDO $pdo, string $instanceId): bool
     }
 }
 
-/**
- * Mémorise l'ID dans la BDD (à des fins de référence uniquement).
- * La BDD ne décide JAMAIS de l'ID actif — seul le fichier le fait.
- */
 function sync_persist_instance_id(PDO $pdo, string $instanceId): void
 {
     try {
-        $stmt = $pdo->prepare(
+        $pdo->prepare(
             "INSERT INTO sync_local_config (config_key, config_value, updated_at)
              VALUES ('instance_id', ?, NOW())
              ON DUPLICATE KEY UPDATE config_value = VALUES(config_value), updated_at = NOW()"
-        );
-        $stmt->execute([$instanceId]);
+        )->execute([$instanceId]);
     } catch (Throwable $e) {
         error_log('sync_persist_instance_id: ' . $e->getMessage());
     }
@@ -564,11 +506,20 @@ function sync_join_garnison_labels(array $garnisons): string
     return implode(' • ', $labels);
 }
 
+/**
+ * Construit le label à envoyer au serveur.
+ * N'ajoute pas "Equipe : " si déjà présent pour éviter "Equipe : Equipe : KINSHASA 2".
+ */
 function sync_build_source_label(string $baseLabel, string $sourceInstance): string
 {
     $baseLabel = trim($baseLabel);
     if ($baseLabel === '') $baseLabel = 'SITE LOCAL 01';
-    return mb_substr('Equipe : ' . $baseLabel, 0, 150);
+
+    if (stripos($baseLabel, 'equipe : ') === false && stripos($baseLabel, 'équipe : ') === false) {
+        $baseLabel = 'Equipe : ' . $baseLabel;
+    }
+
+    return mb_substr($baseLabel, 0, 150);
 }
 
 function sync_build_source_instance(string $instanceId): string
@@ -605,7 +556,7 @@ function sync_json_response(bool $success, string $message, int $httpCode = 200,
 
 function log_sync_attempt(PDO $pdo, array $controleIds, array $equipeIds, string $statut, string $details = ''): void
 {
-    $pdo->prepare("INSERT INTO synchronisation (controle_ids, equipe_ids, nb_controles, nb_equipes, statut, details, utilisateur_id) VALUES (?, ?, ?, ?, ?, ?, ?)")
+    $pdo->prepare("INSERT INTO synchronisation (controle_ids, equipe_ids, nb_controles, nb_equipes, statut, details, utilisateur_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?)")
         ->execute([
             json_encode($controleIds, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
             json_encode($equipeIds, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),

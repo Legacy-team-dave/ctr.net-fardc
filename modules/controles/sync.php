@@ -27,109 +27,304 @@ try {
     $last_syncs = [];
 }
 
+// ── ID client ──
  $client_id = $_SESSION['sync_client_id'] ?? null;
 if (!$client_id || strlen($client_id) < 10) {
     $client_id = bin2hex(random_bytes(16));
     $_SESSION['sync_client_id'] = $client_id;
 }
- $garnison_label = $_SESSION['sync_garnison_label'] ?? '';
 
 include '../../includes/header.php';
 ?>
 
 <input type="hidden" id="syncClientId" value="<?= h($client_id) ?>">
-<input type="hidden" id="syncGarnisonLabel" value="<?= h($garnison_label) ?>">
 
 <style>
-.sync-simple-page { padding: 0 6px; }
-.sync-hero, .sync-panel {
-    background: #fff; border: none; border-radius: 16px;
-    box-shadow: 0 8px 24px rgba(0,0,0,0.08); margin-bottom: 20px; overflow: hidden;
+.sync-simple-page {
+    padding: 0 6px;
 }
-.sync-hero-head, .sync-panel-head {
+
+.sync-hero,
+.sync-panel {
+    background: #fff;
+    border: none;
+    border-radius: 16px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+    margin-bottom: 20px;
+    overflow: hidden;
+}
+
+.sync-hero-head,
+.sync-panel-head {
     background: linear-gradient(135deg, #2e7d32, #1b5e20);
-    color: #fff; padding: 16px 20px; font-weight: 600;
-    display: flex; align-items: center; gap: 10px;
+    color: #fff;
+    padding: 16px 20px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 10px;
 }
-.sync-hero-body, .sync-panel-body { padding: 20px; }
+
+.sync-hero-body,
+.sync-panel-body {
+    padding: 20px;
+}
+
 .sync-stat-card {
-    background: #fff; border-radius: 15px; padding: 20px 22px;
-    display: flex; align-items: center; gap: 16px; height: 100%;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.05);
-    transition: all 0.3s ease; border: 1px solid rgba(0,0,0,0.05);
+    background: #fff;
+    border-radius: 15px;
+    padding: 20px 22px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    height: 100%;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+    transition: all 0.3s ease;
+    border: 1px solid rgba(0, 0, 0, 0.05);
+    margin-bottom: 25px;
 }
-.sync-stat-card:hover { transform: translateY(-5px); box-shadow: 0 8px 25px rgba(46,125,50,0.15); }
+
+.sync-stat-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(46, 125, 50, 0.15);
+}
+
 .sync-stat-icon {
-    width: 56px; height: 56px; border-radius: 12px;
-    display: flex; align-items: center; justify-content: center;
-    color: #fff; font-size: 1.4rem;
-    box-shadow: 0 4px 10px rgba(46,125,50,0.25); flex-shrink: 0;
+    width: 56px;
+    height: 56px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-size: 1.4rem;
+    box-shadow: 0 4px 10px rgba(46, 125, 50, 0.25);
+    flex-shrink: 0;
 }
-.sync-stat-icon.sync-team { background: linear-gradient(135deg, #1565c0, #0d47a1); }
-.sync-stat-icon.sync-pending { background: linear-gradient(135deg, #2e7d32, #1b5e20); }
-.sync-stat-icon.sync-total { background: linear-gradient(135deg, #dc3545, #c82333); }
-.sync-stat-icon.sync-history { background: linear-gradient(135deg, #6c757d, #495057); }
-.sync-stat-info { display: flex; flex-direction: column; gap: 4px; }
-.sync-stat-value { font-size: 2rem; font-weight: 700; color: #1b5e20; line-height: 1; margin: 0; }
-.sync-stat-icon.sync-team + .sync-stat-info .sync-stat-value { color: #1565c0; }
-.sync-stat-icon.sync-pending + .sync-stat-info .sync-stat-value { color: #2e7d32; }
-.sync-stat-icon.sync-total + .sync-stat-info .sync-stat-value { color: #dc3545; }
-.sync-stat-icon.sync-history + .sync-stat-info .sync-stat-value { color: #6c757d; }
-.sync-stat-label { color: #6c757d; font-size: 0.88rem; font-weight: 600; }
-.sync-actions { display: flex; flex-wrap: wrap; gap: 6px; }
-.sync-btn-primary, .sync-btn-secondary, .sync-btn-neutral {
-    border: none; border-radius: 8px; min-height: 34px; min-width: auto;
-    padding: 0 10px; font-weight: 600; font-size: 0.82rem;
-    display: inline-flex; align-items: center; justify-content: center;
-    gap: 5px; cursor: pointer; text-decoration: none;
-    transition: all 0.3s ease; white-space: nowrap;
+
+.sync-stat-icon.sync-team {
+    background: linear-gradient(135deg, #1565c0, #0d47a1);
 }
-.sync-btn-primary { background: linear-gradient(135deg, #2e7d32, #1b5e20); color: #fff; }
-.sync-btn-secondary { background: linear-gradient(135deg, #f1b50f, #e1b231); color: #fff; }
-.sync-btn-neutral { background: linear-gradient(135deg, #6c757d, #495057); color: #fff; }
-.sync-btn-primary:hover { background: linear-gradient(135deg, #1b5e20, #145a18); transform: translateY(-2px); box-shadow: 0 8px 20px rgba(46,125,50,0.22); color: #fff; text-decoration: none; }
-.sync-btn-secondary:hover { background: linear-gradient(135deg, #0d47a1, #0a3d8f); transform: translateY(-2px); box-shadow: 0 8px 20px rgba(13,71,161,0.24); color: #fff; text-decoration: none; }
-.sync-btn-secondary.is-testing { background: linear-gradient(135deg, #1565c0, #0d47a1); box-shadow: 0 8px 20px rgba(13,71,161,0.24); }
-.sync-btn-secondary.is-success { background: linear-gradient(135deg, #2e7d32, #1b5e20); box-shadow: 0 8px 20px rgba(46,125,50,0.22); }
-.sync-btn-secondary.is-success:hover { background: linear-gradient(135deg, #1b5e20, #145a18); color: #fff; }
-.sync-btn-secondary.is-danger { background: linear-gradient(135deg, #dc3545, #b02a37); box-shadow: 0 8px 20px rgba(220,53,69,0.24); }
-.sync-btn-secondary.is-danger:hover { background: linear-gradient(135deg, #b02a37, #8f1f2b); color: #fff; }
-.sync-btn-neutral:hover { background: linear-gradient(135deg, #545b62, #3f464d); transform: translateY(-2px); box-shadow: 0 8px 20px rgba(108,117,125,0.24); color: #fff; text-decoration: none; }
-.sync-steps { margin: 0; padding-left: 18px; color: #555; }
-.sync-steps li { margin-bottom: 6px; }
-.progress-container { display: none; margin-top: 16px; padding: 14px 16px; background: #f8f9fa; border: 1px solid #e2e8f0; border-radius: 12px; }
-.progress-container.active { display: block; }
-.progress-header { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-bottom: 8px; flex-wrap: wrap; }
-.progress-title { display: flex; align-items: center; gap: 6px; color: #333; font-weight: 600; }
-.progress-stats { background: #fff; padding: 2px 10px; border-radius: 12px; font-weight: 700; color: #1b5e20; }
-.progress-bar-container { height: 20px; background: #fff; border-radius: 10px; overflow: hidden; margin: 10px 0; }
-.progress-bar-fill { height: 100%; width: 0%; background: linear-gradient(90deg, #ffc107, #e0a800); border-radius: 10px; transition: width 0.3s ease; display: flex; align-items: center; justify-content: center; color: #212529; font-size: 0.8rem; font-weight: 700; }
-.progress-bar-fill.is-complete { background: linear-gradient(90deg, #28a745, #1e7e34); color: #fff; }
-.progress-details { display: flex; gap: 15px; flex-wrap: wrap; font-size: 0.85rem; color: #666; }
-.sync-history-table { width: 100%; border-collapse: collapse; font-size: 0.88rem; }
-.sync-history-table th, .sync-history-table td { padding: 10px 12px; border-bottom: 1px solid #edf0f2; text-align: left; }
-.sync-history-table th { background: #f8f9fa; font-size: 0.78rem; text-transform: uppercase; color: #666; }
-.conflict-report { margin-top: 20px; border-top: 2px solid #dee2e6; padding-top: 20px; }
-.conflict-report-header { background: linear-gradient(135deg, #dc3545, #c82333); color: white; padding: 12px 16px; border-radius: 8px; margin-bottom: 15px; display: flex; align-items: center; gap: 10px; }
-.conflict-report-header i { font-size: 1.3rem; }
-.conflict-report-header h4 { margin: 0; font-size: 1.1rem; font-weight: 600; }
-.conflict-summary { background: #fff3cd; border: 1px solid #ffc107; border-radius: 8px; padding: 12px 16px; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
-.conflict-summary-item { display: flex; align-items: baseline; gap: 8px; }
-.conflict-summary-label { font-weight: 600; color: #856404; }
-.conflict-summary-value { font-size: 1.3rem; font-weight: 700; color: #856404; }
-.conflict-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
-.conflict-table th { background: #f8f9fa; padding: 10px 12px; text-align: left; font-weight: 600; border-bottom: 2px solid #dee2e6; position: sticky; top: 0; }
-.conflict-table td { padding: 10px 12px; border-bottom: 1px solid #e9ecef; vertical-align: top; }
-.conflict-table tr:hover { background: #f8f9fa; }
-.conflict-badge { display: inline-block; padding: 3px 8px; border-radius: 12px; font-size: 0.7rem; font-weight: 600; }
-.conflict-badge.equipe { background: #cfe2ff; color: #084298; }
-.conflict-badge.controle { background: #f8d7da; color: #721c24; }
-.conflict-details-preview { max-width: 300px; font-size: 0.8rem; color: #6c757d; }
-.conflict-actions { margin-top: 20px; text-align: center; padding-top: 15px; border-top: 1px solid #dee2e6; }
-.btn-view-conflicts { background: linear-gradient(135deg, #dc3545, #c82333); color: white; border: none; padding: 8px 20px; border-radius: 6px; font-weight: 600; cursor: pointer; transition: all 0.3s ease; }
-.btn-view-conflicts:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(220,53,69,0.3); }
-.conflict-report-container { max-height: 500px; overflow-y: auto; }
-.swal2-popup.auto-close .swal2-confirm { display: none !important; }
+
+.sync-stat-icon.sync-pending {
+    background: linear-gradient(135deg, #2e7d32, #1b5e20);
+}
+
+.sync-stat-icon.sync-total {
+    background: linear-gradient(135deg, #dc3545, #c82333);
+}
+
+.sync-stat-icon.sync-history {
+    background: linear-gradient(135deg, #6c757d, #495057);
+}
+
+.sync-stat-info {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.sync-stat-value {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #1b5e20;
+    line-height: 1;
+    margin: 0;
+}
+
+.sync-stat-icon.sync-team+.sync-stat-info .sync-stat-value {
+    color: #1565c0;
+}
+
+.sync-stat-icon.sync-pending+.sync-stat-info .sync-stat-value {
+    color: #2e7d32;
+}
+
+.sync-stat-icon.sync-total+.sync-stat-info .sync-stat-value {
+    color: #dc3545;
+}
+
+.sync-stat-icon.sync-history+.sync-stat-info .sync-stat-value {
+    color: #6c757d;
+}
+
+.sync-stat-label {
+    color: #6c757d;
+    font-size: 0.88rem;
+    font-weight: 600;
+}
+
+.sync-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.sync-btn-primary,
+.sync-btn-secondary,
+.sync-btn-neutral {
+    border: none;
+    border-radius: 8px;
+    min-height: 34px;
+    min-width: auto;
+    padding: 0 10px;
+    font-weight: 600;
+    font-size: 0.82rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    cursor: pointer;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    white-space: nowrap;
+}
+
+.sync-btn-primary {
+    background: linear-gradient(135deg, #2e7d32, #1b5e20);
+    color: #fff;
+}
+
+.sync-btn-secondary {
+    background: linear-gradient(135deg, #f1b50f, #e1b231);
+    color: #fff;
+}
+
+.sync-btn-neutral {
+    background: linear-gradient(135deg, #6c757d, #495057);
+    color: #fff;
+}
+
+.sync-btn-primary:hover {
+    background: linear-gradient(135deg, #1b5e20, #145a18);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(46, 125, 50, 0.22);
+    color: #fff;
+    text-decoration: none;
+}
+
+.sync-btn-secondary:hover {
+    background: linear-gradient(135deg, #0d47a1, #0a3d8f);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(13, 71, 161, 0.24);
+    color: #fff;
+    text-decoration: none;
+}
+
+.sync-btn-neutral:hover {
+    background: linear-gradient(135deg, #545b62, #3f464d);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(108, 117, 125, 0.24);
+    color: #fff;
+    text-decoration: none;
+}
+
+.sync-steps {
+    margin: 0;
+    padding-left: 18px;
+    color: #555;
+}
+
+.sync-steps li {
+    margin-bottom: 6px;
+}
+
+.progress-container {
+    display: none;
+    margin-top: 16px;
+    padding: 14px 16px;
+    background: #f8f9fa;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+}
+
+.progress-container.active {
+    display: block;
+}
+
+.progress-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 8px;
+    flex-wrap: wrap;
+}
+
+.progress-title {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: #333;
+    font-weight: 600;
+}
+
+.progress-stats {
+    background: #fff;
+    padding: 2px 10px;
+    border-radius: 12px;
+    font-weight: 700;
+    color: #1b5e20;
+}
+
+.progress-bar-container {
+    height: 20px;
+    background: #fff;
+    border-radius: 10px;
+    overflow: hidden;
+    margin: 10px 0;
+}
+
+.progress-bar-fill {
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, #ffc107, #e0a800);
+    border-radius: 10px;
+    transition: width 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #212529;
+    font-size: 0.8rem;
+    font-weight: 700;
+}
+
+.progress-bar-fill.is-complete {
+    background: linear-gradient(90deg, #28a745, #1e7e34);
+    color: #fff;
+}
+
+.progress-details {
+    display: flex;
+    gap: 15px;
+    flex-wrap: wrap;
+    font-size: 0.85rem;
+    color: #666;
+}
+
+.sync-history-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.88rem;
+}
+
+.sync-history-table th,
+.sync-history-table td {
+    padding: 10px 12px;
+    border-bottom: 1px solid #edf0f2;
+    text-align: left;
+}
+
+.sync-history-table th {
+    background: #f8f9fa;
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    color: #666;
+}
+
+.swal2-popup.auto-close .swal2-confirm {
+    display: none !important;
+}
 </style>
 
 <div class="sync-simple-page">
@@ -175,19 +370,24 @@ include '../../includes/header.php';
                 </div>
             </div>
             <div class="sync-actions">
-                <button type="button" class="sync-btn-secondary" id="test-sync-btn"><i class="fas fa-wifi"></i> Tester la connexion IP</button>
-                <button type="button" class="sync-btn-primary" id="start-sync-btn"><i class="fas fa-cloud-upload-alt"></i> Synchroniser maintenant</button>
-                <a href="<?= htmlspecialchars(app_url('modules/controles/liste.php')) ?>" class="sync-btn-neutral"><i class="fas fa-list"></i> Retour à la liste</a>
+                <button type="button" class="sync-btn-primary" id="start-sync-btn"><i
+                        class="fas fa-cloud-upload-alt"></i> Synchroniser maintenant</button>
+                <a href="<?= htmlspecialchars(app_url('modules/controles/liste.php')) ?>" class="sync-btn-neutral"><i
+                        class="fas fa-list"></i> Retour à la liste</a>
             </div>
             <div id="progressContainer" class="progress-container">
                 <div class="progress-header">
-                    <div class="progress-title"><i class="fas fa-spinner fa-pulse"></i><span id="progressPhase">Synchronisation en cours...</span></div>
+                    <div class="progress-title"><i class="fas fa-spinner fa-pulse"></i><span
+                            id="progressPhase">Synchronisation en cours...</span></div>
                     <div class="progress-stats" id="progressStats">0%</div>
                 </div>
-                <div class="progress-bar-container"><div class="progress-bar-fill" id="progressBar">0%</div></div>
+                <div class="progress-bar-container">
+                    <div class="progress-bar-fill" id="progressBar">0%</div>
+                </div>
                 <div class="progress-details">
                     <span><i class="fas fa-users"></i> Équipes : <strong id="syncEquipesCount">0</strong></span>
-                    <span><i class="fas fa-clipboard-check"></i> Contrôles : <strong id="syncControlesCount">0</strong></span>
+                    <span><i class="fas fa-clipboard-check"></i> Contrôles : <strong
+                            id="syncControlesCount">0</strong></span>
                     <span><i class="fas fa-clock"></i> <span id="progressTime">--</span></span>
                 </div>
             </div>
@@ -197,28 +397,110 @@ include '../../includes/header.php';
         <div class="sync-panel-head"><i class="fas fa-list-check"></i> Fonctionnement</div>
         <div class="sync-panel-body">
             <ol class="sync-steps">
-                <li>Cliquer sur <strong>Tester la connexion IP</strong>.</li>
-                <li>Saisir l'adresse IP ou l'URL de la machine serveur.</li>
-                <li>Cliquer sur <strong>Synchroniser maintenant</strong> pour envoyer uniquement les <strong>membres d'équipe</strong> et les <strong>contrôles</strong> encore en attente.</li>
+                <li>Les garnisons sont lues automatiquement depuis vos préférences utilisateur.</li>
+                <li>Cliquer sur <strong>Synchroniser maintenant</strong> pour envoyer les données.</li>
+                <li>Chaque PC client a son propre carte sur le serveur central.</li>
             </ol>
         </div>
     </div>
 </div>
 
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/admin-lte@3.2/dist/js/adminlte.min.js"></script>
 <script>
-const syncEndpoint = <?= json_encode(app_url('api/sync_controles.php')) ?>;
-const testSyncEndpoint = <?= json_encode(app_url('api/test_sync_connection.php')) ?>;
-const syncCsrfToken = <?= json_encode($csrf_token) ?>;
-const pendingEquipesCount = <?= json_encode((int) $pending_equipes) ?>;
-const pendingControlesCount = <?= json_encode((int) $pending_controles) ?>;
-const defaultSavedServerIp = (() => {
-    try { return window.localStorage.getItem('ctrSyncServerIp') || <?= json_encode($saved_server_ip) ?> || ''; }
-    catch (error) { return <?= json_encode($saved_server_ip) ?> || ''; }
-})();
-const redirectUrl = <?= json_encode(app_url('modules/controles/liste.php')) ?>;
+$(document).ready(function() {
+    $('[data-widget="pushmenu"]').off('click').on('click', function(e) {
+        e.preventDefault();
+        $('body').toggleClass('sidebar-collapse');
+    });
+    $(window).on('resize', function() {});
 
-let syncStartTime = null;
-let syncTimer = null;
+    $('#start-sync-btn').off('click').on('click', async function() {
+        if (pendingEquipesCount === 0 && pendingControlesCount === 0) {
+            hideSyncProgress();
+            showAutoCloseToast('info', 'Aucune donnée à synchroniser',
+                'Aucun membre d\'équipe ni contrôle n\'est en attente.', 3000, true);
+            return;
+        }
+
+        let clientId = window.localStorage.getItem('ctrSyncClientId');
+        if (!clientId) {
+            clientId = crypto.randomUUID ? crypto.randomUUID() :
+                'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
+                    let r = Math.random() * 16 | 0,
+                        v = c == 'x' ? r : (r & 0x3 | 0x8);
+                    return v.toString(16);
+                });
+            window.localStorage.setItem('ctrSyncClientId', clientId);
+        }
+
+        // ── Récupérer l'ID du fichier temp système ──
+        let machineId = null;
+        try {
+            const resp = await fetch('sync_get_instance_id.php', {
+                credentials: 'same-origin',
+                headers: {
+                    'X-CSRF-Token': syncCsrfToken
+                }
+            });
+            const data = await resp.json();
+            if (data.success && data.instance_id) {
+                machineId = data.instance_id;
+            }
+        } catch (e) {
+            console.warn('Impossible de récupérer l\'ID machine depuis sync_get_instance_id.php:',
+                e);
+        }
+
+        if (!machineId) {
+            machineId = clientId.substring(0, 16);
+        }
+
+        // ── Construire le source_instance ──
+        const sourceInstance = machineId;
+        const serverIp = defaultSavedServerIp;
+
+        // ── Lancer la synchronisation sans popup de saisie ──
+        resetSyncProgress();
+        setSyncButtonsState(true);
+        updateSyncProgress({
+            percentage: 10,
+            step: 'Connexion au serveur distant et envoi des données...',
+            sent: {
+                equipes: pendingEquipesCount,
+                controles: pendingControlesCount
+            }
+        });
+
+        try {
+            await fetchJsonWithCsrf(testSyncEndpoint, {
+                server_ip: serverIp,
+                client_id: clientId
+            });
+        } catch (testError) {
+            throw new Error('Serveur injoignable : ' + testError.message);
+        }
+
+        updateSyncProgress({
+            percentage: 18,
+            step: 'Préparation des données locales...',
+            sent: {
+                equipes: pendingEquipesCount,
+                controles: pendingControlesCount
+            }
+        });
+
+        try {
+            await streamSyncRequest(serverIp, clientId);
+        } catch (syncError) {
+            showAutoCloseToast('error', 'Erreur de synchronisation', syncError.message ||
+                'Impossible de joindre le serveur.', 4000, true);
+        } finally {
+            stopSyncProgress();
+            setSyncButtonsState(false);
+        }
+    });
+});
 
 function isValidServerAddress(value) {
     const trimmed = (value || '').trim();
@@ -227,7 +509,8 @@ function isValidServerAddress(value) {
 }
 
 function escapeHtml(value) {
-    return String(value || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
+    return String(value || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g,
+        '&quot;').replace(/'/g, '&#039;');
 }
 
 function toSyncCount(value) {
@@ -237,33 +520,49 @@ function toSyncCount(value) {
 }
 
 function storeServerIp(value) {
-    try { if (value && value.trim() !== '') window.localStorage.setItem('ctrSyncServerIp', value.trim()); } catch (error) {}
+    try {
+        if (value && value.trim() !== '') window.localStorage.setItem('ctrSyncServerIp', value.trim());
+    } catch (e) {}
 }
 
-function setConnectionButtonState(state) {
-    const testButton = document.getElementById('test-sync-btn');
-    if (!testButton) return;
-    testButton.classList.remove('is-testing', 'is-success', 'is-danger');
-    if (state === 'testing') { testButton.classList.add('is-testing'); testButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Test en cours...'; return; }
-    if (state === 'success') { testButton.classList.add('is-success'); testButton.innerHTML = '<i class="fas fa-check-circle"></i> Connexion réussie'; return; }
-    if (state === 'error') { testButton.classList.add('is-danger'); testButton.innerHTML = '<i class="fas fa-times-circle"></i> Serveur injoignable'; return; }
-    testButton.innerHTML = '<i class="fas fa-wifi"></i> Tester la connexion IP';
+function resetSyncProgress() {
+    const container = document.getElementById('progressContainer');
+    if (!container) return;
+    container.classList.add('active');
+    syncStartTime = new Date();
+    if (syncTimer) {
+        window.clearInterval(syncTimer);
+        syncTimer = null;
+    }
+    syncTimer = window.setInterval(updateElapsedTime, 1000);
+    updateSyncProgress({
+        percentage: 0,
+        step: 'Initialisation...',
+        sent: {
+            equipes: pendingEquipesCount,
+            controles: pendingControlesCount
+        }
+    });
 }
 
-function setSyncButtonsState(disabled) {
-    const testButton = document.getElementById('test-sync-btn');
-    const syncButton = document.getElementById('start-sync-btn');
-    if (testButton) testButton.disabled = disabled;
-    if (syncButton) syncButton.disabled = disabled;
+function hideSyncProgress() {
+    const container = document.getElementById('progressContainer');
+    if (container) container.classList.remove('active');
+}
+
+function stopSyncProgress() {
+    if (syncTimer) {
+        window.clearInterval(syncTimer);
+        syncTimer = null;
+    }
+    updateElapsedTime();
 }
 
 function updateElapsedTime() {
     const timeNode = document.getElementById('progressTime');
     if (!timeNode || !syncStartTime) return;
-    const elapsedSeconds = Math.max(0, Math.floor((Date.now() - syncStartTime.getTime()) / 1000));
-    const minutes = Math.floor(elapsedSeconds / 60);
-    const seconds = elapsedSeconds % 60;
-    timeNode.textContent = minutes > 0 ? `${minutes}m ${seconds}s` : `${seconds}s`;
+    const s = Math.max(0, Math.floor((Date.now() - syncStartTime.getTime()) / 1000));
+    timeNode.textContent = s > 0 ? s + 'm ' + (s % 60) + 's' : s + 's';
 }
 
 function updateSyncProgress(progress) {
@@ -273,68 +572,59 @@ function updateSyncProgress(progress) {
     const equipesNode = document.getElementById('syncEquipesCount');
     const controlesNode = document.getElementById('syncControlesCount');
     if (!progressBar || !progressStats || !progressPhase) return;
-
     const percentage = Math.max(0, Math.min(100, toSyncCount(progress.percentage)));
-    progressBar.style.width = `${percentage}%`;
-    progressBar.textContent = `${percentage}%`;
-    progressStats.textContent = `${percentage}%`;
+    progressBar.style.width = percentage + '%';
+    progressBar.textContent = percentage + '%';
+    progressStats.textContent = percentage + '%';
     progressBar.classList.toggle('is-complete', percentage >= 100);
     if (progress.step) progressPhase.textContent = progress.step;
     const sent = progress.sent || {};
-    if (equipesNode && Object.prototype.hasOwnProperty.call(sent, 'equipes')) equipesNode.textContent = toSyncCount(sent.equipes);
-    if (controlesNode && Object.prototype.hasOwnProperty.call(sent, 'controles')) controlesNode.textContent = toSyncCount(sent.controles);
+    if (equipesNode && Object.prototype.hasOwnProperty.call(sent, 'equipes')) equipesNode.textContent = toSyncCount(sent
+        .equipes);
+    if (controlesNode && Object.prototype.hasOwnProperty.call(sent, 'controles')) controlesNode.textContent =
+        toSyncCount(sent.controles);
     updateElapsedTime();
-}
-
-function resetSyncProgress() {
-    const container = document.getElementById('progressContainer');
-    if (!container) return;
-    container.classList.add('active');
-    syncStartTime = new Date();
-    if (syncTimer) window.clearInterval(syncTimer);
-    syncTimer = window.setInterval(updateElapsedTime, 1000);
-    updateSyncProgress({ percentage: 0, step: 'Initialisation...', sent: { equipes: pendingEquipesCount, controles: pendingControlesCount } });
-}
-
-function hideSyncProgress() {
-    const container = document.getElementById('progressContainer');
-    if (container) container.classList.remove('active');
-}
-
-function stopSyncProgress() {
-    if (syncTimer) { window.clearInterval(syncTimer); syncTimer = null; }
-    updateElapsedTime();
-}
-
-function showAutoCloseToast(icon, title, html, duration = 3000, redirectAfter = true) {
-    Swal.fire({
-        icon: icon, title: title, html: html,
-        timer: duration, timerProgressBar: true,
-        showConfirmButton: false, allowOutsideClick: false, allowEscapeKey: false,
-        didOpen: () => { const popup = Swal.getPopup(); if (popup) popup.classList.add('auto-close'); },
-        willClose: () => { if (redirectAfter) window.location.href = redirectUrl; }
-    });
 }
 
 async function fetchJsonWithCsrf(endpoint, payload) {
     const response = await fetch(endpoint, {
-        method: 'POST', credentials: 'same-origin',
-        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-CSRF-Token': syncCsrfToken },
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            'X-CSRF-Token': syncCsrfToken
+        },
         body: JSON.stringify(payload)
     });
     const data = await response.json().catch(() => ({}));
-    if (!response.ok || !data.success) throw new Error(data.message || 'Impossible de joindre le service demandé.');
+    if (!response.ok || !data.success) throw new Error(data.message || 'Erreur de connexion.');
     return data;
+}
+
+async function fetchSyncGetClientId() {
+    try {
+        const resp = await fetch('sync_get_instance_id.php', {
+            credentials: 'same-origin',
+            headers: {
+                'X-CSRF-Token': syncCsrfToken
+            }
+        });
+        const data = await resp.json();
+        if (data.success && data.instance_id) return data.instance_id;
+        return null;
+    } catch (e) {
+        return null;
+    }
 }
 
 // =====================================================================
 // streamSyncRequest — AVEC TIMEOUT 60s + INACTIVITÉ 30s
 // =====================================================================
-async function streamSyncRequest(serverIp, clientId, garnisonLabel) {
+async function streamSyncRequest(serverIp, clientId) {
     const formData = new FormData();
     formData.append('server_ip', serverIp);
     formData.append('client_id', clientId);
-    formData.append('garnison_label', garnisonLabel);
     formData.append('ajax_progress', '1');
 
     const controller = new AbortController();
@@ -343,30 +633,37 @@ async function streamSyncRequest(serverIp, clientId, garnisonLabel) {
     let response;
     try {
         response = await fetch(syncEndpoint, {
-            method: 'POST', credentials: 'same-origin',
-            headers: { 'Accept': 'text/event-stream, application/json', 'X-CSRF-Token': syncCsrfToken },
-            body: formData, signal: controller.signal
+            method: 'POST',
+            credentials: 'same-origin',
+            headers: {
+                'Accept': 'text/event-stream, application/json',
+                'X-CSRF-Token': syncCsrfToken
+            },
+            body: formData,
+            signal: controller.signal
         });
     } catch (error) {
         window.clearTimeout(timeoutId);
         if (error.name === 'AbortError') {
-            throw new Error('La synchronisation a mis trop de temps à répondre (60s). Le serveur central est peut-être indisponible.');
+            throw new Error('La synchronisation a mis trop de temps à répondre (60s). Serveur indisponible.');
         }
-        throw new Error('Impossible de joindre le service de synchronisation : ' + error.message);
+        throw new Error('Impossible de joindre le service : ' + error.message);
     }
     window.clearTimeout(timeoutId);
 
     const contentType = response.headers.get('content-type') || '';
     if (contentType.includes('application/json') && !contentType.includes('text/event-stream')) {
         const fallback = await response.json().catch(() => ({}));
-        if (!response.ok || !fallback.success) throw new Error(fallback.message || 'Le serveur a rejeté la synchronisation.');
+        if (!response.ok || !fallback.success) throw new Error(fallback.message ||
+            'Le serveur a rejeté la synchronisation.');
         return fallback;
     }
 
     const reader = response.body ? response.body.getReader() : null;
     if (!reader) {
         const fallback = await response.json().catch(() => ({}));
-        if (!response.ok || !fallback.success) throw new Error(fallback.message || 'Impossible de lire la réponse.');
+        if (!response.ok || !fallback.success) throw new Error(fallback.message ||
+        'Impossible de lire la réponse.');
         return fallback;
     }
 
@@ -381,192 +678,92 @@ async function streamSyncRequest(serverIp, clientId, garnisonLabel) {
         buffer += textChunk;
         const lines = buffer.split(/\r?\n/);
         buffer = lines.pop() || '';
-
         for (const rawLine of lines) {
             const line = rawLine.trim();
             if (!line.startsWith('data:')) continue;
             const jsonText = line.substring(5).trim();
             if (!jsonText) continue;
-
             let eventData;
-            try { eventData = JSON.parse(jsonText); } catch (error) { continue; }
-
-            if (eventData.event === 'progress') { updateSyncProgress(eventData); continue; }
-
+            try {
+                eventData = JSON.parse(jsonText);
+            } catch (error) {
+                continue;
+            }
+            if (eventData.event === 'progress') {
+                updateSyncProgress(eventData);
+                continue;
+            }
             if (eventData.event === 'complete') {
                 finalPayload = eventData;
                 const syncState = eventData.data && eventData.data.sync_state;
-                const isNoDataState = syncState === 'no_data';
-                const isAlreadySyncedState = syncState === 'already_synced';
-                const isConflictsPendingState = syncState === 'conflicts_pending';
-
-                if (isNoDataState) { hideSyncProgress(); }
+                if (syncState === 'no_data') hideSyncProgress();
                 else {
                     updateSyncProgress({
                         percentage: 100,
-                        step: isConflictsPendingState ? 'Synchronisation transmise avec conflits.' : (isAlreadySyncedState ? 'Données déjà présentes sur le serveur.' : 'Synchronisation finalisée avec succès.'),
-                        sent: (eventData.data && eventData.data.sent) || { equipes: pendingEquipesCount, controles: pendingControlesCount }
+                        step: syncState === 'conflicts_pending' ?
+                            'Synchronisation transmise avec conflits.' : (syncState ===
+                                'already_synced' ? 'Données déjà présentes.' :
+                                'Synchronisation finalisée.'),
+                        sent: (eventData.data && eventData.data.sent) || {
+                            equipes: pendingEquipesCount,
+                            controles: pendingControlesCount
+                        }
                     });
                 }
                 continue;
             }
-
-            if (eventData.event === 'error') {
-                throw new Error(eventData.message || 'Erreur rapportée par le serveur.');
-            }
+            if (eventData.event === 'error') throw new Error(eventData.message ||
+                'Erreur rapportée par le serveur.');
         }
     };
 
     while (true) {
-        if (Date.now() - lastActivity > inactivityTimeout) {
-            throw new Error('Le serveur a cessé de répondre pendant plus de 30 secondes.');
-        }
+        if (Date.now() - lastActivity > inactivityTimeout) throw new Error(
+            'Le serveur a cessé de répondre pendant plus de 30 secondes.');
         const result = await reader.read();
         if (result.done) break;
-        consumeLines(decoder.decode(result.value, { stream: true }));
+        consumeLines(decoder.decode(result.value, {
+            stream: true
+        }));
     }
 
     if (buffer.trim().startsWith('{')) {
         try {
             const fallbackJson = JSON.parse(buffer.trim());
-            if (!fallbackJson.success) throw new Error(fallbackJson.message || 'Le serveur a retourné une erreur.');
+            if (!fallbackJson.success) throw new Error(fallbackJson.message || 'Erreur.');
             return fallbackJson;
-        } catch (error) { if (error.message.startsWith('Le serveur')) throw error; }
+        } catch (error) {
+            if (error.message.startsWith('Le serveur')) throw error;
+        }
     }
 
     if (finalPayload) return finalPayload;
     if (!response.ok) throw new Error('La synchronisation a été interrompue (code HTTP ' + response.status + ').');
-    return { success: true, message: 'Synchronisation terminée.' };
+    return {
+        success: true,
+        message: 'Synchronisation terminée.'
+    };
 }
 
-function buildConflictReportHtml(conflicts) {
-    if (!conflicts || conflicts.length === 0) return '';
-    let html = '<div class="conflict-report"><div class="conflict-report-header"><i class="fas fa-exclamation-triangle"></i><h4>Rapport des conflits</h4></div>';
-    const equipeConflicts = conflicts.filter(c => c.type === 'equipe' || c.type === 'team' || c.type === 'membre');
-    const controleConflicts = conflicts.filter(c => c.type === 'controle' || c.type === 'control');
-    html += '<div class="conflict-summary"><div class="conflict-summary-item"><span class="conflict-summary-label">Total :</span><span class="conflict-summary-value">' + conflicts.length + '</span></div>';
-    if (equipeConflicts.length > 0) html += '<div class="conflict-summary-item"><span class="conflict-summary-label">👥 Équipes :</span><span class="conflict-summary-value">' + equipeConflicts.length + '</span></div>';
-    if (controleConflicts.length > 0) html += '<div class="conflict-summary-item"><span class="conflict-summary-label">📋 Contrôles :</span><span class="conflict-summary-value">' + controleConflicts.length + '</span></div>';
-    html += '</div><div class="conflict-report-container"><table class="conflict-table"><thead><tr><th>Type</th><th>ID</th><th>Nom</th><th>Détails</th></tr></thead><tbody>';
-    conflicts.forEach(conflict => {
-        let typeClass = 'autre', typeLabel = 'Autre';
-        if (conflict.type === 'equipe' || conflict.type === 'team' || conflict.type === 'membre') { typeClass = 'equipe'; typeLabel = '👥 Équipe'; }
-        else if (conflict.type === 'controle' || conflict.type === 'control') { typeClass = 'controle'; typeLabel = '📋 Contrôle'; }
-        const id = conflict.id || conflict.reference || 'N/A';
-        const name = conflict.nom || conflict.name || 'N/A';
-        let detailsHtml = '';
-        if (conflict.message) detailsHtml += '<div><strong>Message:</strong> ' + escapeHtml(conflict.message) + '</div>';
-        html += '<tr><td><span class="conflict-badge ' + typeClass + '">' + typeLabel + '</span></td><td><code>' + escapeHtml(id) + '</code></td><td><strong>' + escapeHtml(name) + '</strong></td><td class="conflict-details-preview">' + (detailsHtml || '<em class="text-muted">N/A</em>') + '</td></tr>';
-    });
-    html += '</tbody></table></div>';
-    html += '<div class="conflict-actions"><button class="btn-view-conflicts" onclick="window.open(\'' + appUrl('admin/conflicts.php') + '\', \'_blank\')"><i class="fas fa-external-link-alt"></i> Voir les conflits</button></div></div>';
-    return html;
-}
-
-function buildSyncFeedbackHtml(mode, data, serverIp) {
-    const payload = data && data.data ? data.data : {};
-    if (mode === 'test') {
-        const targetUrl = payload.target_url || data.target_url || serverIp;
-        return '<div style="text-align:left;line-height:1.6;"><div><strong>IP Serveur :</strong> ' + escapeHtml(serverIp) + '</div><div><strong>Point de réception :</strong> ' + escapeHtml(targetUrl) + '</div><div style="margin-top:10px;">Connexion disponible.</div></div>';
-    }
-    const sent = payload.sent || {};
-    const pendingConflicts = toSyncCount(payload.pending_conflicts || 0);
-    const conflictsList = payload.conflicts_list || payload.conflicts || [];
-    const equipesCount = toSyncCount(sent.equipes ?? 0);
-    const controlesCount = toSyncCount(sent.controles ?? 0);
-    const summary = payload.summary || data.message || 'Opération terminée.';
-    let rapportHtml = '';
-    if (pendingConflicts > 0 && conflictsList.length > 0) rapportHtml = buildConflictReportHtml(conflictsList);
-    else if (pendingConflicts > 0) rapportHtml = '<div class="conflict-report"><div class="conflict-report-header"><i class="fas fa-exclamation-triangle"></i><h4>⚠️ Conflits détectés</h4></div><div class="conflict-summary"><div class="conflict-summary-item"><span class="conflict-summary-label">Conflits :</span><span class="conflict-summary-value">' + pendingConflicts + '</span></div></div><div class="conflict-actions"><button class="btn-view-conflicts" onclick="window.open(\'' + appUrl('admin/conflicts.php') + '\', \'_blank\')"><i class="fas fa-external-link-alt"></i> Voir les conflits</button></div></div>';
-    return '<div style="text-align:left;line-height:1.6;max-height:70vh;overflow-y:auto;"><div><strong>Résumé :</strong> ' + escapeHtml(summary) + '</div><div style="margin:10px 0;"><div><i class="fas fa-users"></i> <strong>Membres synchronisés :</strong> ' + equipesCount + '</div><div><i class="fas fa-clipboard-check"></i> <strong>Contrôles synchronisés :</strong> ' + controlesCount + '</div></div>' + rapportHtml + '</div>';
-}
-
-function appUrl(path) {
-    const baseUrl = window.location.origin + window.location.pathname.replace(/\/modules\/controles\/[^/]*$/, '');
-    return baseUrl + path;
-}
-
-async function requestSync(mode) {
-    if (mode === 'sync' && pendingEquipesCount === 0 && pendingControlesCount === 0) {
-        hideSyncProgress(); stopSyncProgress();
-        showAutoCloseToast('info', 'Aucune donnée à synchroniser', 'Aucun membre d\'équipe ni contrôle n\'est en attente.', 3000, true);
-        return;
-    }
-
-    let clientId = window.localStorage.getItem('ctrSyncClientId');
-    if (!clientId) {
-        clientId = crypto.randomUUID ? crypto.randomUUID() : 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => { let r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8); return v.toString(16); });
-        window.localStorage.setItem('ctrSyncClientId', clientId);
-    }
-
-    let garnisonLabel = window.localStorage.getItem('ctrSyncGarnisonLabel');
-    const needGarnison = !garnisonLabel;
-
-    const result = await Swal.fire({
-        icon: 'question', title: 'Adresse du serveur',
-        html: '<input type="text" id="swal-server-ip" class="swal2-input" placeholder="Ex: 192.168.1.107" value="' + defaultSavedServerIp + '">' + (needGarnison ? '<input type="text" id="swal-garnison" class="swal2-input" placeholder="Nom de la garnison (ex: KINSHASA)" value="">' : ''),
-        focusConfirm: false, showCancelButton: true,
-        confirmButtonText: mode === 'test' ? 'Tester' : 'Synchroniser',
-        cancelButtonText: 'Annuler',
-        preConfirm: () => {
-            const serverIp = document.getElementById('swal-server-ip').value.trim();
-            if (!isValidServerAddress(serverIp)) { Swal.showValidationMessage('IP ou URL invalide.'); return false; }
-            if (needGarnison) { const newLabel = document.getElementById('swal-garnison').value.trim(); if (!newLabel || newLabel.length < 2) { Swal.showValidationMessage('Saisissez le nom de la garnison (au moins 2 caractères).'); return false; } }
-            return serverIp;
+function showAutoCloseToast(icon, title, html, duration = 3000, redirectAfter = true) {
+    Swal.fire({
+        icon: icon,
+        title: title,
+        html: html,
+        timer: duration,
+        timerProgressBar: true,
+        showConfirmButton: false,
+        allowOutsideClick: false,
+        allowEscapeKey: false,
+        didOpen: () => {
+            const popup = Swal.getPopup();
+            if (popup) popup.classList.add('auto-close');
+        },
+        willClose: () => {
+            if (redirectAfter) window.location.href = redirectUrl;
         }
     });
-
-    if (!result.isConfirmed || !result.value) return;
-    const serverIp = result.value.trim();
-    if (needGarnison) { garnisonLabel = document.getElementById('swal-garnison').value.trim(); window.localStorage.setItem('ctrSyncGarnisonLabel', garnisonLabel); }
-    storeServerIp(serverIp);
-
-    try {
-        if (mode === 'test') {
-            setConnectionButtonState('testing');
-            Swal.fire({ title: 'Connexion', text: 'Vérification...', allowOutsideClick: false, allowEscapeKey: false, showConfirmButton: false, didOpen: () => Swal.showLoading() });
-            const data = await fetchJsonWithCsrf(testSyncEndpoint, { server_ip: serverIp, client_id: clientId, garnison_label: garnisonLabel });
-            setConnectionButtonState('success');
-            showAutoCloseToast('success', 'Connexion établie', buildSyncFeedbackHtml('test', data, serverIp), 3000, false);
-            return;
-        }
-
-        resetSyncProgress();
-        setSyncButtonsState(true);
-        updateSyncProgress({ percentage: 8, step: 'Vérification du point de réception...', sent: { equipes: pendingEquipesCount, controles: pendingControlesCount } });
-        await fetchJsonWithCsrf(testSyncEndpoint, { server_ip: serverIp, client_id: clientId, garnison_label: garnisonLabel });
-        updateSyncProgress({ percentage: 18, step: 'Préparation des données...', sent: { equipes: pendingEquipesCount, controles: pendingControlesCount } });
-        const data = await streamSyncRequest(serverIp, clientId, garnisonLabel);
-        const payload = data && data.data ? data.data : {};
-        const syncState = payload.sync_state || '';
-        const isNoData = syncState === 'no_data';
-        const isAlreadySynced = syncState === 'already_synced';
-        const hasConflictsPending = syncState === 'conflicts_pending';
-        const pendingConflicts = toSyncCount(payload.pending_conflicts || 0);
-
-        if (isNoData) hideSyncProgress();
-        else await new Promise((resolve) => window.setTimeout(resolve, 2000));
-
-        let icon = 'success', title = 'Synchronisation terminée', duration = 3000;
-        if (isNoData) { icon = 'info'; title = 'Aucune donnée à synchroniser'; }
-        else if (hasConflictsPending && pendingConflicts > 0) { icon = 'warning'; title = 'Conflits détectés'; duration = 5000; }
-        else if (isAlreadySynced) { icon = 'info'; title = 'Données déjà synchronisées'; }
-
-        showAutoCloseToast(icon, title, buildSyncFeedbackHtml('sync', data, serverIp), duration, true);
-    } catch (error) {
-        if (mode === 'test') setConnectionButtonState('error');
-        showAutoCloseToast('error', mode === 'test' ? 'Connexion impossible' : 'Erreur de synchronisation', error.message || 'Impossible de joindre le service.', 4000, mode === 'sync');
-    } finally {
-        if (mode === 'sync') { stopSyncProgress(); setSyncButtonsState(false); }
-    }
 }
-
-document.addEventListener('DOMContentLoaded', function() {
-    const testButton = document.getElementById('test-sync-btn');
-    const syncButton = document.getElementById('start-sync-btn');
-    if (testButton) testButton.addEventListener('click', () => requestSync('test'));
-    if (syncButton) syncButton.addEventListener('click', () => requestSync('sync'));
-});
 </script>
 
 <?php include '../../includes/footer.php'; ?>

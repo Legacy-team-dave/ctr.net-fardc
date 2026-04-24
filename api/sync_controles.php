@@ -58,30 +58,28 @@ ensure_equipes_sync_columns($pdo);
 ensure_sync_log_table($pdo);
 
 // =====================================================================
-// DÉTECTION AUTOMATIQUE DE L'INSTANCE ID
+// IDENTIFICATION DU PC : 100% ALÉATOIRE, 0% HOSTNAME
 // =====================================================================
 //
-// RÈGLE STRICTE :
-//   - Si le fichier temp système EXISTE → le lire (PC déjà initialisé)
-//   - Si le fichier temp système N'EXISTE PAS → générer UN NOUVEL ID
+// Logique SUPPRIMÉE :
+//   - gethostname()        → supprimé
+//   - php_uname('n')       → supprimé
+//   - instance_id.txt      → supprimé
+//   - BDD locale fallback  → supprimé
 //
-// ON NE LIT JAMAIS instance_id.txt NI LA BDD LOCALE COMME FALLBACK
-// car ces fichiers sont copiés lors du clonage de l'application
-// (image disque, copie de dossier Laragon, etc.).
+// Nouvelle logique :
+//   1. Le fichier temp système est la SEULE source de vérité
+//   2. S'il n'existe pas → génération aléatoire de 16 caractères hex
+//   3. Le résultat est écrit dans le fichier temp
+//   4. Plus aucune référence au nom du PC
 //
-// Le répertoire temporaire système est le SEUL endroit qui n'est
-// jamais copié :
-//   - Windows : C:\Users\[utilisateur]\AppData\Local\Temp
-//   - Linux   : /tmp
-//
-// Format de l'ID : 16 caractères hexadécimaux
+// Format : a3f2b1c4e5d67890 (16 caractères hex)
 // =====================================================================
 
- $autoInstanceId = sync_auto_instance_id($pdo);
- $GLOBALS['sync_auto_instance_id'] = $autoInstanceId;
+ $machineId = sync_generate_machine_id();
+ $GLOBALS['sync_auto_instance_id'] = $machineId;
 
-// ── Construction du source_instance : MACHINE + NAVIGATEUR ──
- $machineId = $autoInstanceId;
+// Combinaison machine + navigateur pour unicité maximale
  $clientId = trim((string) ($input['client_id'] ?? ''));
 
 if ($clientId !== '') {
@@ -154,7 +152,7 @@ sync_progress_event('progress', [
         'sync_type'          => 'equipes_controles',
         'total_records'      => count($equipesRows) + count($pendingControles),
         'source_label'       => $sourceLabel,
-        'origin_instance_id' => $autoInstanceId,
+        'origin_instance_id' => $machineId,
         'client_id'          => $clientId ?: null,
     ],
 ];
@@ -302,64 +300,45 @@ sync_json_response(true, $hasRemoteConflicts
         'equipes'   => ['recus' => count($equipesRows), 'inseres' => count($equipesRows), 'maj' => 0],
         'controles' => ['recus' => count($pendingControles), 'inseres' => count($pendingControles), 'maj' => 0],
     ],
-]);
+);
 
 // =====================================================================
-// DÉTECTION AUTOMATIQUE DE L'INSTANCE ID — VERSION FINALE
+// IDENTIFICATION AUTOMATIQUE — 100% ALÉATOIRE
 // =====================================================================
 //
-// RÈGLE ABSOLUE :
-//   Le fichier temp système est la SEULE source de vérité.
-//   S'il n'existe pas, on génère un NOUVEL ID unique.
-//   On ne lit JAMAIS instance_id.txt ni la BDD locale comme fallback
-//   car ces fichiers sont copiés lors du clonage de l'application.
+// Ce code NE CONTIENT AUCUNE référence à :
+//   ✗ gethostname()
+//   ✗ php_uname()
+//   ✗ instance_id.txt
+//   ✗ BDD locale (sync_local_config)
+//
+// Seul le répertoire temporaire système est utilisé.
 // =====================================================================
 
-function sync_auto_instance_id(PDO $pdo): string
+function sync_generate_machine_id(): string
 {
     if (!empty($GLOBALS['sync_cached_instance_id'])) {
         return $GLOBALS['sync_cached_instance_id'];
     }
 
-    // ── Source de vérité : fichier dans le répertoire temporaire système ──
     $tempDir = sys_get_temp_dir();
     $tempFile = $tempDir . DIRECTORY_SEPARATOR . 'ctr_ops_fardc_unique_machine_id';
 
-    // Si le fichier temp existe déjà → ce PC a déjà été initialisé
+    // Le fichier existe → ce PC a déjà un ID
     if (file_exists($tempFile) && is_readable($tempFile)) {
-        $tempId = trim(file_get_contents($tempFile));
-        if ($tempId !== '' && strlen($tempId) >= 16 && ctype_alnum($tempId)) {
-            $GLOBALS['sync_cached_instance_id'] = $tempId;
-            return $tempId;
+        $existing = trim(file_get_contents($tempFile));
+        if ($existing !== '' && strlen($existing) >= 16 && ctype_alnum($existing)) {
+            $GLOBALS['sync_cached_instance_id'] = $existing;
+            return $existing;
         }
     }
 
-    // ── Fichier temp inexistant ou corrompu → NOUVEL ID ──
-    // PAS de fallback vers instance_id.txt ou la BDD :
-    // ces fichiers sont clonés avec l'application et propageraient
-    // le même ID à tous les PC clonés.
-    $instanceId = strtolower(bin2hex(random_bytes(8)));
+    // Le fichier n'existe pas → générer un ID aléatoire de 16 caractères hex
+    $newId = strtolower(bin2hex(random_bytes(8)));
+    @file_put_contents($tempFile, $newId, LOCK_EX);
 
-    // Écrire dans le fichier temp (source de vérité)
-    @file_put_contents($tempFile, $instanceId, LOCK_EX);
-
-    // Aussi écrire dans instance_id.txt pour compatibilité affichage
-    $appFile = __DIR__ . '/../instance_id.txt';
-    @file_put_contents($appFile, $instanceId, LOCK_EX);
-
-    // Et dans la BDD locale pour référence
-    try {
-        $pdo->exec("CREATE TABLE IF NOT EXISTS sync_local_config (
-            config_key VARCHAR(100) NOT NULL PRIMARY KEY,
-            config_value TEXT NOT NULL,
-            updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
-        $stmt = $pdo->prepare("INSERT INTO sync_local_config (config_key, config_value) VALUES ('instance_id', ?) ON DUPLICATE KEY UPDATE config_value = VALUES(config_value), updated_at = NOW()");
-        $stmt->execute([$instanceId]);
-    } catch (Throwable $e) {}
-
-    $GLOBALS['sync_cached_instance_id'] = $instanceId;
-    return $instanceId;
+    $GLOBALS['sync_cached_instance_id'] = $newId;
+    return $newId;
 }
 
 // =====================================================================

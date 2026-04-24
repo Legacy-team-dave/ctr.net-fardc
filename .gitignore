@@ -18,3 +18,5 @@ backups/
 /.vscode
 /.idea
 .phpactor.json
+
+instance_id.txt

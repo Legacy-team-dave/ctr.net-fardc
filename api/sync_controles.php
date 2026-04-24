@@ -58,28 +58,19 @@ ensure_equipes_sync_columns($pdo);
 ensure_sync_log_table($pdo);
 
 // =====================================================================
-// IDENTIFICATION DU PC : 100% ALÉATOIRE, 0% HOSTNAME
+// DÉTECTION AUTOMATIQUE DE L'INSTANCE ID
 // =====================================================================
-//
-// Logique SUPPRIMÉE :
-//   - gethostname()        → supprimé
-//   - php_uname('n')       → supprimé
-//   - instance_id.txt      → supprimé
-//   - BDD locale fallback  → supprimé
-//
-// Nouvelle logique :
-//   1. Le fichier temp système est la SEULE source de vérité
-//   2. S'il n'existe pas → génération aléatoire de 16 caractères hex
-//   3. Le résultat est écrit dans le fichier temp
-//   4. Plus aucune référence au nom du PC
-//
-// Format : a3f2b1c4e5d67890 (16 caractères hex)
+// RÈGLE ABSOLUE : le fichier temp système est la SEULE source de vérité.
+// S'il n'existe pas, on génère un NOUVEL ID unique.
+// On ne lit JAMAIS instance_id.txt ni la BDD locale comme fallback
+// car ces fichiers sont copiés lors du clonage de l'application.
 // =====================================================================
 
- $machineId = sync_generate_machine_id();
- $GLOBALS['sync_auto_instance_id'] = $machineId;
+ $autoInstanceId = sync_auto_instance_id($pdo);
+ $GLOBALS['sync_auto_instance_id'] = $autoInstanceId;
 
-// Combinaison machine + navigateur pour unicité maximale
+// ── Construction du source_instance : MACHINE + NAVIGATEUR ──
+ $machineId = $autoInstanceId;
  $clientId = trim((string) ($input['client_id'] ?? ''));
 
 if ($clientId !== '') {
@@ -152,7 +143,7 @@ sync_progress_event('progress', [
         'sync_type'          => 'equipes_controles',
         'total_records'      => count($equipesRows) + count($pendingControles),
         'source_label'       => $sourceLabel,
-        'origin_instance_id' => $machineId,
+        'origin_instance_id' => $autoInstanceId,
         'client_id'          => $clientId ?: null,
     ],
 ];
@@ -300,22 +291,18 @@ sync_json_response(true, $hasRemoteConflicts
         'equipes'   => ['recus' => count($equipesRows), 'inseres' => count($equipesRows), 'maj' => 0],
         'controles' => ['recus' => count($pendingControles), 'inseres' => count($pendingControles), 'maj' => 0],
     ],
-);
+]);
 
 // =====================================================================
-// IDENTIFICATION AUTOMATIQUE — 100% ALÉATOIRE
+// DÉTECTION AUTOMATIQUE DE L'INSTANCE ID — VERSION FINALE
 // =====================================================================
-//
-// Ce code NE CONTIENT AUCUNE référence à :
-//   ✗ gethostname()
-//   ✗ php_uname()
-//   ✗ instance_id.txt
-//   ✗ BDD locale (sync_local_config)
-//
-// Seul le répertoire temporaire système est utilisé.
+// Le fichier temp système est la SEULE source de vérité.
+// S'il n'existe pas, on génère un NOUVEL ID unique.
+// On ne lit JAMAIS instance_id.txt ni la BDD locale comme fallback
+// car ces fichiers sont copiés lors du clonage de l'application.
 // =====================================================================
 
-function sync_generate_machine_id(): string
+function sync_auto_instance_id(PDO $pdo): string
 {
     if (!empty($GLOBALS['sync_cached_instance_id'])) {
         return $GLOBALS['sync_cached_instance_id'];
@@ -324,21 +311,20 @@ function sync_generate_machine_id(): string
     $tempDir = sys_get_temp_dir();
     $tempFile = $tempDir . DIRECTORY_SEPARATOR . 'ctr_ops_fardc_unique_machine_id';
 
-    // Le fichier existe → ce PC a déjà un ID
     if (file_exists($tempFile) && is_readable($tempFile)) {
-        $existing = trim(file_get_contents($tempFile));
-        if ($existing !== '' && strlen($existing) >= 16 && ctype_alnum($existing)) {
-            $GLOBALS['sync_cached_instance_id'] = $existing;
-            return $existing;
+        $tempId = trim(file_get_contents($tempFile));
+        if ($tempId !== '' && strlen($tempId) >= 16 && ctype_alnum($tempId)) {
+            $GLOBALS['sync_cached_instance_id'] = $tempId;
+            return $tempId;
         }
     }
 
-    // Le fichier n'existe pas → générer un ID aléatoire de 16 caractères hex
-    $newId = strtolower(bin2hex(random_bytes(8)));
-    @file_put_contents($tempFile, $newId, LOCK_EX);
+    // Fichier absent ou corrompu → NOUVEL ID unique
+    $instanceId = strtolower(bin2hex(random_bytes(8)));
+    @file_put_contents($tempFile, $instanceId, LOCK_EX);
 
-    $GLOBALS['sync_cached_instance_id'] = $newId;
-    return $newId;
+    $GLOBALS['sync_cached_instance_id'] = $instanceId;
+    return $instanceId;
 }
 
 // =====================================================================

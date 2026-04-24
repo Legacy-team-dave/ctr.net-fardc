@@ -61,7 +61,7 @@ if (!is_valid_server_address($serverIp)) {
 // =====================================================================
 ensure_equipes_sync_columns($pdo);
 
-// L'instance_id est garanti d'exister après cet appel
+// L'instance_id est garanti unique grâce à la vérification du hostname
  $autoInstanceId = sync_auto_instance_id($pdo);
  $GLOBALS['sync_auto_instance_id'] = $autoInstanceId;
 
@@ -297,9 +297,7 @@ sync_json_response(true, $hasRemoteConflicts
 
 /**
  * Crée toutes les tables et colonnes nécessaires à la synchronisation côté client.
- *
- * IMPORTANT : Cette fonction crée aussi la table `sync_local_config` qui stocke
- * l'identifiant unique de ce PC. Elle doit s'exécuter AVANT sync_auto_instance_id().
+ * La table sync_local_config est créée ICI avant tout appel à sync_auto_instance_id().
  */
 function ensure_equipes_sync_columns(PDO $pdo): void
 {
@@ -339,9 +337,7 @@ function ensure_equipes_sync_columns(PDO $pdo): void
         }
     }
 
-    // --- Table sync_local_config : stocke l'ID unique de CE PC ---
-    // Créée ICI, avant tout appel à sync_auto_instance_id(),
-    // pour garantir son existence dans toutes les situations.
+    // --- Table sync_local_config : stocke l'ID unique ET le hostname de CE PC ---
     $pdo->exec("CREATE TABLE IF NOT EXISTS sync_local_config (
         config_key VARCHAR(100) NOT NULL PRIMARY KEY,
         config_value TEXT NOT NULL,
@@ -390,21 +386,20 @@ function ensure_sync_log_table(PDO $pdo): void
 /**
  * Génère ou récupère l'identifiant unique de CE poste client.
  *
- * PRINCIPE :
- *   Chaque PC client qui clone le projet doit avoir un identifiant
- *   différent, même si deux PCs ont le même hostname (ex: "WENDIE").
+ * PROBLÈME RÉSOLU : Quand on clone le projet depuis GitHub, la BDD locale
+ * est copiée avec l'instance_id et le hostname du PC d'origine. Ce code
+ * détecte ce cas en comparant le hostname stocké avec le hostname actuel.
+ * Si mismatch → c'est un clone → un NOUVEL ID est généré automatiquement.
  *
  * ALGORITHME :
- *   1. Lire depuis sync_local_config (table garantie par ensure_equipes_sync_columns)
- *   2. Si absent, lire depuis instance_id.txt (fallback fichier)
- *   3. Si absent, générer automatiquement : <hostname>-<8hex>
- *      Les 8 caractères hex (4 octets aléatoires) garantissent l'unicité
- *      même entre deux PCs avec le même nom de machine.
- *   4. Persister dans BDD + fichier
- *   5. Vérifier l'unicité : si par miracle un conflit existe, régénérer
+ *   1. Lire instance_id et instance_hostname depuis sync_local_config
+ *   2. Si hostname stocké ≠ hostname actuel → CLONE DÉTECTÉ → régénérer
+ *   3. Si hostname correspond → ID valide, le retourner
+ *   4. Si aucun ID → générer un nouvel ID unique
+ *   5. Stocker toujours le hostname actuel pour les futures vérifications
  *
- * FORMAT : ex "wendie-pc-1a58b3f2", "poste-gestion-7c2e09d1"
- * AUCUNE configuration manuelle requise par l'utilisateur.
+ * FORMAT : ex "wendie-pc-1a58", "poste-gestion-7c2e"
+ * Suffixe : 4 caractères hex aléatoires (2 octets = 65 536 combinaisons)
  *
  * @param PDO $pdo Connexion BDD locale
  * @return string Identifiant unique de ce PC (max 50 caractères)
@@ -416,52 +411,68 @@ function sync_auto_instance_id(PDO $pdo): string
         return $GLOBALS['sync_cached_instance_id'];
     }
 
+    $currentHostname = strtolower(trim(gethostname() ?: php_uname('n') ?: 'poste'));
     $file = __DIR__ . '/../instance_id.txt';
 
-    // ── Étape 1 : lecture depuis la BDD locale ──
-    // La table est garantie d'exister (créée par ensure_equipes_sync_columns)
+    // ── Étape 1 : lire l'ID et le hostname stockés en BDD ──
     try {
         $stmt = $pdo->prepare("SELECT config_value FROM sync_local_config WHERE config_key = 'instance_id' LIMIT 1");
         $stmt->execute();
-        $existing = $stmt->fetchColumn();
-        if ($existing !== false && trim((string) $existing) !== '') {
-            $id = trim((string) $existing);
-            $GLOBALS['sync_cached_instance_id'] = $id;
-            // Synchroniser le fichier pour cohérence
-            @file_put_contents($file, $id, LOCK_EX);
-            return $id;
+        $storedId = $stmt->fetchColumn();
+
+        $stmtH = $pdo->prepare("SELECT config_value FROM sync_local_config WHERE config_key = 'instance_hostname' LIMIT 1");
+        $stmtH->execute();
+        $storedHostname = $stmtH->fetchColumn();
+
+        if ($storedId !== false && trim((string) $storedId) !== '') {
+            $storedId = trim((string) $storedId);
+            $storedH = ($storedHostname !== false) ? strtolower(trim((string) $storedHostname)) : '';
+
+            if ($storedH !== '' && $storedH !== $currentHostname) {
+                // ╔════════════════════════════════════════════════════════════╗
+                // ║  CLONE DÉTECTÉ : le hostname stocké ne correspond pas au     ║
+                // ║  hostname actuel. La BDD a été copiée d'un autre PC.      ║
+                // ║  → Régénération d'un nouvel ID pour CE PC.                ║
+                // ╚════════════════════════════════════════════════════════════╝
+                error_log(sprintf(
+                    'sync_auto_instance_id: CLONE DÉTECTÉ — hostname stocké "%s" ≠ actuel "%s" — régénération de l\'ID (ancien: "%s")',
+                    $storedH,
+                    $currentHostname,
+                    $storedId
+                ));
+
+                $newId = sync_generate_unique_instance_id($pdo, $file);
+                sync_store_instance_hostname($pdo, $currentHostname);
+                $GLOBALS['sync_cached_instance_id'] = $newId;
+                return $newId;
+            }
+
+            // Hostname correspond (ou non encore stocké) → ID considéré valide
+            sync_store_instance_hostname($pdo, $currentHostname);
+            $GLOBALS['sync_cached_instance_id'] = $storedId;
+            @file_put_contents($file, $storedId, LOCK_EX);
+            return $storedId;
         }
     } catch (Throwable $e) {
-        // Continuer vers le fallback
+        error_log('sync_auto_instance_id: erreur lecture BDD: ' . $e->getMessage());
     }
 
-    // ── Étape 2 : lecture depuis le fichier (fallback) ──
-    if (file_exists($file) && is_readable($file)) {
-        $existing = trim(file_get_contents($file));
-        if ($existing !== '' && strlen($existing) >= 5) {
-            // Migrer vers la BDD
-            sync_persist_instance_id($pdo, $existing, $file);
-            $GLOBALS['sync_cached_instance_id'] = $existing;
-            return $existing;
-        }
-    }
-
-    // ── Étape 3 : génération automatique avec vérification d'unicité ──
-    $instanceId = sync_generate_unique_instance_id($pdo, $file);
-
-    $GLOBALS['sync_cached_instance_id'] = $instanceId;
-    return $instanceId;
+    // ── Étape 2 : aucun ID en BDD → première utilisation de ce PC → générer ──
+    $newId = sync_generate_unique_instance_id($pdo, $file);
+    sync_store_instance_hostname($pdo, $currentHostname);
+    $GLOBALS['sync_cached_instance_id'] = $newId;
+    return $newId;
 }
 
 /**
  * Génère un identifiant d'instance unique avec vérification anti-collision.
  *
  * @param PDO $pdo Connexion BDD locale
- * @param string $file Chemin du fichier de fallback
+ * @param string $file Chemin du fichier de fallback (écriture seule)
  * @param int $maxAttempts Nombre max de tentatives en cas de collision
  * @return string Identifiant garanti unique
  */
-function sync_generate_unique_instance_id(PDO $pdo, string $file, int $maxAttempts = 3): string
+function sync_generate_unique_instance_id(PDO $pdo, string $file, int $maxAttempts = 5): string
 {
     $hostname = gethostname() ?: php_uname('n') ?: 'poste';
 
@@ -471,13 +482,11 @@ function sync_generate_unique_instance_id(PDO $pdo, string $file, int $maxAttemp
     if ($hostname === '' || strlen($hostname) < 2) {
         $hostname = 'poste';
     }
-    // Limiter la longueur du hostname pour laisser de la place au suffixe
-    $hostname = substr($hostname, 0, 30);
+    $hostname = substr($hostname, 0, 35);
 
     for ($attempt = 0; $attempt < $maxAttempts; $attempt++) {
-        // 4 octets aléatoires = 8 caractères hexa
-        // Cela donne 4 294 967 296 possibilités — collision quasi impossible
-        $randomSuffix = strtolower(bin2hex(random_bytes(4)));
+        // 2 octets aléatoires = 4 caractères hexa (65 536 combinaisons)
+        $randomSuffix = strtolower(bin2hex(random_bytes(2)));
         $instanceId = $hostname . '-' . $randomSuffix;
 
         // Normalisation finale
@@ -490,32 +499,28 @@ function sync_generate_unique_instance_id(PDO $pdo, string $file, int $maxAttemp
         }
 
         // Vérifier que cet ID n'existe pas déjà en BDD
-        // (utile si la BDD a été copiée d'un autre PC)
         if (sync_is_instance_id_unique($pdo, $instanceId)) {
             sync_persist_instance_id($pdo, $instanceId, $file);
             return $instanceId;
         }
 
-        // Collision détectée (extrêmement rare) → réessayer avec un nouveau suffixe
         error_log(sprintf(
-            'sync_auto_instance_id: collision détectée pour "%s" (tentative %d/%d), régénération...',
+            'sync_generate_unique_instance_id: collision "%s" (tentative %d/%d), réessai...',
             $instanceId,
             $attempt + 1,
             $maxAttempts
         ));
     }
 
-    // Dernier recours : forcer avec un timestamp pour garantie absolue
-    $instanceId = $hostname . '-' . strtolower(bin2hex(random_bytes(4))) . '-' . time();
+    // Dernier recours : forcer avec un timestamp
+    $instanceId = $hostname . '-' . strtolower(bin2hex(random_bytes(2))) . '-' . time();
     $instanceId = substr($instanceId, 0, 50);
-
     sync_persist_instance_id($pdo, $instanceId, $file);
     return $instanceId;
 }
 
 /**
- * Vérifie qu'un identifiant d'instance n'existe pas déjà dans la BDD locale.
- * Utile pour détecter le cas où une BDD a été copiée d'un autre PC.
+ * Vérifie qu'un identifiant n'existe pas déjà en BDD locale.
  */
 function sync_is_instance_id_unique(PDO $pdo, string $instanceId): bool
 {
@@ -524,7 +529,6 @@ function sync_is_instance_id_unique(PDO $pdo, string $instanceId): bool
         $stmt->execute([$instanceId]);
         return (int) $stmt->fetchColumn() === 0;
     } catch (Throwable $e) {
-        // En cas d'erreur, supposer que c'est unique (pas bloquant)
         return true;
     }
 }
@@ -534,7 +538,6 @@ function sync_is_instance_id_unique(PDO $pdo, string $instanceId): bool
  */
 function sync_persist_instance_id(PDO $pdo, string $instanceId, string $file): void
 {
-    // Persister en BDD
     try {
         $stmt = $pdo->prepare(
             "INSERT INTO sync_local_config (config_key, config_value, updated_at)
@@ -546,8 +549,24 @@ function sync_persist_instance_id(PDO $pdo, string $instanceId, string $file): v
         error_log('sync_persist_instance_id: erreur BDD: ' . $e->getMessage());
     }
 
-    // Persister dans le fichier
     @file_put_contents($file, $instanceId, LOCK_EX);
+}
+
+/**
+ * Stocke le hostname actuel pour détection future de clones.
+ */
+function sync_store_instance_hostname(PDO $pdo, string $hostname): void
+{
+    try {
+        $stmt = $pdo->prepare(
+            "INSERT INTO sync_local_config (config_key, config_value, updated_at)
+             VALUES ('instance_hostname', ?, NOW())
+             ON DUPLICATE KEY UPDATE config_value = VALUES(config_value), updated_at = NOW()"
+        );
+        $stmt->execute([strtolower(trim($hostname))]);
+    } catch (Throwable $e) {
+        error_log('sync_store_instance_hostname: ' . $e->getMessage());
+    }
 }
 
 
@@ -580,7 +599,6 @@ function is_valid_server_address(string $value): bool
     if ($value === '') {
         return false;
     }
-
     return (bool) preg_match('/^(https?:\/\/)?([a-zA-Z0-9.-]+|\[[0-9a-fA-F:]+\])(?::\d+)?(\/.*)?$/', $value);
 }
 
@@ -593,7 +611,6 @@ function sync_join_garnison_labels(array $garnisons): string
             $labels[] = $garnison;
         }
     }
-
     return implode(' • ', $labels);
 }
 
@@ -603,7 +620,6 @@ function sync_build_source_label(string $baseLabel, string $sourceInstance): str
     if ($baseLabel === '') {
         $baseLabel = 'SITE LOCAL 01';
     }
-
     return mb_substr('Equipe : ' . $baseLabel, 0, 150);
 }
 
@@ -613,14 +629,11 @@ function sync_build_source_instance(string $instanceId): string
     if ($instanceId === '') {
         $instanceId = php_uname('n') ?: 'client';
     }
-
     $normalized = preg_replace('/[^a-zA-Z0-9_-]+/', '-', strtolower($instanceId)) ?? 'client';
     $normalized = trim($normalized, '-_');
-
     if ($normalized === '') {
         $normalized = 'client';
     }
-
     return substr($normalized, 0, 50);
 }
 
@@ -629,11 +642,7 @@ function sync_progress_event(string $event, array $payload = []): void
     if (empty($GLOBALS['sync_stream_enabled'])) {
         return;
     }
-
-    echo 'data: ' . json_encode(array_merge([
-        'event' => $event,
-    ], $payload), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) . "\n\n";
-
+    echo 'data: ' . json_encode(array_merge(['event' => $event], $payload), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) . "\n\n";
     if (function_exists('ob_flush')) {
         @ob_flush();
     }
@@ -643,26 +652,21 @@ function sync_progress_event(string $event, array $payload = []): void
 function sync_json_response(bool $success, string $message, int $httpCode = 200, ?string $errorCode = null, array $data = []): void
 {
     http_response_code($httpCode);
-
     $response = [
         'success' => $success,
         'message' => $message,
         'timestamp' => gmdate('c'),
     ];
-
     if ($errorCode !== null) {
         $response['error_code'] = $errorCode;
     }
-
     if (!empty($data)) {
         $response['data'] = $data;
     }
-
     if (!empty($GLOBALS['sync_stream_enabled'])) {
         sync_progress_event($success ? 'complete' : 'error', $response);
         exit;
     }
-
     echo json_encode($response, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
     exit;
 }
